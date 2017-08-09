@@ -8,7 +8,7 @@
  
  - [Build an Image](#build): Required to begin working with Docker.
  - [Starting a Container](#basic): Instructions on running a container from an image. Lacks the ability to interact with files on your computer.
- - [Using R Studio & Jupyter Notebooks](#intermediate): Instructions on how to run a container and use R Studio and Jupyter Notebooks in your computer's browser. Lacks the ability to interact with files on your computer.
+ - [Using Jupyter Notebooks](#intermediate): Instructions on how to run a container and use Jupyter Notebooks in your computer's browser. Lacks the ability to interact with files on your computer.
  - [Interact with Files on Your Computer](#advanced): Instructions on how to run a container that can interact with files on your computer. This will be the most useful container and will likely be the default setup you use from here on out.
  - [Semi-important Supplemental Info](#supplemental): Instructions on how to limit and reduce Docker image disk space usage by re-using existing images/containers and/or deleting old/unused images/containers.
  
@@ -35,7 +35,7 @@
  
 ####  <a name="basic"></a>Start a Docker Container (Basic)
  
- These instructions will run the Docker container from the [image built above](#build) with no "frills." See the [Intermediate](#intermediate) instructions to begin using R Studio and Jupyter Notebooks in the Docker container.
+ These instructions will run the Docker container from the [image built above](#build) with no "frills." See the [Intermediate](#intermediate) instructions to begin using Jupyter Notebooks in the Docker container.
  
  - Requires that a Docker image has already been built
  - Mac users: If opening a new Terminal window, enter the following before proceeding:
@@ -63,15 +63,11 @@
  - ```IMAGE_NAME``` The name of the image that should be used to start the Docker container.
  - ```/bin/bash``` The command that the container should run when it starts. In this case, we tell the container to start bash. Bash is the command line stuff you use when using Terminal.
  
-####  <a name="intermediate"></a>Run R Studio and Jupyter Notebook in Docker Container (Intermediate)
+####  <a name="intermediate"></a>Run Jupyter Notebook in Docker Container (Intermediate)
  
  1. Start a Docker container with specific port mappings:
  
-   ```docker run -p 8787:8787 -p 8888:8888 -it IMAGE_NAME /bin/bash```
- 
- 2. Start R Studio (enter this inside the container):
- 
-   ```rstudio-server restart```
+   ```docker run -p 8888:8888 -it IMAGE_NAME /bin/bash```
    
  3. Start Jupyter Notebook (enter this inside the container):
  
@@ -81,23 +77,14 @@
  
    ```docker-machine ip```
  
- 4. Run R Studio in your browser:
-   1. Enter URL:
-     1. Mac users (use the IP address from Step 4 above): e.g. ```192.168.99.100:8787```
-     2. Others: ```localhost:8787```
-   2. Enter the following credentials in the R Studio interface:
-     1. Username: srlab
-     2. Password: rstudio
- 
  5. Run Jupyter Notebook in your browser:
    1. Enter URL (in a different window or tab than what you're using for R Studio):
      1. Mac users (use the IP address from Step 4 above): e.g. ```192.168.99.100:8888```
      2. Others: ```localhost:8888```
  
  Explanation:
- - ```-p 8787:8787``` Tells Docker to create container that binds your computer's port 8787 to container port 8787. Allows you to use R Studio in your browser.
  - ```-p 8888:8888``` Tells Docker to create container that binds your computer's port 8888 to container port 8888. Allows you to use Jupyter Notebook in your browser.
- - The port bindings for your computer can be changed (the first number in the 8787:8787 or 8888:8888). It's recommended to stick to port numbers greater than 9000 if they need to be changed. The port bindings for the container (the second number in the 8787:8787 or 8888:8888) should not be changed, since R Studio and Jupyter Notebooks are currently configured to connect to those ports of the container. 
+ - The port bindings for your computer can be changed (the first number in the 8888:8888 part of the command). It's recommended to stick to port numbers greater than 9000 if they need to be changed. The port bindings for the container (the second number in the 88888:8888 part of the command) should not be changed, since Jupyter Notebooks are currently configured to connect to those ports of the container. 
  
 ####  <a name="advanced"></a>Access Files Outside of a Docker Container (Advanced)
  
@@ -114,11 +101,11 @@
  
  1. Start a Docker container with specific port mappings and volume mount points:
  
-   ```docker run -p 8787:8787 -p 8888:8888 -v /path/to/computer/folder:/path/to/container/folder -it IMAGE_NAME /bin/bash```
+   ```docker run -p 8888:8888 -v /path/to/computer/folder:/path/to/container/folder -it IMAGE_NAME /bin/bash```
  
  Explanation:
  
- - ```docker run -p 8787:8787 -p 8888:8888 -it IMAGE_NAME /bin/bash``` See the [Basic](#basic) & [Intermediate](#intermediate) guides.
+ - ```docker run -p 8888:8888 -it IMAGE_NAME /bin/bash``` See the [Basic](#basic) & [Intermediate](#intermediate) guides.
  - ```-v``` This flag tells Docker to mount a volume from your computer in the Docker container.
  - ```/path/to/computer/folder:``` The location of the folder on your computer that you would like to be able to access from your Docker container. If the folder doesn't exist on your computer, Docker will create it.
  - ```/path/to/container/folder``` The location of the folder inside the Docker container where you will be able to access the folder on your computer specified in the first portion of the command.
@@ -127,10 +114,10 @@
  
  ```-v /Users/Sam/Downloads:/home/srlab/junk```
  
- The above command allows me to acces the files in my Downloads folder on my computer. Once I'm in the Docker container, I would change to the "junk" directory to interact with the files in my Downloads folder on my computer.
+The above command allows me to acces the files in my Downloads folder on my computer. Once I'm in the Docker container, I would change to the "junk" directory to interact with the files in my Downloads folder on my computer.
  
  
- Note: Similar to binding multiple ports (-p -p 8787:8787 -p 8888:8888), you can do the same for mounting multiple volumes by adding multiple ```-v``` flags followed by the desired local and container mount points.
+Note: You can mount multiple volumes by adding multiple ```-v``` flags followed by the desired local and container mount points.
  
 #### <a name="supplemental"></a>Supplemental Info
 ##### Reuse an existing container
@@ -145,12 +132,12 @@
  
  1. ```docker ps -a``` Lists all existing containers
  2. If the container STATUS is listed as "Exited" use one of the following options:
-   1. ```docker start CONTAINER_ID``` Replace "CONTAINER_ID" with the ID of the desired container.
-   2. ```docker start NAMES``` Replace "NAMES" with the name of the desired container.
+     1. ```docker start CONTAINER_ID``` Replace "CONTAINER_ID" with the ID of the desired container.
+     2. ```docker start NAMES``` Replace "NAMES" with the name of the desired container.
  3. If the container STATUS is listed as "Up", use one of the following options:
-   1. ```docker attach CONTAINER_ID``` Replace "CONTAINER_ID" with the ID of the desired container.
-   2. ```docker attach NAMES``` Replace "NAMES" with the name of the desired container.
+     1. ```docker attach CONTAINER_ID``` Replace "CONTAINER_ID" with the ID of the desired container.
+     2. ```docker attach NAMES``` Replace "NAMES" with the name of the desired container.
  4. Press CTRL-c to enter the container.
  5. When finished, leave the container using one of the following options:
-   1. Press CTRL-p, then press CTRL-q. This will detach the container and leave it running. This will allow you to skip Step 2 when reusing the container.
-   2. ```exit``` This will stop the container. You will have to start at Step 2 in order to reuse the container.
+     1. Press CTRL-p, then press CTRL-q. This will detach the container and leave it running. This will allow you to skip Step 2 when reusing the container.
+     2. ```exit``` This will stop the container. You will have to start at Step 2 in order to reuse the container.

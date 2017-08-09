@@ -15,7 +15,7 @@ bash.md - Collection of commonly used bash commands for counting, finding & repl
 
 fasta.md - FASTA file manipulation including counting sequences, converting FASTQ to FASTA, & converting FASTA to tab-delmited.
 
-jupyter.md
+jupyter.md - Ways to work with Jupyter Notebooks including embedding notebooks in websites, viewing notebooks on nbviwer.com, and using Jupyter Notebooks on remote computers.
 
 misc.md
 

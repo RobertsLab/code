@@ -17,10 +17,10 @@ fasta.md - FASTA file manipulation including counting sequences, converting FAST
 
 jupyter.md - Ways to work with Jupyter Notebooks including embedding notebooks in websites, viewing notebooks on nbviwer.com, and using Jupyter Notebooks on remote computers.
 
-misc.md
+misc.md - Tips for using SSH, MD5 checksums, and gzip manipulation.
 
-README.md
+README.md - This is the file you're currently reading.
 
-R.md
+R.md - Intended for R tips. Currently empty.
 
-sqlshare.md
+sqlshare.md - Tips for using SQLshare, but most commands are compatible with MySQL and/or SQLite. Lots of tips on joining tables and counting values.

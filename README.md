@@ -13,7 +13,7 @@
 
 bash.md - Collection of commonly used bash commands for counting, finding & replacing, and moving/renaming files.
 
-fasta.md
+fasta.md - FASTA file manipulation including counting sequences, converting FASTQ to FASTA, & converting FASTA to tab-delmited.
 
 jupyter.md
 

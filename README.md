@@ -11,6 +11,10 @@
 
 ## File Descriptions
 
+- R.md - Intended for R tips. Currently empty.
+
+- README.md - This is the file you're currently reading.
+
 - bash.md - Collection of commonly used bash commands for counting, finding & replacing, and moving/renaming files.
 
 - fasta.md - FASTA file manipulation including counting sequences, converting FASTQ to FASTA, & converting FASTA to tab-delmited.
@@ -19,8 +23,4 @@
 
 - misc.md - Tips for using SSH, MD5 checksums, and gzip manipulation.
 
-- README.md - This is the file you're currently reading.
-
-- R.md - Intended for R tips. Currently empty.
-
--sqlshare.md - Tips for using SQLshare, but most commands are compatible with MySQL and/or SQLite. Lots of tips on joining tables and counting values.
+- sqlshare.md - Tips for using SQLshare, but most commands are compatible with MySQL and/or SQLite. Lots of tips on joining tables and counting values.

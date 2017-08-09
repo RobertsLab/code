@@ -4,5 +4,6 @@
  The [Wiki for this repo](https://github.com/RobertsLab/code/wiki) contains more detailed guides and instructions on things like:
  
  - [Jupyter Notebooks](https://github.com/RobertsLab/code/wiki/Jupyter-Notebook-Guide)
+ - [Super Computing with Mox](https://github.com/RobertsLab/hyak_mox/wiki)
  - [Docker](https://github.com/RobertsLab/code/wiki/docker)
 

@@ -9,4 +9,7 @@ mkdir ~/gitrepos/RobertsLab
 
 cd ~/gitrepos/RobertsLab
 
+git clone git@github.com:RobertsLab/onboarding.git
 
+
+git clone git@github.com:RobertsLab/onboarding.wiki.git

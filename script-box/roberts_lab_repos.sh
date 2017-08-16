@@ -18,3 +18,8 @@ git clone git@github.com:RobertsLab/resources.git
 
 
 git clone git@github.com:RobertsLab/resources.wiki.git
+
+
+git clone git@github.com:RobertsLab/code.git
+
+git clone git@github.com:RobertsLab/code.wiki.git

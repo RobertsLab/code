@@ -13,3 +13,8 @@ git clone git@github.com:RobertsLab/onboarding.git
 
 
 git clone git@github.com:RobertsLab/onboarding.wiki.git
+
+git clone git@github.com:RobertsLab/resources.git
+
+
+git clone git@github.com:RobertsLab/resources.wiki.git

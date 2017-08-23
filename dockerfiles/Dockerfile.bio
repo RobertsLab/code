@@ -24,7 +24,6 @@
 # fastqc		0.11.5  		#
 # fastx_toolkit	0.0.13  		#
 # R				3.3.1   		#
-# RStudioServer	1.0.44			#
 # pyrad			3.0.66  		#
 # samtools		0.1.19  		#
 # stacks		1.40    		#
@@ -296,21 +295,12 @@ RUN wget --output-document=bowtie-1.1.2-linux-x86_64.zip \
 	
 ENV PATH /usr/local/bioinformatics/bowtie-1.1.2:$PATH
 
-# Create srlab user
-RUN useradd -ms /bin/bash srlab \
-        && echo "srlab:rstudio" | chpasswd
-
 # Install R (v3.3.1 1)
 RUN conda install -c r r-base='3.3.1 1'
 
 # Install R Essentials (v1.4.3)
 RUN conda install -c r r-essentials=1.4.3
 
-# Install RStudio Server (v1.0.44)
-RUN wget https://download2.rstudio.org/rstudio-server-1.0.44-amd64.deb \
-        && gdebi --non-interactive rstudio-server-1.0.44-amd64.deb \
-        && echo "alias rstudio-server='/etc/init.d/rstudio-server'" >> ~/.bashrc \
-        && rm rstudio-server-1.0.44-amd64.deb
 
 # Install R kernel for Jupyter notebooks
 #RUN touch kernel_script_temp.R
@@ -334,5 +324,5 @@ ENV PATH /usr/local/bioinformatics/vcftools-0.1.14:$PATH
 RUN conda install -c r rpy2=2.8.1
 
 
-# Expose ports for RStudio Server & Jupyter Notebook, respectively
-EXPOSE 8787 8888
+# Expose port for Jupyter Notebook, respectively
+EXPOSE 8888

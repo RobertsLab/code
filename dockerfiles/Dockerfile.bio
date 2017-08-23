@@ -139,8 +139,8 @@ RUN wget https://github.com/arq5x/bedtools2/releases/download/v2.26.0/bedtools-2
 
 ENV PATH /usr/local/bioinformatics/bedtools2:$PATH
 
-## Add MiniConda channel to allow easy install of khmer (dammit dependency)
-RUN conda config --add channels ged --add channels bioconda
+## Add MiniConda channels to allow easy install of khmer and pyinotify (dammit dependencies)
+RUN conda config --add channels ged --add channels bioconda --add channels conda-forge
 
 ## Install Python dependencies for use in dammit
 RUN conda install setuptools pandas khmer doit nose ficus matplotlib numexpr scipy numpy

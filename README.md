@@ -8,7 +8,7 @@
  - [Super Computing with Mox (hyak)](https://github.com/RobertsLab/hyak_mox/wiki)
      - Mox is a high powered designed computer designed for seriously intensive computing
      - Due to the steep learning curve, it has its own dedicated wiki.
- - [Docker](https://github.com/RobertsLab/code/wiki/docker)
+ - [Docker](https://github.com/RobertsLab/code/wiki/Docker-Guide)
      - Docker is a means to run a virtual Linux computer (great for Windows users!).
      - We have as Docker setup to install the most commonly used software used in the Roberts Lab, including Jupyter Notebook.
 

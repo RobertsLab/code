@@ -267,8 +267,8 @@ ENV PATH /usr/local/bioinformatics/bowtie-1.1.2:$PATH
 # Install R (v3.4.1 0)
 RUN conda install -c r r-base='3.4.1 0'
 
-# Install R Essentials (v1.4.3)
-RUN conda install -c r r-essentials=1.4.3
+# Install R Essentials (v1.6.0)
+RUN conda install -c r r-essentials=1.6.0
 
 
 # Install R kernel for Jupyter notebooks

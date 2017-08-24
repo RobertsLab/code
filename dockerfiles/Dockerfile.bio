@@ -98,6 +98,7 @@ RUN apt-get update && \
 	libpango1.0-dev \
 	tree \
 	htop \
+	parallel \
     && apt-get clean
 
     

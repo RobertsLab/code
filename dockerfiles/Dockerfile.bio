@@ -21,6 +21,7 @@
 # ipyrad			0.7.11  		#
 # jupyter						#
 # miniconda		2				#
+# minimap2		2..1.1				#
 # multiqc		0.8				#
 # fastqc		0.11.5  		#
 # fastx_toolkit	0.0.13  		#
@@ -295,6 +296,14 @@ RUN conda install -c r rpy2=2.8.6
 
 # Install ipyrad (v0.7.11)
 RUN conda install -c ipyrad ipyrad=0.7.11
+
+# Install minimap2 (v2.1.1)
+RUN wget https://github.com/lh3/minimap2/releases/download/v2.1.1/minimap2-2.1.1_x64-linux.tar.bz2 \
+	&& tar -xvjf minimap2-2.1.1_x64-linux.tar.bz2 \
+	&& rm minimap2-2.1.1_x64-linux.tar.bz2
+
+ENV PATH /usr/local/bioinformatics/minimap2-2.1.1_x64-linux:$PATH
+
 
 # Expose port for Jupyter Notebook, respectively
 EXPOSE 8888

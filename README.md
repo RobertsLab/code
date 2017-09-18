@@ -28,4 +28,6 @@
 
 - **misc.md** - Tips for using SSH, MD5 checksums, and gzip manipulation.
 
+- **[remote_connections.md](https://github.com/RobertsLab/code/blob/master/remote_connections.md)** - Ways to connect to computers remotely (via SSH), how to create/use SSH keys, create tunnels, and tmux to keep jobs running after closing SSH sessions.
+
 - **sqlshare.md** - Tips for using SQLshare, but most commands are compatible with MySQL and/or SQLite. Lots of tips on joining tables and counting values.

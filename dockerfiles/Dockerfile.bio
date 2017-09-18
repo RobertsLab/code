@@ -320,7 +320,7 @@ RUN wget https://github.com/isovic/racon/files/741519/racon-v0.5.0.tar.gz \
 	&& (cd /usr/local/bioinformatics/racon-v0.5.0 && make) \
 	&& rm racon-v0.5.0.tar.gz
 
-ENV PATH /usr/local/bioinformatics/racon-0.5.0
+ENV PATH /usr/local/bioinformatics/racon-v0.5.0
 
 # Expose port for Jupyter Notebook, respectively
 EXPOSE 8888

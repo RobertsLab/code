@@ -27,6 +27,7 @@
 # fastqc		0.11.5  		#
 # fastx_toolkit	0.0.13  		#
 # R				3.4.1   		#
+# Racon			0.5.0			#
 # samtools		0.1.19  		#
 # stacks		1.40    		#
 # tophat		2.1.1   		#
@@ -313,6 +314,13 @@ RUN wget https://github.com/lh3/miniasm/archive/v0.2.tar.gz \
 
 ENV PATH /usr/local/bioinformatics/miniasm-0.2:$PATH
 
+# Install Racon (v0.5.0)
+RUN wget https://github.com/isovic/racon/archive/0.5.0.tar.gz \
+	&& tar -xzf 0.5.0.tar.gz \
+	&& (cd racon-0.5.0 && make modules && make tools && make -j) \
+	&& rm 0.5.0.tar.gz
+
+ENV PATH /usr/local/bioinformatics/racon-0.5.0
 
 # Expose port for Jupyter Notebook, respectively
 EXPOSE 8888

@@ -315,10 +315,10 @@ RUN wget https://github.com/lh3/miniasm/archive/v0.2.tar.gz \
 ENV PATH /usr/local/bioinformatics/miniasm-0.2:$PATH
 
 # Install Racon (v0.5.0)
-RUN wget https://github.com/isovic/racon/archive/0.5.0.tar.gz \
-	&& tar -xzf 0.5.0.tar.gz \
-	&& (cd racon-0.5.0 && make modules && make tools && make -j) \
-	&& rm 0.5.0.tar.gz
+RUN wget https://github.com/isovic/racon/files/741519/racon-v0.5.0.tar.gz \
+	&& tar -xzf racon-v0.5.0.tar.gz \
+	&& (cd racon-0.5.0 && make) \
+	&& rm racon-v0.5.0.tar.gz
 
 ENV PATH /usr/local/bioinformatics/racon-0.5.0
 

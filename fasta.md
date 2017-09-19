@@ -21,12 +21,20 @@
  
  ---
  
-###  Count bp in fasta Tab-delim
+###  Count bp in fasta Tab-delim (perl)
  
  ```
  !perl -e '$col = 2;' -e 'while (<>) { s/\r?\n//; @F = split /\t/, $_; $len = length($F[$col]); print "$_\t$len\n" } warn "\nAdded column with length of column $col for $. lines.\n\n";' /Volumes/web/cnidarian/cgigas_v9_genome01.tab > /Volumes/web/cnidarian/cgigas_v9_genome02.tab
  ```
  
+### Sequence lengths in FASTA file - tab-delimited (awk)
+
+```
+awk '$0 ~ ">" {print c; c=0;printf substr($0,2,100) "\t"; } $0 !~ ">" {c+=length($0);} END { print c; }' input_file.fasta
+```
+
+Taken from here: [http://www.danielecook.com/generate-fasta-sequence-lengths/](http://www.danielecook.com/generate-fasta-sequence-lengths/)
+
 ###  Count Number of Sequences in a FASTA File (grep)
  
      $grep -c '>' path/to/InputFasta/file.fasta

@@ -34,6 +34,9 @@ sed $'s/; /\t/g' "$input_file" > "$tmp_file"
 # Sort results are piped to head to retrieve the lowest value (i.e. the top of the list; "-n1").
 begin_goterms=$(grep "GO:" "$tmp_file" | awk -F'\t' '{for (i=1;i<=NF;i++) if($i ~/GO:/) print i}' | sort -ug | head -n1)
 
+# Save value of field number that indicates last field before GO terms.
+end_fixed_fields=$(($begin_goterms-1))
+
 # While loop to process each line of the input file.
 while read -r line
 	do
@@ -46,7 +49,7 @@ while read -r line
 	# Send contents of current line to cut.
 	# Cut fields (i.e. retain those fields) 1-12.
 	# Save the results of the echo/cut pipe (i.e. fields 1-12) to the variable "fixed_fields"
-	fixed_fields=$(echo "$line" | cut -f1-12)
+	fixed_fields=$(echo "$line" | cut -f1-$end_fixed_fields)
 
 	# Since not all the lines contain the same number of fields (e.g. may not have GO terms),
 	# evaluate the number of fields in each line to determine how to handle current line.

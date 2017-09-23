@@ -6,8 +6,7 @@
 # See this GitHub issue for explanation of the problem:
 # https://github.com/sr320/LabDocs/issues/654
 
-# This script is written to operate on the file located here:
-# https://github.com/RobertsLab/project-pacific.oyster-larvae/blob/master/DIA_2015/AnnotatedproteinsGO.tabular
+# Takes a tab-delimited input file that contains multiple GO terms, separated by a ";<space>", in a single field.
 
 # Before executing this script, the following need to be changed (look for them below):
 
@@ -18,22 +17,22 @@
 
 # Set variables for files
 # input_file is the initial, "problem" file
-# file is an intermediate file that most of the program works upon
+# tmp_file is an intermediate file that most of the program works upon
 # output_file is the final file produced by the script
 input_file="/path/to/input/file"
-file="/path/to/new/filename"
+tmp_file="/path/to/new/filename"
 output_file="/paht/to/output/file"
 
 # sed command substitutes the "; " sequence to a tab and writes the new format to a new file.
 # This character sequence is how the GO terms are delimited in their field.
-sed $'s/; /\t/g' "$input_file" > "$file"
+sed $'s/; /\t/g' "$input_file" > "$tmp_file"
 
 # Identify first field containing a GO term.
 # Search file with grep for "GO:" and pipe to awk.
 # Awk sets tab as field delimiter (-F'\t'), runs a for loop that looks for "GO:" (~/GO:/), and then prints the field number).
 # Awk results are piped to sort, which sorts unique by number (-ug).
 # Sort results are piped to head to retrieve the lowest value (i.e. the top of the list; "-n1").
-begin_goterms=$(grep "GO:" "$file" | awk -F'\t' '{for (i=1;i<=NF;i++) if($i ~/GO:/) print i}' | sort -ug | head -n1)
+begin_goterms=$(grep "GO:" "$tmp_file" | awk -F'\t' '{for (i=1;i<=NF;i++) if($i ~/GO:/) print i}' | sort -ug | head -n1)
 
 # While loop to process each line of the input file.
 while read -r line
@@ -76,4 +75,4 @@ while read -r line
 	fi
 
 # Send the input file into the while loop and send the output to a file named "rhonda_fixed.txt".
-done < "$file" > "$output_file"
+done < "$tmp_file" > "$output_file"

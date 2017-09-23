@@ -55,7 +55,7 @@ while read -r line
 	# If the value in max_field is less than the field number where the GO terms begin,
 	# then just print the current line (%s) followed by a newline (\n).
 	if (( "$max_field" < "$begin_goterms" ))
-		then printf "%s\n" "$line"
+		then printf "%s\t\n" "$line"
 			else
 
 			# Send contents of current line (which contains GO terms) to cut.

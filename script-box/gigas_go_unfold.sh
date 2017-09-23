@@ -75,7 +75,7 @@ while read -r line
 			# Print the first 12 fields (i.e. the fields stored in "fixed_fields") followed by a tab (%s\t).
 			# Print the current element in the array (i.e. the current GO term) followed by a new line (%s\n).
 			for element in "${!array[@]}"	
-				do printf "%s\t%s\n" "$fixed_fields" "${array[$element]}"
+				do printf "%s\t%s\t\n" "$fixed_fields" "${array[$element]}"
 			done
 	fi
 

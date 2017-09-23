@@ -40,7 +40,8 @@ begin_goterms=$(grep "GO:" "$tmp_file" | awk -F'\t' '{for (i=1;i<=NF;i++) if($i 
 end_fixed_fields=$(($begin_goterms-1))
 
 # While loop to process each line of the input file.
-while read -r line
+# Initial while loop statement is written to handle the last line of the file, even if it doesn't end with a newline character.
+while IFS='' read -r line || [ -n "$line" ]
 	do
 	
 	# Send contents of the current line to awk.

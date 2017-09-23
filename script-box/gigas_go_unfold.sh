@@ -8,6 +8,8 @@
 
 # Takes a tab-delimited input file that contains multiple GO terms, separated by a ";<space>", in a single field.
 
+# GO terms in input file MUST BE IN LAST FIELD (i.e. column).
+
 # Before executing this script, the following need to be changed (look for them below):
 
 # /path/to/input/file
@@ -47,7 +49,7 @@ while read -r line
 	max_field=$(echo "$line" | awk -F'\t' '{print NF}')
 
 	# Send contents of current line to cut.
-	# Cut fields (i.e. retain those fields) 1-12.
+	# Cut all fields (i.e. retain those fields) up to (not including) the first field with with a GO term.
 	# Save the results of the echo/cut pipe (i.e. fields 1-12) to the variable "fixed_fields"
 	fixed_fields=$(echo "$line" | cut -f1-$end_fixed_fields)
 
@@ -55,13 +57,13 @@ while read -r line
 	# evaluate the number of fields in each line to determine how to handle current line.
 
 	# If the value in max_field is less than the field number where the GO terms begin,
-	# then just print the current line (%s) followed by a newline (\n).
+	# then just print the current line (%s) followed by a tab (\t) and newline (\n).
 	if (( "$max_field" < "$begin_goterms" ))
 		then printf "%s\t\n" "$line"
 			else
 
 			# Send contents of current line (which contains GO terms) to cut.
-			# Cut fields (i.e. retain those fields) 13 to whatever the last field is in the curent line.
+			# Cut fields (i.e. retain those fields) to whatever the last field is in the curent line.
 			# Save the results of the echo/cut pipe (i.e. all the GO terms fields) to the variable "goterms".
 			goterms=$(echo "$line" | cut -f"$begin_goterms"-"$max_field")
 			

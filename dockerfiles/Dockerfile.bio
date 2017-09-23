@@ -241,7 +241,8 @@ RUN conda install jupyter -y \
 	&& jupyter notebook --generate-config --allow-root \
 	&& (sed -i '/c.NotebookApp.open_browser/c\c.NotebookApp.open_browser = False' /root/.jupyter/jupyter_notebook_config.py) \
 	&& (sed -i '/c.NotebookApp.ip/c\c.NotebookApp.ip = \x270.0.0.0\x27' /root/.jupyter/jupyter_notebook_config.py) \
-	&& (sed -i '/c.NotebookApp.token/c\c.NotebookApp.token = u\x27\x27' /root/.jupyter/jupyter_notebook_config.py)
+	&& (sed -i '/c.NotebookApp.token/c\c.NotebookApp.token = u\x27\x27' /root/.jupyter/jupyter_notebook_config.py) \
+	&& (sed -i '/c.NotebookApp.iopub_data_rate_limit/c\c.NotebookApp.iopub_data_rate_limit = 10000000000' /root/.jupyter/jupyter_notebook_config.py)
 
 ## Install dammit
 RUN conda install dammit

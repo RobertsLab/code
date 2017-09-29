@@ -26,6 +26,7 @@
 # multiqc		0.8				#
 # fastqc		0.11.5  		#
 # fastx_toolkit	0.0.13  		#
+# quast	4.5	#
 # R				3.4.1   		#
 # Racon			0.5.0			#
 # samtools		0.1.19  		#
@@ -324,5 +325,13 @@ RUN wget https://github.com/isovic/racon/files/741519/racon-v0.5.0.tar.gz \
 
 ENV PATH /usr/local/bioinformatics/racon-v0.5.0:$PATH
 
-# Expose port for Jupyter Notebook, respectively
+# Install Quast (v4.5)
+
+RUN wget https://sourceforge.net/projects/quast/files/quast-4.5.tar.gz \       
+        && tar -xzf quast-4.5.tar.gz \
+        && rm quast-4.5.tar.gz
+
+ENV PATH /usr/local/bioinformatics/quast-4.5:$PATH
+
+# Expose port for Jupyter Notebook
 EXPOSE 8888

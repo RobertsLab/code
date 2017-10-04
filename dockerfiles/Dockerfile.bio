@@ -333,5 +333,12 @@ RUN wget https://sourceforge.net/projects/quast/files/quast-4.5.tar.gz \
 
 ENV PATH /usr/local/bioinformatics/quast-4.5:$PATH
 
+# Install Redundans
+
+RUN git clone --recursive https://github.com/lpryszcz/redundans.git \
+	&& (cd /usr/local/bioinformatics/redundans && bin/.compile.sh)
+
+ENV PATH /usr/local/bioinformatics/redundans/bin/:$PATH
+
 # Expose port for Jupyter Notebook
 EXPOSE 8888

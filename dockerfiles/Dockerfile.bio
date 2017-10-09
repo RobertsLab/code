@@ -81,7 +81,6 @@ RUN apt-get update && \
     gdebi-core \
     libapparmor1 \
     libssl1.0.0 \
-    libedit2 \
     libcurl4-openssl-dev \
     libssl-dev \
     psmisc \

@@ -271,11 +271,14 @@ RUN wget --output-document=bowtie-1.1.2-linux-x86_64.zip \
 	
 ENV PATH /usr/local/bioinformatics/bowtie-1.1.2:$PATH
 
+
+#RUN conda install -c anaconda libedit
+
 # Install R (v3.4.1 0)
-RUN conda install -c r r-base='3.4.1 0'
+# RUN conda install -c r r-base='3.4.1 0'
 
 # Install R Essentials (v1.6.0)
-RUN conda install -c r r-essentials=1.6.0
+# RUN conda install -c r r-essentials=1.6.0
 
 
 # Install R kernel for Jupyter notebooks
@@ -297,7 +300,7 @@ RUN wget https://github.com/vcftools/vcftools/releases/download/v0.1.14/vcftools
 ENV PATH /usr/local/bioinformatics/vcftools-0.1.14:$PATH
 
 # Install rpy2 for R magics in Jupyter Notebooks (v2.8.1)
-RUN conda install -c r rpy2=2.8.6
+#RUN conda install -c r rpy2=2.8.6
 
 # Install ipyrad (v0.7.11)
 RUN conda install -c ipyrad ipyrad=0.7.11

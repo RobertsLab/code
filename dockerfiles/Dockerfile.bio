@@ -16,6 +16,7 @@
 # bowtie1		1.1.2			#
 # bowtie2		2.2.8   		#
 # bsmap			2.90    		#
+# canu			1.6			#
 # cufflinks		2.1.1   		#
 # dammit						#
 # ipyrad			0.7.11  		#
@@ -339,6 +340,14 @@ RUN git clone --recursive https://github.com/lpryszcz/redundans.git \
 	&& (cd /usr/local/bioinformatics/redundans && bin/.compile.sh)
 
 ENV PATH /usr/local/bioinformatics/redundans/bin/:$PATH
+
+# Install Canu (v1.6)
+
+RUN wget https://github.com/marbl/canu/releases/download/v1.6/canu-1.6.Linux-amd64.tar.xz \
+	&& xz -dc canu-1.6.*.tar.xz | tar -xf - \
+	&& rm canu-1.6.Linux-amd64.tar.xz
+
+ENV PATH /usr/local/bioinformatics/canu-1.6/Linux-amd64/bin:$PATH
 
 # Expose port for Jupyter Notebook
 EXPOSE 8888

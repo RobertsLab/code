@@ -358,5 +358,14 @@ RUN wget https://github.com/marbl/canu/releases/download/v1.6/canu-1.6.Linux-amd
 
 ENV PATH /usr/local/bioinformatics/canu-1.6/Linux-amd64/bin:$PATH
 
+# Install Gnuplot (v5.2.0) (Used in Canu)
+
+RUN wget https://sourceforge.net/projects/gnuplot/files/gnuplot/5.2.0/gnuplot-5.2.0.tar.gz \
+	&& tar -xzf gnuplot-5.2.0.tar.gz \
+	&& (cd /usr/local/bioinformatics/gnuplot-5.2.0 &&  ./configure && make && make install) \
+	&& rm gnuplot-5.2.0.tar.gz
+
+ENV PATH /usr/local/bioinformatics/gnuplot-5.2.0:$PATH
+
 # Expose port for Jupyter Notebook
 EXPOSE 8888

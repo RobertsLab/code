@@ -43,16 +43,23 @@
 FROM debian:8
 MAINTAINER Sam White <samwhite@uw.edu>
 
+# Java install
+RUN echo "deb http://http.debian.net/debian jessie-backports main" > /etc/apt/sources.list.d/jessie-backports.list
+RUN apt-get update -y && \
+    apt-get install -y \
+    software-properties-common
+RUN apt-get update -y && \
+    apt-get install -y -t \
+    jessie-backports openjdk-8-jre-headless
 
 # Get software dependencies
-RUN apt-get update && \
+RUN apt-get update -y && \
     apt-get install -y --no-install-recommends \
     apt-utils \
     locales \
     debconf \
     libc6 \
-    default-jdk \
-    software-properties-common \
+    openjdk-8-jre-headless \
     build-essential \
     pkg-config \
     libncurses-dev \

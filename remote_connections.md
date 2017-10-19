@@ -1,7 +1,7 @@
 ## Tips and tricks for connecting to Roberts Lab computers remotely.
 
 ### Copy Files from/to Locations Using SSH (Terminal)
- (NOTE: This will not work natively in Windows, as Windows doesn't have a SSH client. Download and install Cygwin or OpenSSH to gain SSH functionality in Windows).
+ (NOTE: This will not work natively in Windows, as Windows doesn't have an SSH client. Download and install Cygwin or OpenSSH to gain SSH functionality in Windows).
 
 
  Copy something from this system to some other system:
@@ -21,7 +21,7 @@
 ### Set Up SSH Keys for More Secure SSH to Hummingbird(Terminal)
  For any SSH connection to Humminbird (or any server), SSH keys should be used.
 
- Instructions are for Macintosh OS X
+ _Instructions are for Macintosh OS X_
  1. Generate your SSH keys.
  In Terminal, paste the following:
  `ssh-keygen -t rsa`    
@@ -50,7 +50,9 @@
  5. Test it out.
  In Terminal, connect to Humminbird using SSH
 
-#### Tmux to keep jobs running after closing SSH sessions
+---
+
+### Tmux to keep jobs running after closing SSH sessions
 
 - [Useful guide to using Tmux](https://robots.thoughtbot.com/a-tmux-crash-course)
 

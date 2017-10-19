@@ -1,5 +1,54 @@
-### Tips and tricks for connecting to Roberts Lab computers remotely.
+## Tips and tricks for connecting to Roberts Lab computers remotely.
 
+### Copy Files from/to Locations Using SSH (Terminal)
+ (NOTE: This will not work natively in Windows, as Windows doesn't have a SSH client. Download and install Cygwin or OpenSSH to gain SSH functionality in Windows).
+
+
+ Copy something from this system to some other system:
+ `scp /path/to/local/file username@hostname:/path/to/remote/file`
+
+
+ Copy something from some system to some other system:
+ `scp username1@hostname1:/path/to/file username2@hostname2:/path/to/other/file`
+
+
+ Copy something from another system to this system:
+ `scp username@hostname:/path/to/remote/file /path/to/local/file`
+
+ ---
+
+
+### Set Up SSH Keys for More Secure SSH to Hummingbird(Terminal)
+ For any SSH connection to Humminbird (or any server), SSH keys should be used.
+
+ Instructions are for Macintosh OS X
+ 1. Generate your SSH keys.
+ In Terminal, paste the following:
+ `ssh-keygen -t rsa`    
+ Press "Enter" at both prompts for a passphrase.
+ Note: You can certainly enter a passphrase if desired, but the passphrase is only needed in instances where someone has obtained control of your laptop/desktop that you use to connect to Hummingbird. By not entering a passphrase, you obtain the luxury of being able to use SSH without the need to type a password.
+
+ 2. Obtain a script to simplify copying your SSH key to the server.
+ In Terminal, paste the following:
+ ```
+ sudo curl https://raw.github.com/beautifulcode/ssh-copy-id-for-OSX/master/ssh-copy-id.sh -o /usr/local/bin/ssh-copy-id -k
+ ```
+
+ 3. Change permissions on the "ssh-copy-id" script to make it executable.
+ In Terminal, paste the following:
+ ```
+ sudo chmod +x /usr/local/bin/ssh-copy-id
+ ```
+
+ 4. Copy your SSH key to the server using the "ssh-copy-id" script.
+ In Terminal, paste the following:
+ ```
+ ssh-copy-id username@Hummingbird's.IP.address
+ ```
+ You'll be prompted to enter your password for your Hummingbird user account.
+
+ 5. Test it out.
+ In Terminal, connect to Humminbird using SSH
 
 #### Tmux to keep jobs running after closing SSH sessions
 

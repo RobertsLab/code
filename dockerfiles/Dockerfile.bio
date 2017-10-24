@@ -21,7 +21,7 @@
 # dammit						#
 # ipyrad			0.7.11  		#
 # jupyter						#
-# miniconda		3				#
+# miniconda		2				#
 # miniasm		0.2				#
 # minimap2		2.1.1				#
 # multiqc		0.8				#
@@ -138,13 +138,18 @@ WORKDIR /usr/local/bioinformatics
 # Add bioinformatics directory to PATH
 # ENV PATH /usr/local/bioinformatics:$PATH
 
-# Install MiniConda (for installing Jupyter Notebook)
-RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-	&& bash Miniconda3-latest-Linux-x86_64.sh -b \
-	&& (cd /root/miniconda3/bin && ./conda update conda -y) \
-	&& rm Miniconda3-latest-Linux-x86_64.sh
+RUN wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh \
+ 	&& bash Miniconda2-latest-Linux-x86_64.sh -b \
+ 	&& (cd /root/miniconda2/bin && ./conda update conda -y) \
+ 	&& rm Miniconda2-latest-Linux-x86_64.sh
 
-ENV PATH /root/miniconda3/bin:$PATH
+ENV PATH /root/miniconda2/bin:$PATH
+
+## Add MiniConda channels to allow easy install of khmer and pyinotify (dammit dependencies)
+RUN conda config --add channels ged --add channels bioconda --add channels conda-forge
+
+# Add some python packages
+RUN conda install setuptools pandas khmer matplotlib numexpr scipy numpy
 
 
 # Install bedtools (v2.26.0)
@@ -155,10 +160,8 @@ RUN wget https://github.com/arq5x/bedtools2/releases/download/v2.26.0/bedtools-2
 
 ENV PATH /usr/local/bioinformatics/bedtools2:$PATH
 
-## Add MiniConda channels to allow easy install of khmer and pyinotify (dammit dependencies)
-RUN conda config --add channels ged --add channels bioconda --add channels conda-forge
 
-    
+
 # Install blast (v2.6.0+)
 RUN wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.6.0/ncbi-blast-2.6.0+-x64-linux.tar.gz \
 	&& tar -zxvpf ncbi-blast-2.6.0+-x64-linux.tar.gz \

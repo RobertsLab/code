@@ -154,11 +154,6 @@ ENV PATH /usr/local/bioinformatics/bedtools2:$PATH
 ## Add MiniConda channels to allow easy install of khmer and pyinotify (dammit dependencies)
 RUN conda config --add channels ged --add channels bioconda --add channels conda-forge
 
-## Install Python dependencies for use in dammit
-RUN conda install setuptools pandas khmer doit nose matplotlib numexpr scipy numpy
-
-## Update pandas and numexpr using MiniConda (dammit dependencies)
-RUN conda update pandas numexpr
     
 # Install blast (v2.6.0+)
 RUN wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.6.0/ncbi-blast-2.6.0+-x64-linux.tar.gz \
@@ -253,8 +248,6 @@ RUN conda install jupyter -y \
 	&& (sed -i '/c.NotebookApp.token/c\c.NotebookApp.token = u\x27\x27' /root/.jupyter/jupyter_notebook_config.py) \
 	&& (sed -i '/c.NotebookApp.iopub_data_rate_limit/c\c.NotebookApp.iopub_data_rate_limit = 10000000000' /root/.jupyter/jupyter_notebook_config.py)
 
-## Install dammit
-RUN conda install dammit
 
 ## Install MultiQC (v.0.8)
 RUN wget https://github.com/ewels/MultiQC/archive/v0.8.tar.gz \

@@ -64,12 +64,20 @@ for(i in 1:nFiles) { #For each data file
 methylation_information <- unite(meth_stats)
 
 # Clustering dendrogram
+dendrogram_path <- file.path("./analyses/", paste("clustering_dendrogram", ".png", sep = "")) #Specify save destination and filename
+png(dendrogram_path, height = 1000, width = 1000) #Save file with designated name
 clusterSamples(methylation_information, dist="correlation", method="ward", plot=TRUE)
+dev.off()
 
-#Run a PCA analysis on percent methylation for all samples
+# Run a PCA analysis on percent methylation for all samples
+pca_path <- file.path("./analyses/", paste("pca", ".png", sep = "")) #Specify save destination and filename
+png(pca_path, height = 1000, width = 1000) #Save file with designated name
 PCASamples(methylation_information)
+dev.off()
 
 #Run the PCA analysis and plot variances against PC number in a screeplot
+scree_path <- file.path("./analyses/", paste("pca_scree", ".png", sep = "")) #Specify save destination and filename
+png(scree_path, height = 1000, width = 1000) #Save file with designated name
 PCASamples(methylation_information, screeplot = TRUE)
 
 #Calculate differential methylation statistics based on treatment indication from processBismarkAln
@@ -77,15 +85,6 @@ differentialMethylationStats <- calculateDiffMeth(methylation_information)
 
 #Identify loci that are at least 25% different. Q-value is the FDR used for p-value corrections.
 diffMethStats25 <- getMethylDiff(differentialMethylationStats)
-
-#Confirm creation
-head(diffMethStats25)
-
-#Save + strand of DMLs as a new object
-DMLPlus <- filter(diffMethStats25, strand == "+") %>% mutate(start = start -1, end = end + 1) %>% select(chr, start, end, strand, meth.diff)
-
-#Save - strand of DMLs as a new object
-DMLMinus <- filter(diffMethStats25, strand == "-") %>% mutate(start = start -2) %>% select(chr, start, end, strand, meth.diff)
 
 #Convert to bedgraph
 bedgraph(diffMethStats25, file.name = "./analyses/oly_fb_ob_dml.bed", col.name = "meth.diff")

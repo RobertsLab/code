@@ -1,3 +1,12 @@
+######
+# This script uses the MethylKit package to examine methylation
+# differences between a single oyster population raised in two different locations
+# in Puget Sound, WA, USA - Fidalgo Bay & Oyster Bay.
+# 
+# The analysis is set to analyze CpG having minimum 3x coverage.
+# This can be changed in the processBismarkAln function below
+######
+
 
 library(tidyverse)
 library(methylKit)

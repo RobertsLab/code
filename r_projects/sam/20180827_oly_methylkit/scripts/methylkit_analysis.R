@@ -65,3 +65,28 @@ methylation_information <- unite(meth_stats)
 
 # Clustering dendrogram
 clusterSamples(methylation_information, dist="correlation", method="ward", plot=TRUE)
+
+#Run a PCA analysis on percent methylation for all samples
+PCASamples(methylation_information)
+
+#Run the PCA analysis and plot variances against PC number in a screeplot
+PCASamples(methylation_information, screeplot = TRUE)
+
+#Calculate differential methylation statistics based on treatment indication from processBismarkAln
+differentialMethylationStats <- calculateDiffMeth(methylation_information)
+
+#Identify loci that are at least 25% different. Q-value is the FDR used for p-value corrections.
+diffMethStats25 <- getMethylDiff(differentialMethylationStats)
+
+#Confirm creation
+head(diffMethStats25)
+
+#Save + strand of DMLs as a new object
+DMLPlus <- filter(diffMethStats25, strand == "+") %>% mutate(start = start -1, end = end + 1) %>% select(chr, start, end, strand, meth.diff)
+
+#Save - strand of DMLs as a new object
+DMLMinus <- filter(diffMethStats25, strand == "-") %>% mutate(start = start -2) %>% select(chr, start, end, strand, meth.diff)
+
+#Convert to bedgraph
+bedgraph(diffMethStats25, file.name = "./analyses/oly_fb_ob_dml.bed", col.name = "meth.diff")
+

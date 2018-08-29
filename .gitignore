@@ -1,3 +1,4 @@
 *.bam
 *.fa*
 *.fasta*
+.Rproj.user*

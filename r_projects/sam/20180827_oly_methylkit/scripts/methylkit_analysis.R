@@ -96,6 +96,7 @@ dev.off()
 scree_path <- file.path("./analyses/", paste("pca_scree", ".png", sep = "")) #Specify save destination and filename
 png(scree_path, height = 1000, width = 1000) #Save file with designated name
 PCASamples(methylation_information, screeplot = TRUE)
+dev.off()
 
 #Calculate differential methylation statistics based on treatment indication from processBismarkAln
 differentialMethylationStats <- calculateDiffMeth(methylation_information, mc.cores = 16)

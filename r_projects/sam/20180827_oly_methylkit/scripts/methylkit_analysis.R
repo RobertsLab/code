@@ -68,13 +68,13 @@ for(i in 1:nFiles) { #For each data file
 methylation_information <- unite(meth_stats)
 
 # Clustering dendrogram
-dendrogram_path <- file.path("./analyses/", paste("clustering_dendrogram", ".png", sep = "")) #Specify save destination and filename
+dendrogram_path <- file.path("./analyses", paste("clustering_dendrogram", ".png", sep = "")) #Specify save destination and filename
 png(dendrogram_path, height = 1000, width = 1000) #Save file with designated name
 clusterSamples(methylation_information, dist="correlation", method="ward", plot=TRUE)
 dev.off()
 
 # Run a PCA analysis on percent methylation for all samples
-pca_path <- file.path("./analyses/", paste("pca", ".png", sep = "")) #Specify save destination and filename
+pca_path <- file.path("./analyses", paste("pca", ".png", sep = "")) #Specify save destination and filename
 png(pca_path, height = 1000, width = 1000) #Save file with designated name
 PCASamples(methylation_information)
 dev.off()

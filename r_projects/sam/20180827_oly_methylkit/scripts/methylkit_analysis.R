@@ -26,6 +26,7 @@ bam_files_list <- as.list(list.files(path = "./data",
                              pattern = "\\.bam$",
                              full.names = TRUE))
 
+
 # List of sample IDs
 ## 1 = Fidalgo Bay outplant
 ## 2 = Oyster Bay outplant
@@ -33,22 +34,34 @@ bam_files_list <- as.list(list.files(path = "./data",
 sample_ids_list <- list("1NF11", "1NF15", "1NF16", "1NF17",
                     "2NF5", "2NF6", "2NF7", "2NF8")
 
-# Set number of 1NF or 2NF treatments: 0 or 1
+# Set number of 1NF or 2NF treatments.
+# 0 or 1 is assigned to each sample ID corresponding to a particular treatment.
 treatmentSpecification <- c(rep(0, times = 4), rep(1, times = 4))
 
-# Get methylation stats for CpGs with at least 3x coverage
+
+
+# Set minimum CpG coverage desired
+# Used in processBismarkAln function
+min_coverage <- 3
+
+# Set minimum methylation percentage difference between groups
+# Used in getMethylDiff function; 25 is the default value.
+dml_diffs <- 25
+
+
+
+# Get methylation stats for CpGs with at least min_coverage coverage
 meth_stats <- processBismarkAln(location = bam_files_list,
                                     sample.id = sample_ids_list,
                                     assembly = "Olurida_v080.fa ",
                                     read.context = "CpG",
-                                    mincov = 3,
+                                    mincov = min_coverage,
                                     treatment = treatmentSpecification)
 # File count
 nFiles <- length(bam_files_list)
 
 
 # Generate and save histograms showing Percent CpG Methylation
-
 for(i in 1:nFiles) {
   cpg_methylation_percent_path <- file.path("./analyses", paste("cpg_methylation_percent_", sample_ids_list[[i]], ".png", sep = "")) #Specify save destination and filename
   png(cpg_methylation_percent_path, height = 1000, width = 1000) #Save file with designated name
@@ -85,10 +98,10 @@ png(scree_path, height = 1000, width = 1000) #Save file with designated name
 PCASamples(methylation_information, screeplot = TRUE)
 
 #Calculate differential methylation statistics based on treatment indication from processBismarkAln
-differentialMethylationStats <- calculateDiffMeth(methylation_information)
+differentialMethylationStats <- calculateDiffMeth(methylation_information, mc.cores = 16)
 
 #Identify loci that are at least 25% different. Q-value is the FDR used for p-value corrections.
-diffMethStats25 <- getMethylDiff(differentialMethylationStats)
+diffMethStats25 <- getMethylDiff(differentialMethylationStats, difference = dml_diffs)
 
 #Convert to bedgraph
 bedgraph(diffMethStats25, file.name = "./analyses/oly_fb_ob_dml.bed", col.name = "meth.diff")

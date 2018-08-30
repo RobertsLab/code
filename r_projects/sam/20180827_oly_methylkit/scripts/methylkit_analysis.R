@@ -46,11 +46,6 @@ meth_stats <- processBismarkAln(location = bam_files_list,
 # File count
 nFiles <- length(bam_files_list)
 
-#Create new dataframe for filenames
-fileName <- data.frame("nameBase" = rep("Percent-CpG-Methylation", times = nFiles),
-                       "nameBase2" = rep("Percent-CpG-Coverage", times = nFiles),
-                       "sample_ID" = flatten_chr(sample_ids_list)) # converts list to vector; needed to fill column properly
-
 
 # Generate and save histograms showing Percent CpG Methylation
 

@@ -11,4 +11,6 @@ See Sam's notebook entry on the Bismark analysis leading up to this:
 
 ##### FILES
 
+- ```20180827_oly_methylkit.Rproj```: Metadata file used by R Studio.
+
 - ```version_info.txt```: Contains R & R Studio version info from initial data analysis.

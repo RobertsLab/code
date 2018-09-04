@@ -11,6 +11,10 @@
 library(tidyverse)
 library(methylKit)
 
+# Saves R and R Studio version info to file.
+write(capture.output(sessionInfo()), file = "version_info.txt")
+write(capture.output(RStudio.Version()), file = "version_info.txt", append = TRUE)
+
 # Download deduplicated, sorted, BAM files
 download.file("http://owl.fish.washington.edu/Athaliana/20180709_oly_methylseq/1_ATCACG_L001_R1_001_trimmed_bismark_bt2.deduplicated.sorted.bam", destfile = "./data/1_ATCACG_L001_R1_001_trimmed_bismark_bt2.deduplicated.sorted.bam")
 download.file("http://owl.fish.washington.edu/Athaliana/20180709_oly_methylseq/2_CGATGT_L001_R1_001_trimmed_bismark_bt2.deduplicated.sorted.bam", destfile = "./data/2_CGATGT_L001_R1_001_trimmed_bismark_bt2.deduplicated.sorted.bam")

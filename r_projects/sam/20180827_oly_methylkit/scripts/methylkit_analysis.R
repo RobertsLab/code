@@ -4,7 +4,7 @@
 # in Puget Sound, WA, USA - Fidalgo Bay & Oyster Bay.
 # 
 # The analysis is set to analyze CpG having minimum 3x coverage.
-# This can be changed in the processBismarkAln function below
+# This can be changed in the min_coverage variable below.
 ######
 
 

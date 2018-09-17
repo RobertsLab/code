@@ -23,13 +23,20 @@ download.file("http://owl.fish.washington.edu/Athaliana/20180912_oly_WGBSseq_bis
 download.file("http://owl.fish.washington.edu/Athaliana/20180912_oly_WGBSseq_bismark/7_CAGATC_L001_R1_001_trimmed_bismark_bt2.deduplicated.sorted.bam", destfile = "./data/7_CAGATC_L001_R1_001_trimmed_bismark_bt2.deduplicated.sorted.bam")
 download.file("http://owl.fish.washington.edu/Athaliana/20180912_oly_WGBSseq_bismark/8_ACTTGA_L001_R1_001_trimmed_bismark_bt2.deduplicated.sorted.bam", destfile = "./data/8_ACTTGA_L001_R1_001_trimmed_bismark_bt2.deduplicated.sorted.bam")
 
+
+# Store bam files in list
+bam_files_list <- as.list(list.files(path = "./data",
+                                     pattern = "\\.bam$",
+                                     full.names = TRUE))
+
+
 # List of sample IDs
 ## 1 = Fidalgo Bay outplant
 ## 2 = Oyster Bay outplant
 ## NF = Fidalgo Bay broodstock origination
 fidalgo_bay_ids_list <- list("1NF11", "1NF15", "1NF16", "1NF17")
-
 oyster_bay_ids_list <- list("2NF5", "2NF6", "2NF7", "2NF8")
+
 
 # Assign treatment binaries
 
@@ -42,3 +49,73 @@ oyster_bay_treatment = 1
 treatmentSpecification <- c(
   rep(fidalgo_bay_treatment, times = length(fidalgo_bay_ids_list)), 
   rep(oyster_bay_treatment, times = length(oyster_bay_ids_list)))
+
+# Set minimum CpG coverage desired
+# Used in processBismarkAln function
+min_coverage <- 3
+
+# Set minimum methylation percentage difference between groups
+# Used in getMethylDiff function; 25 is the default value.
+dml_diffs <- 25
+
+
+
+# Get methylation stats for CpGs with at least min_coverage coverage
+meth_stats <- processBismarkAln(location = bam_files_list,
+                                sample.id = c(fidalgo_bay_ids_list, oyster_bay_ids_list),
+                                assembly = "Olurida_v080.fa ",
+                                read.context = "CpG",
+                                mincov = min_coverage,
+                                treatment = treatmentSpecification)
+# File count
+nFiles <- length(bam_files_list)
+
+# Generate and save histograms showing Percent CpG Methylation
+for(i in 1:nFiles) {
+  cpg_methylation_percent_path <- file.path("./analyses", paste("cpg_methylation_percent_", sample_ids_list[[i]], min_coverage, "x_coverage.png", sep = "")) #Specify save destination and filename
+  png(cpg_methylation_percent_path, height = 1000, width = 1000) #Save file with designated name
+  getMethylationStats(meth_stats[[i]], plot = TRUE, both.strands = FALSE) #Get %CpG methylation information
+  dev.off() #Turn off plotting device
+}
+
+# Generate and save histograms showing CpG Methylation Coverage
+for(i in 1:nFiles) { #For each data file
+  cpg_coverage_path <- file.path("./analyses/", paste("cpg_coverage_", sample_ids_list[[i]], min_coverage, "x_coverage.png", sep = "")) #Specify save destination and filename
+  png(cpg_coverage_path, height = 1000, width = 1000) #Save file with designated name
+  getCoverageStats(meth_stats[[i]], plot = TRUE, both.strands = FALSE) #Get %CpG methylation information
+  dev.off() #Turn off plotting device
+}
+
+# Combine all samples to evaluate bases covered in all samples
+methylation_information <- unite(meth_stats)
+
+# Clustering dendrogram
+dendrogram_path <- file.path("./analyses", paste("clustering_dendrogram", min_coverage, "x_coverage.png", sep = "")) #Specify save destination and filename
+png(dendrogram_path, height = 1000, width = 1000) #Save file with designated name
+clusterSamples(methylation_information, dist="correlation", method="ward", plot=TRUE)
+dev.off()
+
+# Run a PCA analysis on percent methylation for all samples
+pca_path <- file.path("./analyses", paste("pca", min_coverage, "x_coverage.png", sep = "")) #Specify save destination and filename
+png(pca_path, height = 1000, width = 1000) #Save file with designated name
+PCASamples(methylation_information)
+dev.off()
+
+#Run the PCA analysis and plot variances against PC number in a screeplot
+scree_path <- file.path("./analyses/", paste("pca_scree", min_coverage, "x_coverage.png", sep = "")) #Specify save destination and filename
+png(scree_path, height = 1000, width = 1000) #Save file with designated name
+PCASamples(methylation_information, screeplot = TRUE)
+dev.off()
+
+#Calculate differential methylation statistics based on treatment indication from processBismarkAln
+differentialMethylationStats <- calculateDiffMeth(methylation_information, mc.cores = 16)
+
+#Identify loci that are at least dml_diffs% different. Q-value is the FDR used for p-value corrections.
+diffMethStats <- getMethylDiff(differentialMethylationStats, difference = dml_diffs)
+
+#Set bedfile output name and path.
+#Filename incorporates minimum CpG coverage and percent difference of differentially methylated loci used.
+bed_graph_filename <- file.path("./analyses", paste("OlyFbOb_", min_coverage, "x_cov_", dml_diffs, "percentDiff", ".bed", sep = ""))
+
+#Convert to bedgraph
+bedgraph(diffMethStats25, file.name = bed_graph_filename, col.name = "meth.diff")

@@ -29,6 +29,9 @@ bam_files_list <- as.list(list.files(path = "./data",
                                      pattern = "\\.bam$",
                                      full.names = TRUE))
 
+# File count
+nFiles <- length(bam_files_list)
+
 
 # List of sample IDs
 ## 1 = Fidalgo Bay outplant
@@ -59,7 +62,6 @@ min_coverage <- 3
 dml_diffs <- 25
 
 
-
 # Get methylation stats for CpGs with at least min_coverage coverage
 meth_stats <- processBismarkAln(location = bam_files_list,
                                 sample.id = c(fidalgo_bay_ids_list, oyster_bay_ids_list),
@@ -67,8 +69,6 @@ meth_stats <- processBismarkAln(location = bam_files_list,
                                 read.context = "CpG",
                                 mincov = min_coverage,
                                 treatment = treatmentSpecification)
-# File count
-nFiles <- length(bam_files_list)
 
 # Generate and save histograms showing Percent CpG Methylation
 for(i in 1:nFiles) {

@@ -42,6 +42,10 @@ oyster_bay_ids_list <- list("2NF5", "2NF6", "2NF7", "2NF8")
 sample_ids_list <- c(fidalgo_bay_ids_list, oyster_bay_ids_list)
 
 # Assign treatment binaries
+# 0 = "control" group
+# 1 = "treatment" group
+# Will calculate methylation difference as the difference of
+# treatment - control
 
 fidalgo_bay_treatment = 0
 
@@ -57,11 +61,12 @@ treatmentSpecification <- c(
 # Used in processBismarkAln function
 min_coverage <- c(1, 3, 5, 10)
 
-# Set minimum methylation percentage difference between groups
+# Vector to set minimum methylation percentage differences between groups.
 # Used in getMethylDiff function; 25 is the default value.
 dml_diffs <- c(25, 50, 75)
 
 
+# Loop through minimum coverages.
 for(mincov in min_coverage) {
 
     # Get methylation stats for CpGs with at least min_coverage coverage
@@ -112,7 +117,7 @@ for(mincov in min_coverage) {
     #Calculate differential methylation statistics based on treatment indication from processBismarkAln
     differentialMethylationStats <- calculateDiffMeth(methylation_information, mc.cores = 16)
     
-    
+        # Loop through different DML percent cutoffs.
         for(dmldiffs in dml_diffs){
             #Identify loci that are at least dml_diffs% different. Q-value is the FDR used for p-value corrections.
             diffMethStats <- getMethylDiff(differentialMethylationStats, difference = dmldiffs)

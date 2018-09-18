@@ -53,7 +53,7 @@ treatmentSpecification <- c(
                             rep(fidalgo_bay_treatment, times = length(fidalgo_bay_ids_list)), 
                             rep(oyster_bay_treatment, times = length(oyster_bay_ids_list)))
 
-# Set minimum CpG coverage desired
+# Vector of minimum CpG coverages desired
 # Used in processBismarkAln function
 min_coverage <- c(1, 3, 5, 10)
 
@@ -120,5 +120,5 @@ for(mincov in min_coverage) {
     bed_graph_filename <- file.path("./analyses", paste("OlyFbOb_", mincov, "x_cov_", dml_diffs, "percentDiff", ".bed", sep = ""))
     
     #Convert to bedgraph
-    bedgraph(diffMethStats25, file.name = bed_graph_filename, col.name = "meth.diff")
+    bedgraph(diffMethStats, file.name = bed_graph_filename, col.name = "meth.diff")
 }

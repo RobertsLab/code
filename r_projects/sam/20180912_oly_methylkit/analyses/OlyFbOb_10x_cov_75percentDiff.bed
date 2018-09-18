@@ -1,0 +1,1 @@
+track type=bedGraph name='./analyses/OlyFbOb_10x_cov_75percentDiff.bed' description='meth.diff' visibility=full color=255,0,255 altColor=102,205,170 maxHeightPixels=80:80:11  

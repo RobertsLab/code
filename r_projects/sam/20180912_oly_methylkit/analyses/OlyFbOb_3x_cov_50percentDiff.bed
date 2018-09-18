@@ -1,0 +1,6 @@
+track type=bedGraph name='./analyses/OlyFbOb_3x_cov_50percentDiff.bed' description='meth.diff' visibility=full color=255,0,255 altColor=102,205,170 maxHeightPixels=80:80:11  
+Contig106713	3010	3011	-61.6666666666667
+Contig106713	3046	3047	-54.8494983277592
+Contig193746	1442	1443	-65.9090909090909
+Contig35213	1504	1505	-51.5617715617716
+Contig35213	1506	1507	-54.7220855878013

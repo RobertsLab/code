@@ -4,7 +4,7 @@ See the [Whole genome BSseq December 2015 wiki](https://github.com/RobertsLab/pr
 
 See Sam's notebook entry on the Bismark analysis leading up to this:
 
-- https://github.com/RobertsLab/project-olympia.oyster-genomic/wiki/Whole-genome-BSseq-December-2015
+- http://onsnetwork.org/kubu4/2018/08/16/dna-methylation-analysis-bismark-pipeline-on-all-olympia-oyster-bsseq-datasets/
 
 
 ---

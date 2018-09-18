@@ -39,7 +39,7 @@ nFiles <- length(bam_files_list)
 ## NF = Fidalgo Bay broodstock origination
 fidalgo_bay_ids_list <- list("1NF11", "1NF15", "1NF16", "1NF17")
 oyster_bay_ids_list <- list("2NF5", "2NF6", "2NF7", "2NF8")
-
+sample_ids_list <- c(fidalgo_bay_ids_list, oyster_bay_ids_list)
 
 # Assign treatment binaries
 
@@ -64,7 +64,7 @@ dml_diffs <- 25
 
 # Get methylation stats for CpGs with at least min_coverage coverage
 meth_stats <- processBismarkAln(location = bam_files_list,
-                                sample.id = c(fidalgo_bay_ids_list, oyster_bay_ids_list),
+                                sample.id = sample_ids_list,
                                 assembly = "Olurida_v080.fa ",
                                 read.context = "CpG",
                                 mincov = min_coverage,

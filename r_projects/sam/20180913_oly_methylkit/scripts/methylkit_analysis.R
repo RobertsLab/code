@@ -60,7 +60,7 @@ min_coverage <- c(1, 3, 5, 10)
 # Used in getMethylDiff function; 25 is the default value.
 dml_diffs <- c(25, 50, 75)
 
-
+# Loop through minimum coverages.
 for(mincov in min_coverage) {
   
   # Get methylation stats for CpGs with at least min_coverage coverage
@@ -111,6 +111,7 @@ for(mincov in min_coverage) {
   #Calculate differential methylation statistics based on treatment indication from processBismarkAln
   differentialMethylationStats <- calculateDiffMeth(methylation_information, mc.cores = 16)
   
+      # Loop through different DML percent cutoffs.
       for(dmldiffs in dml_diffs){
         #Identify loci that are at least dml_diffs% different. Q-value is the FDR used for p-value corrections.
         diffMethStats <- getMethylDiff(differentialMethylationStats, difference = dmldiffs)

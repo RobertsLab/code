@@ -112,13 +112,16 @@ for(mincov in min_coverage) {
     #Calculate differential methylation statistics based on treatment indication from processBismarkAln
     differentialMethylationStats <- calculateDiffMeth(methylation_information, mc.cores = 16)
     
-    #Identify loci that are at least dml_diffs% different. Q-value is the FDR used for p-value corrections.
-    diffMethStats <- getMethylDiff(differentialMethylationStats, difference = dml_diffs)
     
-    #Set bedfile output name and path.
-    #Filename incorporates minimum CpG coverage and percent difference of differentially methylated loci used.
-    bed_graph_filename <- file.path("./analyses", paste("OlyFbOb_", mincov, "x_cov_", dml_diffs, "percentDiff", ".bed", sep = ""))
-    
-    #Convert to bedgraph
-    bedgraph(diffMethStats, file.name = bed_graph_filename, col.name = "meth.diff")
+        for(dmldiffs in dml_diffs){
+            #Identify loci that are at least dml_diffs% different. Q-value is the FDR used for p-value corrections.
+            diffMethStats <- getMethylDiff(differentialMethylationStats, difference = dmldiffs)
+            
+            #Set bedfile output name and path.
+            #Filename incorporates minimum CpG coverage and percent difference of differentially methylated loci used.
+            bed_graph_filename <- file.path("./analyses", paste("OlyFbOb_", mincov, "x_cov_", dmldiffs, "percentDiff", ".bed", sep = ""))
+            
+            #Convert to bedgraph
+            bedgraph(diffMethStats, file.name = bed_graph_filename, col.name = "meth.diff")
+        }
 }

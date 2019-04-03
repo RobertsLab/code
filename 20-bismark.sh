@@ -16,7 +16,8 @@
 #SBATCH --mail-user=$USER@uw.edu
 ## Specify the working directory for this job
 #SBATCH --workdir=
-
+# Exit script if a command fails
+set -e
 
 ### USER NEEDS TO SET VARIABLES FOR THE FOLLOWING:
 # Full path to directory with sequencing reads

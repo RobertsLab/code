@@ -89,15 +89,6 @@ ${bismark_dir}/bismark_methylation_extractor \
 --buffer_size 75% \
 *.bam
 
-# Bismark processing report
-# Generates HTML reports from previously created files
-${bismark_dir}/bismark2report
-
-#Bismark summary report
-# Generates HTML summary reports from previously created files
-${bismark_dir}/bismark2summary
-
-
 
 # Methylation extraction
 # Extracts methylation info from deduplicated BAM files produced by Bismark
@@ -113,11 +104,12 @@ ${bismark_dir}/bismark_methylation_extractor \
 *deduplicated.bam
 
 
-
 # Bismark processing report
+# Generates HTML reports from previously created files
 ${bismark_dir}/bismark2report
 
 #Bismark summary report
+# Generates HTML summary reports from previously created files
 ${bismark_dir}/bismark2summary
 
 

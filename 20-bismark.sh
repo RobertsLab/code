@@ -60,6 +60,8 @@ done
 # Initialize arrays
 R1_array=()
 R2_array=()
+bam_array=()
+dedup_bam_array=()
 
 # Concatenate R1 reads and generate lists of FastQs
 for fastq in ${reads_dir}/*R1*.gz
@@ -79,7 +81,7 @@ R2_array=(${reads_dir}/*_R2_*.fq*)
 
 # Run bismark using bisulftie-converted genome
 # Generates a set of BAM files as outputs
-# Records stderr to a file for easy viewing of Bismkar summary info
+# Records stderr to a file for easy viewing of Bismark summary info
 ${bismark_dir}/bismark \
 --path_to_bowtie ${bowtie2_dir} \
 --genome ${genome} \
@@ -89,6 +91,11 @@ ${bismark_dir}/bismark \
 -2 ${R2} \
 2> bismark_summary.txt
 
+
+# Populate array with BAM files
+bam_array=(*.bam)
+# Create space-separated list of BAM files
+bam_space_list=$(echo ${bam_array[@]})
 
 # Methylation extraction
 # Extracts methylation info from BAM files produced by Bismark
@@ -103,6 +110,15 @@ ${bismark_dir}/bismark_methylation_extractor \
 --buffer_size 75% \
 *.bam
 
+# Populate array with BAM files
+dedup_bam_array=(*deduplicated.bam)
+
+# Create space-separated list of deduplicated BAM files
+dedup_bam_space_list=$(echo ${dedup_bam_array[@]})
+
+# Create comma-separated list of deduplicated BAM files
+dedup_bam_comma_list=$(echo ${dedup_bam_array[@]} | tr " " ",")
+
 
 # Methylation extraction
 # Extracts methylation info from deduplicated BAM files produced by Bismark
@@ -116,6 +132,9 @@ ${bismark_dir}/bismark_methylation_extractor \
 --multicore ${threads} \
 --buffer_size 75% \
 *deduplicated.bam
+
+# Populate array with BAM files
+
 
 
 # Bismark processing report

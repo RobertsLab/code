@@ -43,6 +43,23 @@ do
   echo ${fastq} >> ${reads_list}
 done
 
+# Initialize arrays
+R1_array=()
+R2_array=()
+
+# Concatenate R1 reads and generate lists of FastQs
+for fastq in ${reads_dir}/*R1*.gz
+do
+  cat ${fastq} >> ${R1}
+done
+
+# Concatenate R2 reads and generate lists of FastQs
+for fastq in ${reads_dir}/*R2*.gz
+do
+  echo ${fastq} >> ${R2_list}
+  cat ${fastq} >> ${R2}
+done
+
 #
 find ${reads_dir}*_1.fq.gz \
 | xargs basename -s _s1_R1_val_1.fq.gz | xargs -I{} ${bismark_dir}/bismark \

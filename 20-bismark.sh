@@ -75,27 +75,38 @@ do
   cat ${fastq} >> ${R1}
 done
 
-# Concatenate R2 reads and generate lists of FastQs
-for fastq in ${reads_dir}/*R2*.gz
-do
-  cat ${fastq} >> ${R2}
-done
-
 ## Save FastQ files to arrays
 R1_array=(${reads_dir}/*_R1_*.fq*)
-R2_array=(${reads_dir}/*_R2_*.fq*)
 
-# Run bismark using bisulftie-converted genome
-# Generates a set of BAM files as outputs
-# Records stderr to a file for easy viewing of Bismark summary info
-${bismark_dir}/bismark \
---path_to_bowtie ${bowtie2_dir} \
---genome ${genome} \
---non_directional \
--p 28 \
--1 ${R1} \
--2 ${R2} \
-2> bismark_summary.txt
+
+if [ ${paired} -eq 0 ]; then
+  # Concatenate R2 reads
+  R2_array=(${reads_dir}/*_R2_*.fq*)
+  # Concatenate R2 reads and generate lists of FastQs
+  for fastq in ${reads_dir}/*R2*.gz
+    do
+      cat ${fastq} >> ${R2}
+  done
+  # Run bismark using bisulftie-converted genome
+  # Generates a set of BAM files as outputs
+  # Records stderr to a file for easy viewing of Bismark summary info
+  ${bismark_dir}/bismark \
+  --path_to_bowtie ${bowtie2_dir} \
+  --genome ${genome} \
+  --non_directional \
+  -p 28 \
+  -1 ${R1} \
+  -2 ${R2} \
+  2> bismark_summary.txt
+else
+  ${bismark_dir}/bismark \
+  --path_to_bowtie ${bowtie2_dir} \
+  --genome ${genome} \
+  --non_directional \
+  -p 28 \
+  ${R1} \
+  2> bismark_summary.txt
+fi
 
 # Sort Bismark BAM files (failsafe for deduplication)
 find *.bam \

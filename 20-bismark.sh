@@ -94,16 +94,17 @@ if [ ${paired} -eq 0 ]; then
   --path_to_bowtie ${bowtie2_dir} \
   --genome ${genome} \
   --non_directional \
-  -p 28 \
+  -p ${threads} \
   -1 ${R1} \
   -2 ${R2} \
   2> bismark_summary.txt
 else
+  # Run Bismark single-end
   ${bismark_dir}/bismark \
   --path_to_bowtie ${bowtie2_dir} \
   --genome ${genome} \
   --non_directional \
-  -p 28 \
+  -p ${threads} \
   ${R1} \
   2> bismark_summary.txt
 fi

@@ -91,10 +91,20 @@ ${bismark_dir}/bismark \
 -2 ${R2} \
 2> bismark_summary.txt
 
-# Deduplication
+# Sort Bismark BAM files (failsafe for deduplication)
 find *.bam \
 | xargs basename -s .bam \
-| xargs -I{} ${bismark_dir}/deduplicate_bismark \
+| xargs -I{} \
+${samtools} sort \
+--threads ${threads} \
+-n {}.bam \
+-o {}.sorted.bam
+
+# Deduplication
+find *sorted.bam \
+| xargs basename -s .bam \
+| xargs -I{} \
+${bismark_dir}/deduplicate_bismark \
 --paired \
 --samtools_path=${samtools} \
 {}.bam
@@ -140,16 +150,20 @@ ${bismark_dir}/bismark2summary
 
 
 
-find *deduplicated.bam | \
-xargs basename -s .bam | \
-xargs -I{} ${samtools} \
-sort --threads ${threads} {}.bam \
+find *deduplicated.bam \
+| xargs basename -s .bam \
+| xargs -I{} \
+${samtools} sort \
+--threads ${threads} \
+{}.bam \
 -o {}.sorted.bam
 
 # Index sorted files for IGV
 # The "-@ ${threads}" below specifies number of CPU threads to use.
 
-find *.sorted.bam | \
-xargs basename -s .sorted.bam | \
-xargs -I{} ${samtools} \
-index -@ ${threads} {}.sorted.bam
+find *.sorted.bam \
+| xargs basename -s .sorted.bam \
+| xargs -I{} \
+${samtools} index \
+-@ ${threads} \
+{}.sorted.bam

@@ -63,6 +63,12 @@ R2_array=()
 bam_array=()
 dedup_bam_array=()
 
+# Check for paired-end
+# Capture grep output
+# >0 means single-end reads
+grep "_R2_" ${reads_list}
+paired=$?
+
 # Concatenate R1 reads and generate lists of FastQs
 for fastq in ${reads_dir}/*R1*.gz
 do

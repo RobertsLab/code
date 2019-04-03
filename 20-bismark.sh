@@ -111,7 +111,7 @@ ${bismark_dir}/bismark_methylation_extractor \
 --buffer_size 75% \
 ${bam_space_list}
 
-# Populate array with BAM files
+# Populate array with deduplicated BAM files
 dedup_bam_array=(*deduplicated.bam)
 
 # Create space-separated list of deduplicated BAM files
@@ -134,9 +134,6 @@ ${bismark_dir}/bismark_methylation_extractor \
 --multicore ${threads} \
 --buffer_size 75% \
 ${dedup_bam_space_list}
-
-# Populate array with BAM files
-
 
 
 # Bismark processing report

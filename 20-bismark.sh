@@ -18,13 +18,23 @@
 #SBATCH --workdir=
 
 
+### USER NEEDS TO SET VARIABLES FOR THE FOLLOWING:
+# Full path to directory with sequencing reads
+reads_dir=""
+
+# Full path to bisulftie-converted genome directory
+genome_dir=""
+
+####################################################
+# DO NOT EDIT BELOW THIS LINE
+
 
 # Directories and programs
 wd=$(pwd)
 bismark_dir="/gscratch/srlab/programs/Bismark-0.21.0"
 bowtie2_dir="/gscratch/srlab/programs/bowtie2-2.3.4.1-linux-x86_64/"
 samtools="/gscratch/srlab/programs/samtools-1.9/samtools"
-reads_dir="/gscratch/srlab/sr320/data/oakl/"
+
 
 
 # what is this line for ?

@@ -56,9 +56,12 @@ done
 # Concatenate R2 reads and generate lists of FastQs
 for fastq in ${reads_dir}/*R2*.gz
 do
-  echo ${fastq} >> ${R2_list}
   cat ${fastq} >> ${R2}
 done
+
+## Save FastQ files to arrays
+R1_array=(${reads_dir}/*_R1_*.fq*)
+R2_array=(${reads_dir}/*_R2_*.fq*)
 
 #
 find ${reads_dir}*_1.fq.gz \

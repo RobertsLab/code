@@ -118,14 +118,28 @@ ${samtools} sort \
 -n {}.bam \
 -o {}.sorted.bam
 
-# Deduplication
-find *sorted.bam \
-| xargs basename -s .bam \
-| xargs -I{} \
-${bismark_dir}/deduplicate_bismark \
---paired \
---samtools_path=${samtools} \
-{}.bam
+# Determine if deduplication is necessary
+# Then, determine if paired-end or single-end
+if [ ${deduplicated} == "y"  ]; then
+  if [ ${paired} -eq 0 ]; then
+    # Deduplication
+    find *sorted.bam \
+    | xargs basename -s .bam \
+    | xargs -I{} \
+    ${bismark_dir}/deduplicate_bismark \
+    --paired \
+    --samtools_path=${samtools} \
+    {}.bam
+  else
+    find *sorted.bam \
+    | xargs basename -s .bam \
+    | xargs -I{} \
+    ${bismark_dir}/deduplicate_bismark \
+    --single \
+    --samtools_path=${samtools} \
+    {}.bam
+  fi
+fi
 
 # Methylation extraction
 # Extracts methylation info from BAM files produced by Bismark

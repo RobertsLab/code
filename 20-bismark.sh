@@ -89,7 +89,13 @@ ${bismark_dir}/bismark_methylation_extractor \
 --buffer_size 75% \
 *.bam
 
+# Bismark processing report
+# Generates HTML reports from previously created files
+${bismark_dir}/bismark2report
 
+#Bismark summary report
+# Generates HTML summary reports from previously created files
+${bismark_dir}/bismark2summary
 
 ${bismark_dir}/bismark_methylation_extractor \
 --bedGraph --counts --scaffolds \

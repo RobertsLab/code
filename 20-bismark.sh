@@ -26,6 +26,10 @@ reads_dir=""
 # Full path to bisulftie-converted genome directory
 genome_dir=""
 
+# Enter y (for yes) or n (for no) between the quotes.
+# Yes - Whole genome bisulfite sequencing
+# No - Reduced genome bisulfite sequencing (e.g. RRBS, MBD)
+deduplicated=""
 ####################################################
 # DO NOT EDIT BELOW THIS LINE
 

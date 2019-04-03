@@ -36,12 +36,6 @@ bowtie2_dir="/gscratch/srlab/programs/bowtie2-2.3.4.1-linux-x86_64/"
 samtools="/gscratch/srlab/programs/samtools-1.9/samtools"
 
 
-
-# what is this line for ?
-source /gscratch/srlab/programs/scripts/paths.sh
-
-
-
 #
 find ${reads_dir}*_1.fq.gz \
 | xargs basename -s _s1_R1_val_1.fq.gz | xargs -I{} ${bismark_dir}/bismark \

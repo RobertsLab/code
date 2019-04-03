@@ -76,13 +76,18 @@ ${bismark_dir}/bismark \
 2> bismark_summary.txt
 
 
-
-find *.bam | \
-xargs basename -s .bam | \
-xargs -I{} ${bismark_dir}/deduplicate_bismark \
---bam \
---paired \
-{}.bam
+# Methylation extraction
+# Extracts methylation info from BAM files produced by Bismark
+# Options to created a bedgraph file, counts, remove spaces from names
+# and to use the "scaffolds" setting.
+${bismark_dir}/bismark_methylation_extractor \
+--bedgraph \
+--counts \
+--scaffolds \
+--remove_spaces \
+--multicore ${threads} \
+--buffer_size 75% \
+*.bam
 
 
 

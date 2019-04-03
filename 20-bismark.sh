@@ -33,6 +33,15 @@ deduplicated=""
 ####################################################
 # DO NOT EDIT BELOW THIS LINE
 
+# Evaluate user-edited variables to make sure they have been filled
+[ ! -z ${deduplicated} ] \
+&& echo "The deduplicated variable is not defined. Please edit the SBATCH script and add y or n to deduplicated variable."
+
+[ ! -z ${genome_dir} ] \
+&& echo "The bisulfite genome directory path has not been set. Please edit the SBATCH script."
+
+[ ! -z ${reads_dir} ] \
+&& echo "The reads directory paht has not been set. Please edit the SBATCH script."
 
 # Directories and programs
 wd=$(pwd)

@@ -139,6 +139,19 @@ if [ ${deduplicated} == "y"  ]; then
     --samtools_path=${samtools} \
     {}.bam
   fi
+  # Methylation extraction
+  # Extracts methylation info from deduplicated BAM files produced by Bismark
+  # Options to created a bedgraph file, counts, remove spaces from names
+  # and to use the "scaffolds" setting.
+  ${bismark_dir}/bismark_methylation_extractor \
+  --bedGraph \
+  --cytosine_report \
+  --counts \
+  --scaffolds \
+  --remove_spaces \
+  --multicore ${threads} \
+  --buffer_size 75% \
+  *deduplicated.bam
 fi
 
 # Methylation extraction
@@ -156,19 +169,7 @@ ${bismark_dir}/bismark_methylation_extractor \
 *.bam
 
 
-# Methylation extraction
-# Extracts methylation info from deduplicated BAM files produced by Bismark
-# Options to created a bedgraph file, counts, remove spaces from names
-# and to use the "scaffolds" setting.
-${bismark_dir}/bismark_methylation_extractor \
---bedGraph \
---cytosine_report \
---counts \
---scaffolds \
---remove_spaces \
---multicore ${threads} \
---buffer_size 75% \
-*deduplicated.bam
+
 
 
 # Bismark processing report

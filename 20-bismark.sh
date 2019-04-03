@@ -97,8 +97,17 @@ ${bismark_dir}/bismark2report
 # Generates HTML summary reports from previously created files
 ${bismark_dir}/bismark2summary
 
+
+
+# Methylation extraction
+# Extracts methylation info from deduplicated BAM files produced by Bismark
+# Options to created a bedgraph file, counts, remove spaces from names
+# and to use the "scaffolds" setting.
 ${bismark_dir}/bismark_methylation_extractor \
---bedGraph --counts --scaffolds \
+--bedGraph \
+--counts \
+--scaffolds \
+--remove_spaces \
 --multicore ${threads} \
 --buffer_size 75% \
 *deduplicated.bam
@@ -106,11 +115,9 @@ ${bismark_dir}/bismark_methylation_extractor \
 
 
 # Bismark processing report
-
 ${bismark_dir}/bismark2report
 
 #Bismark summary report
-
 ${bismark_dir}/bismark2summary
 
 

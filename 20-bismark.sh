@@ -152,6 +152,14 @@ if [ ${deduplicated} == "y"  ]; then
   --multicore ${threads} \
   --buffer_size 75% \
   *deduplicated.bam
+  # Sort BAM files
+  find *deduplicated.bam \
+  | xargs basename -s .bam \
+  | xargs -I{} \
+  ${samtools} sort \
+  --threads ${threads} \
+  {}.bam \
+  -o {}.sorted.bam
 fi
 
 # Methylation extraction
@@ -183,13 +191,6 @@ ${bismark_dir}/bismark2summary
 
 
 
-find *deduplicated.bam \
-| xargs basename -s .bam \
-| xargs -I{} \
-${samtools} sort \
---threads ${threads} \
-{}.bam \
--o {}.sorted.bam
 
 # Index sorted files for IGV
 # The "-@ ${threads}" below specifies number of CPU threads to use.

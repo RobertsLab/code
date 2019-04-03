@@ -91,12 +91,6 @@ ${bismark_dir}/bismark \
 -2 ${R2} \
 2> bismark_summary.txt
 
-
-# Populate array with BAM files
-bam_array=(*.bam)
-# Create space-separated list of BAM files
-bam_space_list=$(echo ${bam_array[@]})
-
 # Methylation extraction
 # Extracts methylation info from BAM files produced by Bismark
 # Options to created a bedgraph file, counts, remove spaces from names
@@ -109,16 +103,7 @@ ${bismark_dir}/bismark_methylation_extractor \
 --remove_spaces \
 --multicore ${threads} \
 --buffer_size 75% \
-${bam_space_list}
-
-# Populate array with deduplicated BAM files
-dedup_bam_array=(*deduplicated.bam)
-
-# Create space-separated list of deduplicated BAM files
-dedup_bam_space_list=$(echo ${dedup_bam_array[@]})
-
-# Create comma-separated list of deduplicated BAM files
-dedup_bam_comma_list=$(echo ${dedup_bam_array[@]} | tr " " ",")
+*.bam
 
 
 # Methylation extraction
@@ -133,7 +118,7 @@ ${bismark_dir}/bismark_methylation_extractor \
 --remove_spaces \
 --multicore ${threads} \
 --buffer_size 75% \
-${dedup_bam_space_list}
+*deduplicated.bam
 
 
 # Bismark processing report
@@ -146,7 +131,6 @@ ${bismark_dir}/bismark2summary
 
 
 
-# Sort files for methylkit and IGV
 
 find *deduplicated.bam | \
 xargs basename -s .bam | \

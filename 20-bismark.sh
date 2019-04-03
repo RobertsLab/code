@@ -63,15 +63,17 @@ done
 R1_array=(${reads_dir}/*_R1_*.fq*)
 R2_array=(${reads_dir}/*_R2_*.fq*)
 
-#
-find ${reads_dir}*_1.fq.gz \
-| xargs basename -s _s1_R1_val_1.fq.gz | xargs -I{} ${bismark_dir}/bismark \
+# Run bismark using bisulftie-converted genome
+# Generates a set of BAM files as outputs
+# Records stderr to a file for easy viewing of Bismkar summary info
+${bismark_dir}/bismark \
 --path_to_bowtie ${bowtie2_dir} \
--genome /gscratch/srlab/sr320/data/Cvirg-genome \
--p ${threads} \
+--genome ${genome} \
 --non_directional \
--1 /gscratch/srlab/sr320/data/oakl/{}_s1_R1_val_1.fq.gz \
--2 /gscratch/srlab/sr320/data/oakl/{}_s1_R2_val_2.fq.gz \
+-p 28 \
+-1 ${R1} \
+-2 ${R2} \
+2> bismark_summary.txt
 
 
 

@@ -1,16 +1,17 @@
 #!/bin/bash
-## Job Name
-#SBATCH --job-name=oly-mbd
-## Allocation Definition
+## Job Name - can be changed
+#SBATCH --job-name=BISMARK
+## Allocation Definition - confirm correctness
 #SBATCH --account=coenv
 #SBATCH --partition=coenv
 ## Resources
-## Nodes (We only get 1, so this is fixed)
+## Nodes (often you will only use 1)
 #SBATCH --nodes=1
 ## Walltime (days-hours:minutes:seconds format)
-#SBATCH --time=00-100:00:00
+#SBATCH --time=05-100:00:00
 ## Memory per node
 #SBATCH --mem=100G
+## email notification - set to your own email
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=sr320@uw.edu
 ## Specify the working directory for this job

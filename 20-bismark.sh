@@ -34,14 +34,14 @@ wd=$(pwd)
 bismark_dir="/gscratch/srlab/programs/Bismark-0.21.0"
 bowtie2_dir="/gscratch/srlab/programs/bowtie2-2.3.4.1-linux-x86_64/"
 samtools="/gscratch/srlab/programs/samtools-1.9/samtools"
-
+threads="28"
 
 #
 find ${reads_dir}*_1.fq.gz \
 | xargs basename -s _s1_R1_val_1.fq.gz | xargs -I{} ${bismark_dir}/bismark \
 --path_to_bowtie ${bowtie2_dir} \
 -genome /gscratch/srlab/sr320/data/Cvirg-genome \
--p 14 \
+-p ${threads} \
 --non_directional \
 -1 /gscratch/srlab/sr320/data/oakl/{}_s1_R1_val_1.fq.gz \
 -2 /gscratch/srlab/sr320/data/oakl/{}_s1_R2_val_2.fq.gz \
@@ -59,7 +59,7 @@ xargs -I{} ${bismark_dir}/deduplicate_bismark \
 
 ${bismark_dir}/bismark_methylation_extractor \
 --bedGraph --counts --scaffolds \
---multicore 14 \
+--multicore ${threads} \
 --buffer_size 75% \
 *deduplicated.bam
 
@@ -80,13 +80,13 @@ ${bismark_dir}/bismark2summary
 find *deduplicated.bam | \
 xargs basename -s .bam | \
 xargs -I{} ${samtools} \
-sort --threads 28 {}.bam \
+sort --threads ${threads} {}.bam \
 -o {}.sorted.bam
 
 # Index sorted files for IGV
-# The "-@ 16" below specifies number of CPU threads to use.
+# The "-@ ${threads}" below specifies number of CPU threads to use.
 
 find *.sorted.bam | \
 xargs basename -s .sorted.bam | \
 xargs -I{} ${samtools} \
-index -@ 28 {}.sorted.bam
+index -@ ${threads} {}.sorted.bam

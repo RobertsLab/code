@@ -102,13 +102,14 @@ bam_space_list=$(echo ${bam_array[@]})
 # Options to created a bedgraph file, counts, remove spaces from names
 # and to use the "scaffolds" setting.
 ${bismark_dir}/bismark_methylation_extractor \
---bedgraph \
+--bedGraph \
+--cytosine_report \
 --counts \
 --scaffolds \
 --remove_spaces \
 --multicore ${threads} \
 --buffer_size 75% \
-*.bam
+${bam_space_list}
 
 # Populate array with BAM files
 dedup_bam_array=(*deduplicated.bam)
@@ -126,12 +127,13 @@ dedup_bam_comma_list=$(echo ${dedup_bam_array[@]} | tr " " ",")
 # and to use the "scaffolds" setting.
 ${bismark_dir}/bismark_methylation_extractor \
 --bedGraph \
+--cytosine_report \
 --counts \
 --scaffolds \
 --remove_spaces \
 --multicore ${threads} \
 --buffer_size 75% \
-*deduplicated.bam
+${dedup_bam_space_list}
 
 # Populate array with BAM files
 

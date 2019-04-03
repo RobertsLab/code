@@ -15,7 +15,7 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=$USER@uw.edu
 ## Specify the working directory for this job
-#SBATCH --workdir=/gscratch/srlab/sr320/analyses/2019/0403
+#SBATCH --workdir=
 
 
 

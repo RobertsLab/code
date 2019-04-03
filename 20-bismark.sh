@@ -11,9 +11,9 @@
 #SBATCH --time=05-100:00:00
 ## Memory per node
 #SBATCH --mem=100G
-## email notification - set to your own email
+## email notification
 #SBATCH --mail-type=ALL
-#SBATCH --mail-user=sr320@uw.edu
+#SBATCH --mail-user=$USER@uw.edu
 ## Specify the working directory for this job
 #SBATCH --workdir=/gscratch/srlab/sr320/analyses/2019/0403
 
@@ -32,7 +32,7 @@ source /gscratch/srlab/programs/scripts/paths.sh
 
 
 
-# 
+#
 find ${reads_dir}*_1.fq.gz \
 | xargs basename -s _s1_R1_val_1.fq.gz | xargs -I{} ${bismark_dir}/bismark \
 --path_to_bowtie ${bowtie2_dir} \

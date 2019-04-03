@@ -91,6 +91,14 @@ ${bismark_dir}/bismark \
 -2 ${R2} \
 2> bismark_summary.txt
 
+# Deduplication
+find *.bam \
+| xargs basename -s .bam \
+| xargs -I{} ${bismark_dir}/deduplicate_bismark \
+--paired \
+--samtools_path=${samtools} \
+{}.bam
+
 # Methylation extraction
 # Extracts methylation info from BAM files produced by Bismark
 # Options to created a bedgraph file, counts, remove spaces from names

@@ -27,12 +27,12 @@ samtools="/gscratch/srlab/programs/samtools-1.9/samtools"
 reads_dir="/gscratch/srlab/sr320/data/oakl/"
 
 
-
+# what is this line for ?
 source /gscratch/srlab/programs/scripts/paths.sh
 
 
 
-
+# 
 find ${reads_dir}*_1.fq.gz \
 | xargs basename -s _s1_R1_val_1.fq.gz | xargs -I{} ${bismark_dir}/bismark \
 --path_to_bowtie ${bowtie2_dir} \

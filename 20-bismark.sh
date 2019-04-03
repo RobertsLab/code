@@ -35,6 +35,13 @@ bismark_dir="/gscratch/srlab/programs/Bismark-0.21.0"
 bowtie2_dir="/gscratch/srlab/programs/bowtie2-2.3.4.1-linux-x86_64/"
 samtools="/gscratch/srlab/programs/samtools-1.9/samtools"
 threads="28"
+reads_list="input_fastqs.txt"
+
+# Create list of input FastQ files for easier confirmation.
+for fastq in ${reads_dir}/*.fq*
+do
+  echo ${fastq} >> ${reads_list}
+done
 
 #
 find ${reads_dir}*_1.fq.gz \

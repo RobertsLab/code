@@ -60,8 +60,6 @@ done
 # Initialize arrays
 R1_array=()
 R2_array=()
-bam_array=()
-dedup_bam_array=()
 
 # Check for paired-end
 # Capture grep output

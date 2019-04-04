@@ -73,8 +73,8 @@ threads="28"
 reads_list="input_fastqs.txt"
 
 ## Concatenated FastQ Files
-R1="${wd}/concatenated_R1.fq.gz"
-R2="${wd}/concatenated_R2.fq.gz"
+R1=""
+R2=""
 
 # Initialize arrays
 R1_array=()
@@ -121,8 +121,8 @@ if [ ${paired} -eq 0 ]; then
   --genome ${genome} \
   --non_directional \
   -p ${threads} \
-  -1 ${R1} \
-  -2 ${R2} \
+  -1 echo ${R1_array[@]} \
+  -2 echo ${R2_array[@]} \
   2> bismark_summary.txt
 else
   # Run Bismark single-end
@@ -131,7 +131,7 @@ else
   --genome ${genome} \
   --non_directional \
   -p ${threads} \
-  ${R1} \
+  echo ${R1_array[@]} \
   2> bismark_summary.txt
 fi
 

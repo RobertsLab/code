@@ -23,7 +23,7 @@ set -e
 # This is a script written to assess bisulfite sequencing reads
 # using Bismark. The user needs to supply the following:
 # 1. A single directory location contaning BSseq reads.
-# 2. BSseq reads need to end with .fq or .fq.gz
+# 2. BSseq reads need to be gzipped FastQ and end with .fq.gz
 # 3. A bisulfite-converted genome, produced with Bowtie2.
 # 4. Indicate if deduplication should be performed (whole genome or reduced genome sequencing)
 #
@@ -81,7 +81,7 @@ R1_array=()
 R2_array=()
 
 # Create list of input FastQ files for easier confirmation.
-for fastq in ${reads_dir}/*.fq*
+for fastq in ${reads_dir}/*.fq.gz
 do
   echo ${fastq} >> ${reads_list}
 done
@@ -93,20 +93,20 @@ grep "_R2_" ${reads_list}
 paired=$?
 
 # Concatenate R1 reads and generate lists of FastQs
-for fastq in ${reads_dir}/*R1*.gz
+for fastq in ${reads_dir}/*R1*.fq.gz
 do
   cat ${fastq} >> ${R1}
 done
 
 ## Save FastQ files to arrays
-R1_array=(${reads_dir}/*_R1_*.fq*)
+R1_array=(${reads_dir}/*_R1_*.fq.gz)
 
 
 if [ ${paired} -eq 0 ]; then
   ## Save FastQ files to arrays
-  R2_array=(${reads_dir}/*_R2_*.fq*)
+  R2_array=(${reads_dir}/*_R2_*.fq.gz)
   # Concatenate R2 reads
-  for fastq in ${reads_dir}/*R2*.gz
+  for fastq in ${reads_dir}/*R2*.fq.gz
     do
       cat ${fastq} >> ${R2}
   done

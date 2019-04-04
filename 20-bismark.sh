@@ -94,6 +94,7 @@ paired=$?
 
 # Confirm even number of FastQ files
 num_files=$(wc -l < ${reads_list})
+fastq_even_odd=$(echo $(( ${num_files} % 2 )) )
 
 
 # Concatenate R1 reads and generate lists of FastQs
@@ -105,8 +106,17 @@ done
 ## Save FastQ files to arrays
 R1_array=(${reads_dir}/*_R1_*.fq.gz)
 
-
+# Evaluate if paired-end FastQs
+# Run Bismark as paired-end/single-end based on evaluation
 if [ ${paired} -eq 0 ]; then
+  # Evaluate if FastQs have corresponding partner (i.e. R1 and R2 files)
+  # Evaluated on even/odd number of files.
+  if [ ${fastq_even_odd} -ne 0 ]; then
+    { echo "Missing at least one FastQ pair from paired-end FastQ set."; \
+      echo "Please verify input FastQs all have an R1 and corresponding R2 file.";
+      exit 1; \
+    }
+  fi
   ## Save FastQ files to arrays
   R2_array=(${reads_dir}/*_R2_*.fq.gz)
   # Concatenate R2 reads

@@ -97,12 +97,6 @@ num_files=$(wc -l < ${reads_list})
 fastq_even_odd=$(echo $(( ${num_files} % 2 )) )
 
 
-# Concatenate R1 reads and generate lists of FastQs
-for fastq in ${reads_dir}/*R1*.fq.gz
-do
-  cat ${fastq} >> ${R1}
-done
-
 ## Save FastQ files to arrays
 R1_array=(${reads_dir}/*_R1_*.fq.gz)
 
@@ -119,11 +113,6 @@ if [ ${paired} -eq 0 ]; then
   fi
   ## Save FastQ files to arrays
   R2_array=(${reads_dir}/*_R2_*.fq.gz)
-  # Concatenate R2 reads
-  for fastq in ${reads_dir}/*R2*.fq.gz
-    do
-      cat ${fastq} >> ${R2}
-  done
   # Run bismark using bisulftie-converted genome
   # Generates a set of BAM files as outputs
   # Records stderr to a file for easy viewing of Bismark summary info

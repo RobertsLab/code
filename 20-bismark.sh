@@ -89,7 +89,7 @@ done
 # Check for paired-end
 # Capture grep output
 # >0 means single-end reads
-grep "_R2_" ${reads_list}
+grep "_R2_" ${reads_list} || true
 paired=$?
 
 # Confirm even number of FastQ files

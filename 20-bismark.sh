@@ -41,7 +41,7 @@ deduplicated=""
 && echo "The bisulfite genome directory path has not been set. Please edit the SBATCH script."
 
 [ ! -z ${reads_dir} ] \
-&& echo "The reads directory paht has not been set. Please edit the SBATCH script."
+&& echo "The reads directory path has not been set. Please edit the SBATCH script."
 
 # Directories and programs
 wd=$(pwd)
@@ -141,7 +141,7 @@ if [ ${deduplicated} == "y"  ]; then
   fi
   # Methylation extraction
   # Extracts methylation info from deduplicated BAM files produced by Bismark
-  # Options to created a bedgraph file, counts, remove spaces from names
+  # Options to created a bedgraph file, a cytosine coverage report, counts, remove spaces from names
   # and to use the "scaffolds" setting.
   ${bismark_dir}/bismark_methylation_extractor \
   --bedGraph \
@@ -152,7 +152,7 @@ if [ ${deduplicated} == "y"  ]; then
   --multicore ${threads} \
   --buffer_size 75% \
   *deduplicated.bam
-  # Sort BAM files
+  # Sort deduplicated BAM files
   find *deduplicated.bam \
   | xargs basename -s .bam \
   | xargs -I{} \
@@ -160,25 +160,30 @@ if [ ${deduplicated} == "y"  ]; then
   --threads ${threads} \
   {}.bam \
   -o {}.sorted.bam
+else
+  # Methylation extraction
+  # Extracts methylation info from BAM files produced by Bismark
+  # Options to created a bedgraph file, a cytosine coverage report, counts, remove spaces from names
+  # and to use the "scaffolds" setting.
+  ${bismark_dir}/bismark_methylation_extractor \
+  --bedGraph \
+  --cytosine_report \
+  --counts \
+  --scaffolds \
+  --remove_spaces \
+  --multicore ${threads} \
+  --buffer_size 75% \
+  *.sorted.bam
 fi
 
-# Methylation extraction
-# Extracts methylation info from BAM files produced by Bismark
-# Options to created a bedgraph file, counts, remove spaces from names
-# and to use the "scaffolds" setting.
-${bismark_dir}/bismark_methylation_extractor \
---bedGraph \
---cytosine_report \
---counts \
---scaffolds \
---remove_spaces \
---multicore ${threads} \
---buffer_size 75% \
-*.bam
-
-
-
-
+# Index sorted files for IGV
+# The "-@ ${threads}" below specifies number of CPU threads to use.
+find *.sorted.bam \
+| xargs basename -s .sorted.bam \
+| xargs -I{} \
+${samtools} index \
+-@ ${threads} \
+{}.sorted.bam
 
 # Bismark processing report
 # Generates HTML reports from previously created files
@@ -187,24 +192,3 @@ ${bismark_dir}/bismark2report
 #Bismark summary report
 # Generates HTML summary reports from previously created files
 ${bismark_dir}/bismark2summary
-
-
-# Sort BAM files
-find *.bam \
-| xargs basename -s .bam \
-| xargs -I{} \
-${samtools} sort \
---threads ${threads} \
-{}.bam \
--o {}.sorted.bam
-
-
-# Index sorted files for IGV
-# The "-@ ${threads}" below specifies number of CPU threads to use.
-
-find *.sorted.bam \
-| xargs basename -s .sorted.bam \
-| xargs -I{} \
-${samtools} index \
--@ ${threads} \
-{}.sorted.bam

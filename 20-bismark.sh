@@ -19,7 +19,21 @@
 # Exit script if a command fails
 set -e
 
+##########################
+# This is a script written to assess bisulfite sequencing reads
+# using Bismark. The user needs to supply the following:
+# 1. A single directory location contaning BSseq reads.
+# 2. BSseq reads need to end with .fq or .fq.gz
+# 3. A bisulfite-converted genome, produced with Bowtie2.
+# 4. Indicate if deduplication should be performed (whole genome or reduced genome sequencing)
+#
+# Set these values below
+
+
+
 ### USER NEEDS TO SET VARIABLES FOR THE FOLLOWING:
+# Set --workdir= path in SBATCH header above.
+#
 # Full path to directory with sequencing reads
 reads_dir=""
 
@@ -29,13 +43,20 @@ genome_dir=""
 # Enter y (for yes) or n (for no) between the quotes.
 # Yes - Whole genome bisulfite sequencing
 # No - Reduced genome bisulfite sequencing (e.g. RRBS, MBD)
-deduplicated=""
+deduplicate=""
+
+
+
 ####################################################
 # DO NOT EDIT BELOW THIS LINE
+####################################################
+
+
+
 
 # Evaluate user-edited variables to make sure they have been filled
-[ ! -z ${deduplicated} ] \
-&& echo "The deduplicated variable is not defined. Please edit the SBATCH script and add y or n to deduplicated variable."
+[ ! -z ${deduplicate} ] \
+&& echo "The deduplicate variable is not defined. Please edit the SBATCH script and add y or n to deduplicate variable."
 
 [ ! -z ${genome_dir} ] \
 && echo "The bisulfite genome directory path has not been set. Please edit the SBATCH script."
@@ -118,7 +139,7 @@ ${samtools} sort \
 
 # Determine if deduplication is necessary
 # Then, determine if paired-end or single-end
-if [ ${deduplicated} == "y"  ]; then
+if [ ${deduplicate} == "y"  ]; then
   if [ ${paired} -eq 0 ]; then
     # Deduplication
     find *sorted.bam \

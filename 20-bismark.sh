@@ -103,9 +103,9 @@ R1_array=(${reads_dir}/*_R1_*.fq*)
 
 
 if [ ${paired} -eq 0 ]; then
-  # Concatenate R2 reads
+  ## Save FastQ files to arrays
   R2_array=(${reads_dir}/*_R2_*.fq*)
-  # Concatenate R2 reads and generate lists of FastQs
+  # Concatenate R2 reads
   for fastq in ${reads_dir}/*R2*.gz
     do
       cat ${fastq} >> ${R2}

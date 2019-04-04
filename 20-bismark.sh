@@ -72,15 +72,19 @@ samtools="/gscratch/srlab/programs/samtools-1.9/samtools"
 threads="28"
 reads_list="input_fastqs.txt"
 
+## Concatenated FastQ Files
+R1="${wd}/concatenated_R1.fq.gz"
+R2="${wd}/concatenated_R2.fq.gz"
+
+# Initialize arrays
+R1_array=()
+R2_array=()
+
 # Create list of input FastQ files for easier confirmation.
 for fastq in ${reads_dir}/*.fq*
 do
   echo ${fastq} >> ${reads_list}
 done
-
-# Initialize arrays
-R1_array=()
-R2_array=()
 
 # Check for paired-end
 # Capture grep output

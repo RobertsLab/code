@@ -55,13 +55,13 @@ deduplicate=""
 
 
 # Evaluate user-edited variables to make sure they have been filled
-[ ! -z ${deduplicate} ] \
+[ -z ${deduplicate} ] \
 && echo "The deduplicate variable is not defined. Please edit the SBATCH script and add y or n to deduplicate variable."
 
-[ ! -z ${genome_dir} ] \
+[ -z ${genome_dir} ] \
 && echo "The bisulfite genome directory path has not been set. Please edit the SBATCH script."
 
-[ ! -z ${reads_dir} ] \
+[ -z ${reads_dir} ] \
 && echo "The reads directory path has not been set. Please edit the SBATCH script."
 
 # Directories and programs
@@ -91,6 +91,10 @@ done
 # >0 means single-end reads
 grep "_R2_" ${reads_list}
 paired=$?
+
+# Confirm even number of FastQ files
+num_files=$(wc -l < ${reads_list})
+
 
 # Concatenate R1 reads and generate lists of FastQs
 for fastq in ${reads_dir}/*R1*.fq.gz

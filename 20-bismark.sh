@@ -189,7 +189,14 @@ ${bismark_dir}/bismark2report
 ${bismark_dir}/bismark2summary
 
 
-
+# Sort BAM files
+find *.bam \
+| xargs basename -s .bam \
+| xargs -I{} \
+${samtools} sort \
+--threads ${threads} \
+{}.bam \
+-o {}.sorted.bam
 
 
 # Index sorted files for IGV

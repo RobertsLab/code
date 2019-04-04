@@ -99,6 +99,8 @@ fastq_even_odd=$(echo $(( ${num_files} % 2 )) )
 
 ## Save FastQ files to arrays
 R1_array=(${reads_dir}/*_R1_*.fq.gz)
+## Send space-delimited list of R1 FastQ to variable
+R1=$(echo ${R1_array[@]})
 
 # Evaluate if paired-end FastQs
 # Run Bismark as paired-end/single-end based on evaluation
@@ -113,6 +115,8 @@ if [ ${paired} -eq 0 ]; then
   fi
   ## Save FastQ files to arrays
   R2_array=(${reads_dir}/*_R2_*.fq.gz)
+  ## Send space-delimited list of R2 FastQ to variable
+  R2=$(echo ${R2_array[@]})
   # Run bismark using bisulftie-converted genome
   # Generates a set of BAM files as outputs
   # Records stderr to a file for easy viewing of Bismark summary info
@@ -121,8 +125,8 @@ if [ ${paired} -eq 0 ]; then
   --genome ${genome} \
   --non_directional \
   -p ${threads} \
-  -1 echo ${R1_array[@]} \
-  -2 echo ${R2_array[@]} \
+  -1 ${R1} \
+  -2 ${R2} \
   2> bismark_summary.txt
 else
   # Run Bismark single-end
@@ -131,7 +135,7 @@ else
   --genome ${genome} \
   --non_directional \
   -p ${threads} \
-  echo ${R1_array[@]} \
+  ${R1} \
   2> bismark_summary.txt
 fi
 

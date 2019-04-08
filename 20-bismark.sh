@@ -41,8 +41,8 @@ reads_dir=""
 genome_dir=""
 
 # Enter y (for yes) or n (for no) between the quotes.
-# Yes - Whole genome bisulfite sequencing
-# No - Reduced genome bisulfite sequencing (e.g. RRBS, MBD)
+# Yes - Whole genome bisulfite sequencing, MBD.
+# No - Reduced genome bisulfite sequencing (e.g. RRBS)
 deduplicate=""
 
 

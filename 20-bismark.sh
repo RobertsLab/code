@@ -107,10 +107,10 @@ R1=$(echo ${R1_array[@]})
 
 # Evaluate if paired-end FastQs
 # Run Bismark as paired-end/single-end based on evaluation
-if [ ${paired} -eq 0 ]; then
+if [[ ${paired} -eq 0 ]]; then
   # Evaluate if FastQs have corresponding partner (i.e. R1 and R2 files)
   # Evaluated on even/odd number of files.
-  if [ ${fastq_even_odd} -ne 0 ]; then
+  if [[ ${fastq_even_odd} -ne 0 ]]; then
     { echo "Missing at least one FastQ pair from paired-end FastQ set."; \
       echo "Please verify input FastQs all have an R1 and corresponding R2 file.";
       exit 1; \

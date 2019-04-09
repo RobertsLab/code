@@ -124,7 +124,7 @@ if [ ${paired} -eq 0 ]; then
   # Generates a set of BAM files as outputs
   # Records stderr to a file for easy viewing of Bismark summary info
   ${bismark_dir}/bismark \
-  --path_to_bowtie ${bowtie2_dir} \
+  --path_to_bowtie2 ${bowtie2_dir} \
   --genome ${genome} \
   --non_directional \
   -p ${threads} \
@@ -134,7 +134,7 @@ if [ ${paired} -eq 0 ]; then
 else
   # Run Bismark single-end
   ${bismark_dir}/bismark \
-  --path_to_bowtie ${bowtie2_dir} \
+  --path_to_bowtie2 ${bowtie2_dir} \
   --genome ${genome} \
   --non_directional \
   -p ${threads} \

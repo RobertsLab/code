@@ -56,13 +56,15 @@ deduplicate=""
 
 # Evaluate user-edited variables to make sure they have been filled
 [ -z ${deduplicate} ] \
-&& echo "The deduplicate variable is not defined. Please edit the SBATCH script and add y or n to deduplicate variable."
+&& { echo "The deduplicate variable is not defined. Please edit the SBATCH script and add y or n to deduplicate variable."; exit 1; }
 
 [ -z ${genome_dir} ] \
-&& echo "The bisulfite genome directory path has not been set. Please edit the SBATCH script."
+&& { echo "The bisulfite genome directory path has not been set. Please edit the SBATCH script."; exit 1; }
 
 [ -z ${reads_dir} ] \
-&& echo "The reads directory path has not been set. Please edit the SBATCH script."
+&& { echo "The reads directory path has not been set. Please edit the SBATCH script."; exit 1; }
+
+
 
 # Directories and programs
 wd=$(pwd)

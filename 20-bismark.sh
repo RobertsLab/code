@@ -91,8 +91,9 @@ done
 # Check for paired-end
 # Capture grep output
 # >0 means single-end reads
-grep "_R2_" ${reads_list} || true
-paired=$?
+# Or statement (||) prevent script from exiting if grep stderr >1
+grep "_R2_" ${reads_list} && paired=$? || true
+
 
 # Confirm even number of FastQ files
 num_files=$(wc -l < ${reads_list})

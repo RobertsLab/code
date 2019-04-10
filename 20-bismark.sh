@@ -200,6 +200,14 @@ if [ ${deduplicate} == "y"  ]; then
   --threads ${threads} \
   bam_basename.bam \
   -o bam_basename.sorted.bam
+  # Index sorted files for IGV
+  # The "-@ ${threads}" below specifies number of CPU threads to use.
+  find *deduplicated.sorted.bam \
+  | xargs basename -s .sorted.bam \
+  | xargs -I bam_basename \
+  ${samtools} index \
+  -@ ${threads} \
+  bam_basename.sorted.bam
 else
   # Methylation extraction
   # Extracts methylation info from BAM files produced by Bismark
@@ -216,16 +224,16 @@ else
   --buffer_size 75% \
   --samtools_path=${samtools} \
   *.sorted.bam
+  # Index sorted files for IGV
+  # The "-@ ${threads}" below specifies number of CPU threads to use.
+  find *.sorted.bam \
+  | xargs basename -s .sorted.bam \
+  | xargs -I bam_basename \
+  ${samtools} index \
+  -@ ${threads} \
+  bam_basename.sorted.bam
 fi
 
-# Index sorted files for IGV
-# The "-@ ${threads}" below specifies number of CPU threads to use.
-find *.sorted.bam \
-| xargs basename -s .sorted.bam \
-| xargs -I bam_basename \
-${samtools} index \
--@ ${threads} \
-bam_basename.sorted.bam
 
 # Bismark processing report
 # Generates HTML reports from previously created files

@@ -128,6 +128,7 @@ if [[ ${paired} -eq 0 ]]; then
   ${bismark_dir}/bismark \
   --path_to_bowtie2 ${bowtie2_dir} \
   --genome ${genome_dir} \
+  --samtools_path=${samtools} \
   --non_directional \
   -p ${threads} \
   -1 ${R1} \
@@ -138,6 +139,7 @@ else
   ${bismark_dir}/bismark \
   --path_to_bowtie2 ${bowtie2_dir} \
   --genome ${genome_dir} \
+  --samtools_path=${samtools} \
   --non_directional \
   -p ${threads} \
   ${R1} \

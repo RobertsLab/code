@@ -127,7 +127,7 @@ if [[ ${paired} -eq 0 ]]; then
   # Records stderr to a file for easy viewing of Bismark summary info
   ${bismark_dir}/bismark \
   --path_to_bowtie2 ${bowtie2_dir} \
-  --genome ${genome} \
+  --genome ${genome_dir} \
   --non_directional \
   -p ${threads} \
   -1 ${R1} \
@@ -137,7 +137,7 @@ else
   # Run Bismark single-end
   ${bismark_dir}/bismark \
   --path_to_bowtie2 ${bowtie2_dir} \
-  --genome ${genome} \
+  --genome ${genome_dir} \
   --non_directional \
   -p ${threads} \
   ${R1} \

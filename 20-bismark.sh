@@ -228,10 +228,11 @@ else
 
   # Sort BAM files
   find *.bam \
-  | xargs -I bam \
+  | xargs basename -s .bam \
+  | xargs -I bam_basename \
   ${samtools} sort \
   --threads ${threads} \
-  -o bam.sorted.bam
+  -o bam_basename.sorted.bam
   # Index sorted files for IGV
   # The "-@ ${threads}" below specifies number of CPU threads to use.
   find *sorted.bam \

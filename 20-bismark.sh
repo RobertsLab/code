@@ -185,6 +185,7 @@ if [ ${deduplicate} == "y"  ]; then
   --bedGraph \
   --cytosine_report \
   --genome_folder ${genome_dir} \
+  --gzip
   --counts \
   --scaffolds \
   --remove_spaces \
@@ -216,6 +217,7 @@ else
   --bedGraph \
   --cytosine_report \
   --genome_folder ${genome_dir} \
+  --gzip \
   --counts \
   --scaffolds \
   --remove_spaces \

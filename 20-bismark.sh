@@ -227,7 +227,7 @@ else
   *.bam
 
   # Sort BAM files
-  find .bam \
+  find *.bam \
   | xargs -I bam \
   ${samtools} sort \
   --threads ${threads} \

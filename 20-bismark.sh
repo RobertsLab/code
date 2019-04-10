@@ -224,10 +224,15 @@ else
   --multicore ${threads} \
   --buffer_size 75% \
   --samtools_path=${samtools} \
-  *.sorted.bam
+  *.bam
+  find .bam \
+  | xargs -I bam \
+  ${samtools} sort \
+  --threads ${threads} \
+  -o bam.sorted.bam
   # Index sorted files for IGV
   # The "-@ ${threads}" below specifies number of CPU threads to use.
-  find *.sorted.bam \
+  find *sorted.bam \
   | xargs -I sorted_bam \
   ${samtools} index \
   -@ ${threads} \

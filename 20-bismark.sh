@@ -225,6 +225,8 @@ else
   --buffer_size 75% \
   --samtools_path=${samtools} \
   *.bam
+
+  # Sort BAM files
   find .bam \
   | xargs -I bam \
   ${samtools} sort \

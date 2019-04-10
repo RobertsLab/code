@@ -147,13 +147,15 @@ else
 fi
 
 # Sort Bismark BAM files (failsafe for deduplication)
-find *.bam \
-| xargs basename -s .bam \
-| xargs -I{} \
-${samtools} sort \
---threads ${threads} \
--n {}.bam \
--o {}.sorted.bam
+for bam in *.bam
+do
+  no_ext=${bam%.bam}
+  ${samtools} sort \
+  --threads ${threads} \
+  -n ${bam} \
+  -o ${no_ext}.sorted.bam
+done
+
 
 # Determine if deduplication is necessary
 # Then, determine if paired-end or single-end

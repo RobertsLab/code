@@ -188,6 +188,7 @@ if [ ${deduplicate} == "y"  ]; then
   --remove_spaces \
   --multicore ${threads} \
   --buffer_size 75% \
+  --samtools_path=${samtools} \
   *deduplicated.bam
   # Sort deduplicated BAM files
   find *deduplicated.bam \
@@ -210,6 +211,7 @@ else
   --remove_spaces \
   --multicore ${threads} \
   --buffer_size 75% \
+  --samtools_path=${samtools} \
   *.sorted.bam
 fi
 

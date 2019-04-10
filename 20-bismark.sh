@@ -149,11 +149,11 @@ fi
 # Sort Bismark BAM files (failsafe for deduplication)
 find *.bam \
 | xargs basename -s .bam \
-| xargs -I{} \
+| xargs -I bam_basename \
 ${samtools} sort \
 --threads ${threads} \
--n {}.bam \
--o {}.sorted.bam
+-n bam_basename.bam \
+-o bam_basename.sorted.bam
 
 # Determine if deduplication is necessary
 # Then, determine if paired-end or single-end
@@ -162,19 +162,19 @@ if [ ${deduplicate} == "y"  ]; then
     # Deduplication
     find *sorted.bam \
     | xargs basename -s .bam \
-    | xargs -I{} \
+    | xargs -I bam_basename \
     ${bismark_dir}/deduplicate_bismark \
     --paired \
     --samtools_path=${samtools} \
-    {}.bam
+    bam_basename.bam
   else
     find *sorted.bam \
     | xargs basename -s .bam \
-    | xargs -I{} \
+    | xargs -I bam_basename \
     ${bismark_dir}/deduplicate_bismark \
     --single \
     --samtools_path=${samtools} \
-    {}.bam
+    bam_basename.bam
   fi
   # Methylation extraction
   # Extracts methylation info from deduplicated BAM files produced by Bismark
@@ -194,11 +194,11 @@ if [ ${deduplicate} == "y"  ]; then
   # Sort deduplicated BAM files
   find *deduplicated.bam \
   | xargs basename -s .bam \
-  | xargs -I{} \
+  | xargs -I bam_basename \
   ${samtools} sort \
   --threads ${threads} \
-  {}.bam \
-  -o {}.sorted.bam
+  bam_basename.bam \
+  -o bam_basename.sorted.bam
 else
   # Methylation extraction
   # Extracts methylation info from BAM files produced by Bismark
@@ -221,10 +221,10 @@ fi
 # The "-@ ${threads}" below specifies number of CPU threads to use.
 find *.sorted.bam \
 | xargs basename -s .sorted.bam \
-| xargs -I{} \
+| xargs -I bam_basename \
 ${samtools} index \
 -@ ${threads} \
-{}.sorted.bam
+bam_basename.sorted.bam
 
 # Bismark processing report
 # Generates HTML reports from previously created files

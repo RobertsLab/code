@@ -146,18 +146,19 @@ else
   2> bismark_summary.txt
 fi
 
-# Sort Bismark BAM files (failsafe for deduplication)
-find *.bam \
-| xargs basename -s .bam \
-| xargs -I bam_basename \
-${samtools} sort \
---threads ${threads} \
--n bam_basename.bam \
--o bam_basename.sorted.bam
+
 
 # Determine if deduplication is necessary
 # Then, determine if paired-end or single-end
 if [ ${deduplicate} == "y"  ]; then
+  # Sort Bismark BAM files by read names instead of chromosomes
+  find *.bam \
+  | xargs basename -s .bam \
+  | xargs -I bam_basename \
+  ${samtools} sort \
+  --threads ${threads} \
+  -n bam_basename.bam \
+  -o bam_basename.sorted.bam
   if [ ${paired} -eq 0 ]; then
     # Deduplication
     find *sorted.bam \

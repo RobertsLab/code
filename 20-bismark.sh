@@ -183,6 +183,7 @@ if [ ${deduplicate} == "y"  ]; then
   ${bismark_dir}/bismark_methylation_extractor \
   --bedGraph \
   --cytosine_report \
+  --genome_folder ${genome_dir} \
   --counts \
   --scaffolds \
   --remove_spaces \
@@ -206,6 +207,7 @@ else
   ${bismark_dir}/bismark_methylation_extractor \
   --bedGraph \
   --cytosine_report \
+  --genome_folder ${genome_dir} \
   --counts \
   --scaffolds \
   --remove_spaces \

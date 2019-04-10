@@ -203,11 +203,10 @@ if [ ${deduplicate} == "y"  ]; then
   # Index sorted files for IGV
   # The "-@ ${threads}" below specifies number of CPU threads to use.
   find *deduplicated.sorted.bam \
-  | xargs basename -s .sorted.bam \
-  | xargs -I bam_basename \
+  | xargs -I sorted_bam \
   ${samtools} index \
   -@ ${threads} \
-  bam_basename.sorted.bam
+  sorted_bam
 else
   # Methylation extraction
   # Extracts methylation info from BAM files produced by Bismark
@@ -227,11 +226,10 @@ else
   # Index sorted files for IGV
   # The "-@ ${threads}" below specifies number of CPU threads to use.
   find *.sorted.bam \
-  | xargs basename -s .sorted.bam \
-  | xargs -I bam_basename \
+  | xargs -I sorted_bam \
   ${samtools} index \
   -@ ${threads} \
-  bam_basename.sorted.bam
+  sorted_bam
 fi
 
 

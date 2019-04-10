@@ -68,7 +68,7 @@ deduplicate=""
 
 # Directories and programs
 wd=$(pwd)
-bismark_dir="/gscratch/srlab/programs/Bismark-0.21.0"
+bismark_dir="/gscratch/srlab/programs/Bismark-0.21.0_dev"
 bowtie2_dir="/gscratch/srlab/programs/bowtie2-2.3.4.1-linux-x86_64/"
 samtools="/gscratch/srlab/programs/samtools-1.9/samtools"
 threads="28"

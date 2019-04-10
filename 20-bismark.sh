@@ -85,7 +85,7 @@ R2_array=()
 # Create list of input FastQ files for easier confirmation.
 for fastq in ${reads_dir}/*.fq.gz
 do
-  echo ${fastq} >> ${reads_list}
+  echo ${fastq##*/} >> ${reads_list}
 done
 
 # Check for paired-end

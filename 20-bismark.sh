@@ -45,7 +45,9 @@ genome_dir=""
 # No - Reduced genome bisulfite sequencing (e.g. RRBS)
 deduplicate=""
 
-
+# Run Bismark on desired number of reads/pairs subset
+# The default value is 0, which will run Bismark on all reads/pairs
+subset="-u 0"
 
 ####################################################
 # DO NOT EDIT BELOW THIS LINE
@@ -130,6 +132,7 @@ if [[ ${paired} -eq 0 ]]; then
   --genome ${genome_dir} \
   --samtools_path=${samtools} \
   --non_directional \
+  ${subset} \
   -p ${threads} \
   -1 ${R1} \
   -2 ${R2} \
@@ -141,6 +144,7 @@ else
   --genome ${genome_dir} \
   --samtools_path=${samtools} \
   --non_directional \
+  ${subset} \
   -p ${threads} \
   ${R1} \
   2> bismark_summary.txt

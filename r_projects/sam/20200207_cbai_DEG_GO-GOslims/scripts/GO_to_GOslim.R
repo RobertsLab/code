@@ -39,7 +39,7 @@ for (item in goseq_files) {
                         fill = TRUE)
   
   ## Grab just the individual GO terms from the "category" column)
-  goterms <- as.character(go_seqs$category)
+  goterms <- as.character(go_seqs$V1)
   
   ### Use GSEA to map GO terms to GOslims
   

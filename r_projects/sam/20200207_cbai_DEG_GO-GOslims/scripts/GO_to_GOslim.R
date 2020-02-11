@@ -53,7 +53,7 @@ for (item in goseq_files) {
   # in addition to using the command here - I think they're both required.
   slim <- getOBOCollection("./data/goslim_generic.obo")
   
-  # Select Biological Processes groups
+  ## Map GO terms to GOslims and select Biological Processes group
   slims <- goSlim(myCollection, slim, "BP")
   
   

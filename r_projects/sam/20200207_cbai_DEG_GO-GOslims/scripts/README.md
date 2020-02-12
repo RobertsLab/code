@@ -1,0 +1,1 @@
+- `GO_to_GOslim.R`: R script file using GSEABase package to map GO terms to GOslims.

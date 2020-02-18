@@ -4,7 +4,7 @@
 
 FILES
 
-- `goslim_generic.obo`: Gene Ontology GOslim file downloaded from [from http://geneontology.org/docs/go-subset-guide/](from http://geneontology.org/docs/go-subset-guide/)
+- `goslim_generic.obo`: Gene Ontology GOslim file downloaded from [http://geneontology.org/docs/go-subset-guide/](http://geneontology.org/docs/go-subset-guide/)
 
 - `salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.infected-UP.subset.GOseq.depleted`: Infected DEGs depleted GO terms.
 

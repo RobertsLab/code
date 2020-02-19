@@ -54,7 +54,18 @@ for (item in goseq_files) {
   slim <- getOBOCollection("./data/goslim_generic.obo")
   
   ## Map GO terms to GOslims and select Biological Processes group
-  slims <- goSlim(myCollection, slim, "BP")
+  slimsdf <- goSlim(myCollection, slim, "BP")
+  
+  ## Create function to parse out GO terms assigned to each GOslim
+  ## Courtesy Bioconductor Support: https://support.bioconductor.org/p/128407/
+  mappedIds <-
+    function(df, collection, OFFSPRING)
+    {
+      map <- as.list(OFFSPRING[rownames(df)])
+      mapped <- lapply(map, intersect, ids(collection))
+      df[["go_terms"]] <- vapply(unname(mapped), paste, collapse = ";", character(1L))
+      df
+    }
   
   
   ### Prep output file naming structure
@@ -74,7 +85,7 @@ for (item in goseq_files) {
   outfile_dest <- file.path("./analyses/", outfilename)
   
   ## Write output file
-  write.csv(slims, file = outfile_dest, quote = FALSE)
+  write.csv(slimsdf, file = outfile_dest, quote = FALSE)
   
   
 }

@@ -56,6 +56,9 @@ for (item in goseq_files) {
   ## Map GO terms to GOslims and select Biological Processes group
   slimsdf <- goSlim(myCollection, slim, "BP")
   
+  ## Need to know the 'offspring' of each term in the ontology, and this is given by the data in:
+  GO.db::GOBPOFFSPRING
+  
   ## Create function to parse out GO terms assigned to each GOslim
   ## Courtesy Bioconductor Support: https://support.bioconductor.org/p/128407/
   mappedIds <-
@@ -67,6 +70,8 @@ for (item in goseq_files) {
       df
     }
   
+  ## Run the function
+  slimsdf <- mappedIds(slimsdf, myCollection, GOMFOFFSPRING)
   
   ### Prep output file naming structure
   

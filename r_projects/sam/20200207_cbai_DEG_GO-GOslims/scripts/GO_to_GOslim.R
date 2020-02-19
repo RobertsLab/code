@@ -64,7 +64,7 @@ for (item in goseq_files) {
   slimsdf <- goSlim(myCollection, slim, ontology)
   
   ## Need to know the 'offspring' of each term in the ontology, and this is given by the data in:
-  GO.db::GOBPOFFSPRING
+  # GO.db::getFromNamespace(go_offspring, "GO.db")
   
   ## Create function to parse out GO terms assigned to each GOslim
   ## Courtesy Bioconductor Support: https://support.bioconductor.org/p/128407/
@@ -78,7 +78,7 @@ for (item in goseq_files) {
     }
   
   ## Run the function
-  slimsdf <- mappedIds(slimsdf, myCollection, GOBPOFFSPRING)
+  slimsdf <- mappedIds(slimsdf, myCollection, getFromNamespace(go_offspring, "GO.db"))
   
   ### Prep output file naming structure
   

@@ -1,6 +1,13 @@
 library(GSEABase)
 library(tidyverse)
 
+
+### SET ONTOLOGY GROUP (e.g. Biological Process = BP, Molecular Function = MF, Cellular Component = CC)
+ontology <- "BP"
+
+### Set GOOFFSPRING database, based on ontology group set above
+go_offspring <- paste("GO", ontology, "OFFSPRING", sep = "")
+
 ### Download files
 download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200207_cbai_DEG/infected-vs-uninfected/edgeR.2317.dir/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.infected-UP.subset.GOseq.enriched",
               destfile = "./data/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.infected-UP.subset.GOseq.enriched")
@@ -54,7 +61,7 @@ for (item in goseq_files) {
   slim <- getOBOCollection("./data/goslim_generic.obo")
   
   ## Map GO terms to GOslims and select Biological Processes group
-  slimsdf <- goSlim(myCollection, slim, "BP")
+  slimsdf <- goSlim(myCollection, slim, ontology)
   
   ## Need to know the 'offspring' of each term in the ontology, and this is given by the data in:
   GO.db::GOBPOFFSPRING
@@ -71,7 +78,7 @@ for (item in goseq_files) {
     }
   
   ## Run the function
-  slimsdf <- mappedIds(slimsdf, myCollection, GOMFOFFSPRING)
+  slimsdf <- mappedIds(slimsdf, myCollection, GOBPOFFSPRING)
   
   ### Prep output file naming structure
   

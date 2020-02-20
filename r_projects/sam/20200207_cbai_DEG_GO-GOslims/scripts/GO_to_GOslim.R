@@ -1,6 +1,13 @@
 library(GSEABase)
 library(tidyverse)
 
+#########################################################################
+# Scipt to map C.bairdi DEG enriched GO terms to GOslims
+# and identify the GO terms contributing to each GOslim.
+#
+# Enriched GO terms are selected for a false discovery rate <= 0.05
+#########################################################################
+
 
 
 ### Download files

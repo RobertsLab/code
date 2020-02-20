@@ -58,8 +58,11 @@ for (item in goseq_files) {
                         col.names = paste0("V",seq_len(max_fields)),
                         fill = TRUE)
   
+  ## Filter enriched GOterms with false discovery rate <= 0.05
+  goseqs_fdr <- filter(go_seqs, V8 <= 0.05)
+  
   ## Grab just the individual GO terms from the "category" column)
-  goterms <- as.character(go_seqs$V1)
+  goterms <- as.character(goseqs_fdr$V1)
   
   ### Use GSEA to map GO terms to GOslims
   

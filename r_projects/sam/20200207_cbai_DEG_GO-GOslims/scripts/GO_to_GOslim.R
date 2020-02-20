@@ -43,6 +43,7 @@ download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200207_cb
 ### Create list of files
 goseq_files <- list.files(path = "./data",
                          pattern = "\\.GOseq.[de]",
+                         recursive = TRUE,
                          full.names = TRUE)
 
 ### Set output filename suffix

@@ -3,10 +3,10 @@ library(tidyverse)
 
 
 ### SET ONTOLOGY GROUP (e.g. Biological Process = BP, Molecular Function = MF, Cellular Component = CC)
-ontology <- "BP"
+slim_ontology <- "BP"
 
 ### Set GOOFFSPRING database, based on ontology group set above
-go_offspring <- paste("GO", ontology, "OFFSPRING", sep = "")
+go_offspring <- paste("GO", slim_ontology, "OFFSPRING", sep = "")
 
 ### Download files
 download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200207_cbai_DEG/infected-vs-uninfected/edgeR.2317.dir/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.infected-UP.subset.GOseq.enriched",
@@ -74,7 +74,7 @@ for (item in goseq_files) {
   slim <- getOBOCollection("./data/goslim_generic.obo")
   
   ## Map GO terms to GOslims and select Biological Processes group
-  slimsdf <- goSlim(myCollection, slim, ontology)
+  slimsdf <- goSlim(myCollection, slim, slim_ontology)
   
   ## Need to know the 'offspring' of each term in the ontology, and this is given by the data in:
   # GO.db::getFromNamespace(go_offspring, "GO.db")
@@ -98,16 +98,23 @@ for (item in goseq_files) {
   ## Split filenames on periods
   ## Creates a list
   split_filename <- strsplit(item, ".", fixed = TRUE)
+  
+  ## Split filename on directories
+  ## Creates a list
+  split_dirs <- strsplit(item, "/", fixed = TRUE)
 
   ## Slice split_filename list from position 9 to the last position of the list
   ## Paste these together using a period
   goseq_filename_split <-paste(split_filename[[1]][9:lengths(split_filename)], collapse = ".")
   
+  ## Slice split_dirs list at position
+  
   ## Paste elements together to form output filename
   outfilename <- paste(goseq_filename_split, output_suffix, collapse = ".", sep = ".")
   
-  # Set output file destination and name
-  outfile_dest <- file.path("./analyses/", outfilename)
+  ## Set output file destination and name
+  ## Adds proper subdirectory from split_dirs list
+  outfile_dest <- file.path("./analyses", split_dirs[[1]][3], outfilename)
   
   ## Write output file
   write.csv(slimsdf, file = outfile_dest, quote = FALSE)

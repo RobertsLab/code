@@ -1,0 +1,6 @@
+category	over_represented_pvalue	under_represented_pvalue	numDEInCat	numInCat	term	ontology	over_represented_FDR	under_represented_FDR	go_term
+GO:0009987	1	0.00644775801745978	0	6076	cellular process	BP	0.9999999999	0.999808828885493	BP cellular process
+GO:0008150	0.998333342003771	0.0161390652103567	1	7218	biological_process	BP	0.9999999999	0.999808828885493	BP biological_process
+GO:0071704	1	0.0423904239278856	0	4124	organic substance metabolic process	BP	0.9999999999	0.999808828885493	BP organic substance metabolic process
+GO:0044237	1	0.0458191146901842	0	4050	cellular metabolic process	BP	0.9999999999	0.999808828885493	BP cellular metabolic process
+GO:0065007	1	0.048577110185018	0	4016	biological regulation	BP	0.9999999999	0.999808828885493	BP biological regulation

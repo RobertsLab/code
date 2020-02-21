@@ -88,6 +88,10 @@ for (slim_ontology in ontologies) {
     ## Run the function
     slimsdf <- mappedIds(slimsdf, myCollection, getFromNamespace(go_offspring, "GO.db"))
     
+    ## Provide column name for first column
+    slimsdf <- cbind(GOslim = rownames(slimsdf), slimsdf)
+    rownames(slimsdf) <- NULL
+    
     ### Prep output file naming structure
     
     ## Split filenames on periods

@@ -12,7 +12,7 @@ library(tidyverse)
 fdr <- as.character("1.0")
 
 ### Download files
-download.file(url = "salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.infected-UP.subset.GOseq.enriched.flattened",
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200207_cbai_DEG/infected-vs-uninfected/edgeR.2317.dir/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.infected-UP.subset.GOseq.enriched.flattened",
               destfile = "./data/infected-vs-uninfected/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.infected-UP.subset.GOseq.enriched.flattened")
 download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200207_cbai_DEG/D12-vs-D26/edgeR.21229.dir/salmon.gene.counts.matrix.D12_vs_D26.edgeR.DE_results.P0.05_C1.D26-UP.subset.GOseq.enriched.flattened", 
               destfile = "./data/D12-vs-D26/salmon.gene.counts.matrix.D12_vs_D26.edgeR.DE_results.P0.05_C1.D26-UP.subset.GOseq.enriched.flattened")
@@ -43,15 +43,12 @@ for (slim_ontology in ontologies) {
     ## Get max number of fields
     # Needed to handle reading in file with different number of columns in each row
     # as there may be multiple 
-    max_fields <- max(count.fields(item, sep = "\t"))
+    max_fields <- max(count.fields(item, sep = "\t"), na.rm = TRUE)
     
     ## Read in tab-delimited GOseq file
     # Use "max_fields" to populate all columns with a sequentially numbered header
-    go_seqs <- read.table(item,
-                          sep = "\t",
-                          header = TRUE,
-                          col.names = paste0("V",seq_len(max_fields)),
-                          fill = TRUE)
+    go_seqs <- read.delim(item,
+                          col.names = paste0("V",seq_len(max_fields)))
     
     ## Filter enriched GOterms with false discovery rate
     goseqs_fdr <- filter(go_seqs, V8 <= as.numeric(fdr))

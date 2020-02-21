@@ -1,5 +1,0 @@
-category	over_represented_pvalue	under_represented_pvalue	numDEInCat	numInCat	term	ontology	over_represented_FDR	go_term	gene_ids
-GO:0004602	0.00581671880613388	0.999986298534554	1	9	glutathione peroxidase activity	MF	0.9999999999	MF glutathione peroxidase activity	TRINITY_DN2373_c0_g1
-GO:0004601	0.01630906863068	0.99988270285688	1	28	peroxidase activity	MF	0.9999999999	MF peroxidase activity	TRINITY_DN2373_c0_g1
-GO:0016684	0.0187008000394131	0.999845086588766	1	31	oxidoreductase activity, acting on peroxide as acceptor	MF	0.9999999999	MF oxidoreductase activity, acting on peroxide as acceptor	TRINITY_DN2373_c0_g1
-GO:0016209	0.0245768967872275	0.999729518829868	1	42	antioxidant activity	MF	0.9999999999	MF antioxidant activity	TRINITY_DN2373_c0_g1

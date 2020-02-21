@@ -117,7 +117,7 @@ for (slim_ontology in ontologies) {
     outfile_dest <- file.path("./analyses", split_dirs[[1]][3], outfilename)
     
     ## Write output file
-    write.csv(slimsdf, file = outfile_dest, quote = FALSE)
+    write.csv(slimsdf, file = outfile_dest, quote = FALSE, row.names = FALSE)
     
     
   }

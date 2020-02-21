@@ -3,41 +3,19 @@ library(tidyverse)
 
 #########################################################################
 # Scipt to map C.bairdi DEG enriched GO terms to GOslims
-# and identify the GO terms contributing to each GOslim.
-#
-# Enriched GO terms are selected for a false discovery rate <= 0.05
+# and identify the GO terms contributing to each GOslim
 #########################################################################
 
 
 
+### Set false discovery rate (FDR) filter, if desired
+fdr <- as.character("1.0")
+
 ### Download files
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200207_cbai_DEG/infected-vs-uninfected/edgeR.2317.dir/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.infected-UP.subset.GOseq.enriched",
-              destfile = "./data/infected-vs-uninfected/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.infected-UP.subset.GOseq.enriched")
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200207_cbai_DEG/infected-vs-uninfected/edgeR.2317.dir/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.infected-UP.subset.GOseq.depleted",
-              destfile = "./data/infected-vs-uninfected/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.infected-UP.subset.GOseq.depleted")
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200207_cbai_DEG/infected-vs-uninfected/edgeR.2317.dir/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.uninfected-UP.subset.GOseq.enriched",
-              destfile = "./data/infected-vs-uninfected/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.uninfected-UP.subset.GOseq.enriched")
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200207_cbai_DEG/infected-vs-uninfected/edgeR.2317.dir/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.uninfected-UP.subset.GOseq.depleted",
-              destfile = "./data/infected-vs-uninfected/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.uninfected-UP.subset.GOseq.depleted")
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200207_cbai_DEG/D12-vs-D26/edgeR.21229.dir/salmon.gene.counts.matrix.D12_vs_D26.edgeR.DE_results.P0.05_C1.D12-UP.subset.GOseq.depleted", 
-              destfile = "./data/D12-vs-D26/salmon.gene.counts.matrix.D12_vs_D26.edgeR.DE_results.P0.05_C1.D12-UP.subset.GOseq.depleted")
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200207_cbai_DEG/D12-vs-D26/edgeR.21229.dir/salmon.gene.counts.matrix.D12_vs_D26.edgeR.DE_results.P0.05_C1.D12-UP.subset.GOseq.enriched", 
-              destfile = "./data/D12-vs-D26/salmon.gene.counts.matrix.D12_vs_D26.edgeR.DE_results.P0.05_C1.D12-UP.subset.GOseq.enriched")
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200207_cbai_DEG/D12-vs-D26/edgeR.21229.dir/salmon.gene.counts.matrix.D12_vs_D26.edgeR.DE_results.P0.05_C1.D26-UP.subset.GOseq.depleted", 
-              destfile = "./data/D12-vs-D26/salmon.gene.counts.matrix.D12_vs_D26.edgeR.DE_results.P0.05_C1.D26-UP.subset.GOseq.depleted")
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200207_cbai_DEG/D12-vs-D26/edgeR.21229.dir/salmon.gene.counts.matrix.D12_vs_D26.edgeR.DE_results.P0.05_C1.D26-UP.subset.GOseq.enriched", 
-              destfile = "./data/D12-vs-D26/salmon.gene.counts.matrix.D12_vs_D26.edgeR.DE_results.P0.05_C1.D26-UP.subset.GOseq.enriched")
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200207_cbai_DEG/D12_infected-vs-D12_uninfected/edgeR.24484.dir/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.DE.subset.GOseq.depleted", 
-              destfile = "./data/D12_infected-vs-D12_uninfected/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.DE.subset.GOseq.depleted")
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200207_cbai_DEG/D12_infected-vs-D12_uninfected/edgeR.24484.dir/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.DE.subset.GOseq.enriched", 
-              destfile = "./data/D12_infected-vs-D12_uninfected/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.DE.subset.GOseq.enriched")
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200207_cbai_DEG/D12_infected-vs-D12_uninfected/edgeR.24484.dir/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.infected-UP.subset.GOseq.depleted", 
-              destfile = "./data/D12_infected-vs-D12_uninfected/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.infected-UP.subset.GOseq.depleted")
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200207_cbai_DEG/D12_infected-vs-D12_uninfected/edgeR.24484.dir/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.infected-UP.subset.GOseq.enriched", 
-              destfile = "./data/D12_infected-vs-D12_uninfected/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.infected-UP.subset.GOseq.enriched")
-
-
-
+download.file(url = "salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.infected-UP.subset.GOseq.enriched.flattened",
+              destfile = "./data/infected-vs-uninfected/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.infected-UP.subset.GOseq.enriched.flattened")
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200207_cbai_DEG/D12-vs-D26/edgeR.21229.dir/salmon.gene.counts.matrix.D12_vs_D26.edgeR.DE_results.P0.05_C1.D26-UP.subset.GOseq.enriched.flattened", 
+              destfile = "./data/D12-vs-D26/salmon.gene.counts.matrix.D12_vs_D26.edgeR.DE_results.P0.05_C1.D26-UP.subset.GOseq.enriched.flattened")
 
 
 ### Create list of files
@@ -64,6 +42,7 @@ for (slim_ontology in ontologies) {
     
     ## Get max number of fields
     # Needed to handle reading in file with different number of columns in each row
+    # as there may be multiple 
     max_fields <- max(count.fields(item, sep = "\t"))
     
     ## Read in tab-delimited GOseq file
@@ -74,8 +53,8 @@ for (slim_ontology in ontologies) {
                           col.names = paste0("V",seq_len(max_fields)),
                           fill = TRUE)
     
-    ## Filter enriched GOterms with false discovery rate <= 0.05
-    goseqs_fdr <- filter(go_seqs, V8 <= 0.05)
+    ## Filter enriched GOterms with false discovery rate
+    goseqs_fdr <- filter(go_seqs, V8 <= as.numeric(fdr))
     
     ## Grab just the individual GO terms from the "category" column)
     goterms <- as.character(goseqs_fdr$V1)
@@ -129,7 +108,8 @@ for (slim_ontology in ontologies) {
     ## Slice split_dirs list at position
     
     ## Paste elements together to form output filename
-    outfilename <- paste(goseq_filename_split, slim_ontology ,output_suffix, collapse = ".", sep = ".")
+    fdr_file_out <- paste("FDR", fdr, sep = "_")
+    outfilename <- paste(goseq_filename_split, fdr_file_out, slim_ontology ,output_suffix, collapse = ".", sep = ".")
     
     ## Set output file destination and name
     ## Adds proper subdirectory from split_dirs list

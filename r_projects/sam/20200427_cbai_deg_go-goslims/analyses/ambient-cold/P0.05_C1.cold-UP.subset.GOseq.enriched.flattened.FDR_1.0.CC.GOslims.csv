@@ -1,0 +1,36 @@
+GOslim,Count,Percent,Term,go_terms
+GO:0000228,0,0,nuclear chromosome,
+GO:0000229,0,0,cytoplasmic chromosome,
+GO:0005575,6,22.2222222222222,cellular_component,GO:0022627;GO:0031966;GO:0032040;GO:0048476;GO:0070469
+GO:0005576,0,0,extracellular region,
+GO:0005615,0,0,extracellular space,
+GO:0005618,0,0,cell wall,
+GO:0005622,4,14.8148148148148,intracellular,GO:0022627;GO:0031966;GO:0048476
+GO:0005623,4,14.8148148148148,cell,GO:0022627;GO:0031966;GO:0048476
+GO:0005634,0,0,nucleus,
+GO:0005635,0,0,nuclear envelope,
+GO:0005654,0,0,nucleoplasm,
+GO:0005694,0,0,chromosome,
+GO:0005730,0,0,nucleolus,
+GO:0005737,3,11.1111111111111,cytoplasm,GO:0022627;GO:0031966
+GO:0005739,2,7.40740740740741,mitochondrion,GO:0031966
+GO:0005764,0,0,lysosome,
+GO:0005768,0,0,endosome,
+GO:0005773,0,0,vacuole,
+GO:0005777,0,0,peroxisome,
+GO:0005783,0,0,endoplasmic reticulum,
+GO:0005794,0,0,Golgi apparatus,
+GO:0005811,0,0,lipid droplet,
+GO:0005815,0,0,microtubule organizing center,
+GO:0005829,1,3.7037037037037,cytosol,GO:0022627
+GO:0005840,1,3.7037037037037,ribosome,GO:0022627
+GO:0005856,0,0,cytoskeleton,
+GO:0005886,0,0,plasma membrane,
+GO:0005929,0,0,cilium,
+GO:0009536,0,0,plastid,
+GO:0009579,0,0,thylakoid,
+GO:0030312,0,0,external encapsulating structure,
+GO:0031012,0,0,extracellular matrix,
+GO:0031410,0,0,cytoplasmic vesicle,
+GO:0032991,3,11.1111111111111,protein-containing complex,GO:0022627;GO:0032040;GO:0048476
+GO:0043226,3,11.1111111111111,organelle,GO:0022627;GO:0031966

@@ -1,0 +1,41 @@
+GOslim,Count,Percent,Term,go_terms
+GO:0003674,1347,59.9199288256228,molecular_function,GO:0030023;GO:0001640;GO:0001641;GO:0003676;GO:0003887;GO:0003964;GO:0004175;GO:0004190;GO:0008233;GO:0004518;GO:0004519;GO:0004520;GO:0004521;GO:0004523;GO:0004536;GO:0004540;GO:0004970;GO:0005214;GO:0005230;GO:0008010;GO:0008066;GO:0008270;GO:0009036;GO:0070011;GO:0015666;GO:0016740;GO:0016772;GO:0016779;GO:0016787;GO:0016788;GO:0016888;GO:0016891;GO:0016893;GO:0022824;GO:0022835;GO:0030594;GO:0030375;GO:0034061;GO:0039660;GO:0042302;GO:0046914;GO:0055056;GO:0070001;GO:0097493;GO:0098960;GO:0099529;GO:1904315
+GO:0003677,0,0,DNA binding,
+GO:0003700,0,0,DNA-binding transcription factor ac...,
+GO:0003723,0,0,RNA binding,
+GO:0003729,0,0,mRNA binding,
+GO:0003735,0,0,structural constituent of ribosome,
+GO:0003924,0,0,GTPase activity,
+GO:0004386,0,0,helicase activity,
+GO:0004518,286,12.7224199288256,nuclease activity,GO:0004519;GO:0004520;GO:0004521;GO:0004523;GO:0004536;GO:0004540;GO:0009036;GO:0015666;GO:0016888;GO:0016891;GO:0016893
+GO:0005198,25,1.11209964412811,structural molecule activity,GO:0030023;GO:0005214;GO:0008010;GO:0039660;GO:0042302;GO:0097493
+GO:0008092,0,0,cytoskeletal protein binding,
+GO:0008134,0,0,transcription factor binding,
+GO:0008135,0,0,translation factor activity, RNA bi...,
+GO:0008168,0,0,methyltransferase activity,
+GO:0008233,198,8.80782918149466,peptidase activity,GO:0004175;GO:0004190;GO:0070011;GO:0070001
+GO:0008289,0,0,lipid binding,
+GO:0016301,0,0,kinase activity,
+GO:0016491,0,0,oxidoreductase activity,
+GO:0016746,0,0,transferase activity, transferring ...,
+GO:0016757,0,0,transferase activity, transferring ...,
+GO:0016765,0,0,transferase activity, transferring ...,
+GO:0016779,284,12.6334519572954,nucleotidyltransferase activity,GO:0003887;GO:0003964;GO:0034061
+GO:0016791,0,0,phosphatase activity,
+GO:0016798,0,0,hydrolase activity, acting on glyco...,
+GO:0016810,0,0,hydrolase activity, acting on carbo...,
+GO:0016829,0,0,lyase activity,
+GO:0016853,0,0,isomerase activity,
+GO:0016874,0,0,ligase activity,
+GO:0016887,0,0,ATPase activity,
+GO:0019843,0,0,rRNA binding,
+GO:0019899,0,0,enzyme binding,
+GO:0022857,27,1.20106761565836,transmembrane transporter activity,GO:0004970;GO:0005230;GO:0022824;GO:0022835;GO:0055056;GO:1904315
+GO:0030234,0,0,enzyme regulator activity,
+GO:0030533,0,0,triplet codon-amino acid adaptor ac...,
+GO:0030555,0,0,RNA modification guide activity,
+GO:0030674,0,0,protein binding, bridging,
+GO:0032182,0,0,ubiquitin-like protein binding,
+GO:0042393,0,0,histone binding,
+GO:0043167,81,3.60320284697509,ion binding,GO:0008270;GO:0046914
+GO:0051082,0,0,unfolded protein binding,

@@ -1,0 +1,4 @@
+category	over_represented_pvalue	under_represented_pvalue	numDEInCat	numInCat	term	ontology	over_represented_FDR	gene_ids
+GO:0042742	0.0195998117387744	0.999856476663552	1	84	defense_response_to_bacterium	BP	0.9999999999	TRINITY_DN9661_c1_g1
+GO:0009617	0.0262990344455734	0.999740060988525	1	113	response_to_bacterium	BP	0.9999999999	TRINITY_DN9661_c1_g1
+GO:0098542	0.0313582531201904	0.999629095864113	1	135	defense_response_to_other_organism	BP	0.9999999999	TRINITY_DN9661_c1_g1

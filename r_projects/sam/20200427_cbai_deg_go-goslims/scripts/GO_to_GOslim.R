@@ -6,6 +6,45 @@ library(tidyverse)
 # and identify the GO terms contributing to each GOslim
 #########################################################################
 
+### Download files and specify destination directory
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200422_cbai_DEG_basic_comparisons/D9-D12/edgeR.169728.dir/salmon.gene.counts.matrix.D12_vs_D9.edgeR.DE_results.P0.05_C1.D12-UP.subset.GOseq.enriched.flattened",
+              destfile = "./data/D9-D12/salmon.gene.counts.matrix.D12_vs_D9.edgeR.DE_results.P0.05_C1.D12-UP.subset.GOseq.enriched.flattened")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200422_cbai_DEG_basic_comparisons/D9-D12/edgeR.169728.dir/salmon.gene.counts.matrix.D12_vs_D9.edgeR.DE_results.P0.05_C1.D9-UP.subset.GOseq.enriched.flattened",
+              destfile = "./data/D9-D12/salmon.gene.counts.matrix.D12_vs_D9.edgeR.DE_results.P0.05_C1.D9-UP.subset.GOseq.enriched.flattened")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200422_cbai_DEG_basic_comparisons/D9-D26/edgeR.200352.dir/salmon.gene.counts.matrix.D26_vs_D9.edgeR.DE_results.P0.05_C1.D9-UP.subset.GOseq.enriched.flattened",
+              destfile = "./data/D9-D26/salmon.gene.counts.matrix.D26_vs_D9.edgeR.DE_results.P0.05_C1.D9-UP.subset.GOseq.enriched.flattened")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200422_cbai_DEG_basic_comparisons/D9-D26/edgeR.200352.dir/salmon.gene.counts.matrix.D26_vs_D9.edgeR.DE_results.P0.05_C1.D26-UP.subset.GOseq.enriched.flattened",
+              destfile = "./data/D9-D26/salmon.gene.counts.matrix.D26_vs_D9.edgeR.DE_results.P0.05_C1.D26-UP.subset.GOseq.enriched.flattened")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200422_cbai_DEG_basic_comparisons/D12-D26/edgeR.230922.dir/salmon.gene.counts.matrix.D12_vs_D26.edgeR.DE_results.P0.05_C1.D26-UP.subset.GOseq.enriched.flattened",
+              destfile = "./data/D12-D26/salmon.gene.counts.matrix.D12_vs_D26.edgeR.DE_results.P0.05_C1.D26-UP.subset.GOseq.enriched.flattened")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200422_cbai_DEG_basic_comparisons/ambient-cold/edgeR.267393.dir/salmon.gene.counts.matrix.ambient_vs_cold.edgeR.DE_results.P0.05_C1.ambient-UP.subset.GOseq.enriched.flattened",
+              destfile = "./data/ambient-cold/salmon.gene.counts.matrix.ambient_vs_cold.edgeR.DE_results.P0.05_C1.ambient-UP.subset.GOseq.enriched.flattened")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200422_cbai_DEG_basic_comparisons/ambient-cold/edgeR.267393.dir/salmon.gene.counts.matrix.ambient_vs_cold.edgeR.DE_results.P0.05_C1.cold-UP.subset.GOseq.enriched.flattened",
+              destfile = "./data/ambient-cold/salmon.gene.counts.matrix.ambient_vs_cold.edgeR.DE_results.P0.05_C1.cold-UP.subset.GOseq.enriched.flattened")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200422_cbai_DEG_basic_comparisons/ambient-warm/edgeR.297991.dir/salmon.gene.counts.matrix.ambient_vs_warm.edgeR.DE_results.P0.05_C1.warm-UP.subset.GOseq.enriched.flattened",
+              destfile = "./data/ambient-warm/salmon.gene.counts.matrix.ambient_vs_warm.edgeR.DE_results.P0.05_C1.warm-UP.subset.GOseq.enriched.flattened")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200422_cbai_DEG_basic_comparisons/ambient-warm/edgeR.297991.dir/salmon.gene.counts.matrix.ambient_vs_warm.edgeR.DE_results.P0.05_C1.ambient-UP.subset.GOseq.enriched.flattened",
+              destfile = "./data/ambient-warm/salmon.gene.counts.matrix.ambient_vs_warm.edgeR.DE_results.P0.05_C1.ambient-UP.subset.GOseq.enriched.flattened")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200422_cbai_DEG_basic_comparisons/cold-warm/edgeR.328585.dir/salmon.gene.counts.matrix.cold_vs_warm.edgeR.DE_results.P0.05_C1.warm-UP.subset.GOseq.enriched.flattened",
+              destfile = "./data/cold-warm/salmon.gene.counts.matrix.cold_vs_warm.edgeR.DE_results.P0.05_C1.warm-UP.subset.GOseq.enriched.flattened")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200422_cbai_DEG_basic_comparisons/cold-warm/edgeR.328585.dir/salmon.gene.counts.matrix.cold_vs_warm.edgeR.DE_results.P0.05_C1.cold-UP.subset.GOseq.enriched.flattened",
+              destfile = "./data/cold-warm/salmon.gene.counts.matrix.cold_vs_warm.edgeR.DE_results.P0.05_C1.cold-UP.subset.GOseq.enriched.flattened")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200422_cbai_DEG_basic_comparisons/infected-uninfected/edgeR.132470.dir/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.infected-UP.subset.GOseq.enriched.flattened",
+              destfile = "./data/infected-uninfected/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.infected-UP.subset.GOseq.enriched.flattened")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200422_cbai_DEG_basic_comparisons/infected-uninfected/edgeR.132470.dir/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.uninfected-UP.subset.GOseq.enriched.flattened",
+              destfile = "./data/infected-uninfected/salmon.gene.counts.matrix.infected_vs_uninfected.edgeR.DE_results.P0.05_C1.uninfected-UP.subset.GOseq.enriched.flattened")
 
 
 ### Set false discovery rate (FDR) filter, if desired

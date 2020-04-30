@@ -1,0 +1,114 @@
+---
+title: "cbai_deg_multiple_conditions"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r libraries}
+library("DESeq2")
+library("tidyverse")
+library("dplyr")
+library("pheatmap")
+library("RColorBrewer")
+library("genefilter")
+library("ggplot2")
+library("gplots")
+library("limma")
+library("spdep") 
+library("adegenet")
+```
+
+```{r download files}
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/72_quant/quant.sf",
+destfile = "../data/72_quant.sf")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/73_quant/quant.sf",
+destfile = "../data/73_quant.sf")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/113_quant/quant.sf",
+destfile = "../data/113_quant.sf")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/118_quant/quant.sf",
+destfile = "../data/118_quant.sf")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/127_quant/quant.sf",
+destfile = "../data/127_quant.sf")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/132_quant/quant.sf",
+destfile = "../data/132_quant.sf")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/151_quant/quant.sf",
+destfile = "../data/151_quant.sf")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/173_quant/quant.sf",
+destfile = "../data/173_quant.sf")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/178_quant/quant.sf",
+destfile = "../data/178_quant.sf")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/221_quant/quant.sf",
+destfile = "../data/221_quant.sf")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/222_quant/quant.sf",
+destfile = "../data/222_quant.sf")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/254_quant/quant.sf",
+destfile = "../data/254_quant.sf")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/272_quant/quant.sf",
+destfile = "../data/272_quant.sf")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/280_quant/quant.sf",
+destfile = "../data/280_quant.sf")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/294_quant/quant.sf",
+destfile = "../data/294_quant.sf")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/334_quant/quant.sf",
+destfile = "../data/334_quant.sf")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/349_quant/quant.sf",
+destfile = "../data/349_quant.sf")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/359_quant/quant.sf",
+destfile = "../data/359_quant.sf")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/425_quant/quant.sf",
+destfile = "../data/425_quant.sf")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/427_quant/quant.sf",
+destfile = "../data/427_quant.sf")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/445_quant/quant.sf",
+destfile = "../data/445_quant.sf")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/463_quant/quant.sf",
+destfile = "../data/463_quant.sf")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/481_quant/quant.sf",
+destfile = "../data/481_quant.sf")
+
+download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/485_quant/quant.sf",
+destfile = "../data/485_quant.sf")
+
+```
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

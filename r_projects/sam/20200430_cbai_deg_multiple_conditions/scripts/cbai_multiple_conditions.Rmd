@@ -102,6 +102,10 @@ destfile = "../data/485_quant.sf")
 
 ```
 
+```{bash check downloaded files}
+head ../data/72_quant.sf | column -t
+```
+
 
 ## Including Plots
 

@@ -25,6 +25,7 @@ library("gplots")
 library("limma")
 library("spdep") 
 library("adegenet")
+library("tximport")
 ```
 
 ```{r download files}
@@ -105,6 +106,20 @@ destfile = "../data/485_quant.sf")
 ```{bash check downloaded files}
 head ../data/72_quant.sf | column -t
 ```
+```{r treatment info}
+treatmentinfo <- read.csv("../data/cbai_2020gw_rnaseq_sample_info.csv", header = TRUE, sep = ",")
+print(treatmentinfo)
+```
+
+
+
+
+
+
+
+
+
+
 
 
 ## Including Plots

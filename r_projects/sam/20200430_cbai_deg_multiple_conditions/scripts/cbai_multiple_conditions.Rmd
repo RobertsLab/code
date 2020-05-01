@@ -108,15 +108,51 @@ head ../data/72_quant.sf | column -t
 ```
 ```{r treatment info}
 treatmentinfo <- read.csv("../data/cbai_2020gw_rnaseq_sample_info.csv", header = TRUE, sep = ",")
-print(treatmentinfo)
+treatmentinfo
+```
+
+
+
+```{r import gene counts}
+# Read in salmon gene count data
+# First column has no label, so use "empty" row.names to assign Trinity gene IDs to row names
+gcount <- read.csv("../data/salmon.gene.counts.matrix", header = TRUE, row.names = "", check.names = FALSE, sep = "\t")
+head(gcount)
+
+# Round numbers to integers
+gcount <- gcount %>% 
+  rownames_to_column('gene_id') %>% 
+  mutate_if(is.numeric, round, 0) %>% 
+  column_to_rownames('gene_id')
+
+head(gcount)
 ```
 
 
 
 
+```{r match sample IDs}
+#Ensure all sample IDs in colData are also in CountData and match their orders
+# Sort column names
+gcount <- gcount[ , order(names(gcount))]
 
+head(gcount)
 
+# Remove "_quant" from column names
+colnames(gcount) = gsub(pattern = "_quant", replacement = "", colnames(gcount))
 
+head(gcount)
+
+rownames(treatmentinfo) <- treatmentinfo$sample_id
+colnames(gcount) <- treatmentinfo$sample_id
+
+head(treatmentinfo)
+head(gcount)
+
+# Check row and column names match. Should return "TRUE".
+all(rownames(treatmentinfo) %in% colnames(gcount))
+all(rownames(treatmentinfo) == colnames(gcount))
+```
 
 
 

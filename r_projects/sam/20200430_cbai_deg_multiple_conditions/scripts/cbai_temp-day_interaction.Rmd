@@ -112,7 +112,11 @@ treatmentinfo
 ```{r import gene counts}
 # Read in salmon gene count data
 # First column has no label, so use "empty" row.names to assign Trinity gene IDs to row names
-gcount <- read.csv("../data/salmon.gene.counts.matrix", header = TRUE, row.names = "", check.names = FALSE, sep = "\t")
+gcount <- read.csv("../data/salmon.gene.counts.matrix",
+                   header = TRUE,
+                   row.names = "",
+                   check.names = FALSE,
+                   sep = "\t")
 head(gcount)
 
 # Round numbers to integers

@@ -153,17 +153,73 @@ head(gcount)
 all(rownames(treatmentinfo) %in% colnames(gcount))
 all(rownames(treatmentinfo) == colnames(gcount))
 ```
-
-
-
-
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+inf_status <- sort(unique(treatmentinfo$infection_status))
+days <- sort(unique(treatmentinfo$day))
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+treatmentinfo$infection_status <- factor(treatmentinfo$infection_status, levels = inf_status)
+treatmentinfo$day <- factor(treatmentinfo$day) #set group values as factor variables
+
+head(treatmentinfo)
+```
+
+
+```{r}
+#Set DESeq2 design
+gdds <- DESeqDataSetFromMatrix(countData = gcount,
+                              colData = treatmentinfo,
+                              design = ~infection_status + day + infection_status:day)
+```
+
+```{r}
+SF.gdds <- estimateSizeFactors( gdds ) #estimate size factors to determine if we can use vst  to transform our data. Size factors should be less than for to use vst
+print(sizeFactors(SF.gdds)) #View size factors
+```
+
+```{r}
+gvst <- vst(gdds, blind = FALSE)
+
+head (assay(gvst), 3)
+```
+
+```{r}
+gsampleDists <- dist(t(assay(gvst))) #calculate distance matix
+gsampleDistMatrix <- as.matrix(gsampleDists) #distance matrix
+rownames(gsampleDistMatrix) <- colnames(gvst) #assign row names
+colnames(gsampleDistMatrix) <- NULL #assign col names
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255) #assign colors
+pheatmap(gsampleDistMatrix, #plot matrix
+         clustering_distance_rows=gsampleDists, #cluster rows
+         clustering_distance_cols=gsampleDists, #cluster columns
+         col=colors) #set colors
+```
+
+```{r}
+gPCAdata <- plotPCA(gvst, intgroup = c("infection_status", "day"), returnData=TRUE)
+percentVar <- round(100*attr(gPCAdata, "percentVar")) #plot PCA of samples with all data
+ggplot(gPCAdata, aes(PC1, PC2, color=infection_status, shape=day)) + 
+  geom_point(size=3) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  scale_color_manual(values = c(infected="red", uninfected="cadetblue4")) +
+  coord_fixed()
+```
+
+```{r}
+DEG.group <- DESeq(gdds, test = "LRT", reduced = ~infection_status + day) #run differential expression test by group using the LRT model
+DEG.group.results <- results(DEG.group) #save DE results
+resultsNames(DEG.group) #view DE results
+```
+
+```{r}
+group.results.ordered <- order(DEG.group.results$pvalue) #Order p-values by smallest value first
+summary(DEG.group.results) #view results summary
+```
+
+```{r}
+sig.num <- sum(DEG.group.results$padj < 0.05, na.rm=TRUE) #How many adjusted p-values were less than 0.05?
+sig.num
+```
+

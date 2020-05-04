@@ -207,8 +207,8 @@ head(assay(DEGvst), 3) #view transformed gene count data
 topVarGenes <- head(order(rowVars(assay(DEGvst)),decreasing=TRUE),sig.num) #sort by decreasing sig
 mat <- assay(DEGvst)[ topVarGenes, ] #make an expression object
 mat <- mat - rowMeans(mat) #difference in expression compared to average across all samples
-ann_colors <-  list(time_point=c(Eggs="darkgreen", Fertilized_embryos="darkgreen", Cleavage="cadetblue4", Prawn_chip="deepskyblue", Gastrulation="cornflowerblue", Morulae="blueviolet", Blastula="darkorchid4", Planulae="deeppink4"), treatment= c(AMB="chartreuse", l="pink", xl="violetred3"))#, treatment=AMB="chartreuse", l="pink", xl="violetred3")
-df1 <- as.data.frame(colData(DEGvst)[c("time_point", "treatment")]) #make dataframe for column naming 
+ann_colors <-  list(day=c(D9="darkgreen", D12="cadetblue4", D26="deepskyblue"), infection_status= c(infected="chartreuse", uninfected="violetred3"))#, treatment=AMB="chartreuse", l="pink", xl="violetred3")
+df1 <- as.data.frame(colData(DEGvst)[c("day", "infection_status")]) #make dataframe for column naming 
 DEGheatmap <- pheatmap(mat, scale="row", annotation_col=df1, annotation_colors = ann_colors,
          clustering_distance_rows="euclidean", clustering_method = "average",
          show_rownames =FALSE,

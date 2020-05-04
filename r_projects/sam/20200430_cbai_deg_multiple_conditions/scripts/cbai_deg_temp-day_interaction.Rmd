@@ -7,9 +7,24 @@ output: html_document
 knitr::opts_chunk$set(message = FALSE)
 ```
 
+### Differential Expression of _C.bairdi_ Genes Across Infection Status and Time Points Using DESeq2
+
+---
+
+This follows the excellent example from Erin Chille's repo:
+
+https://github.com/echille/Montipora_OA_Development_Timeseries/blob/master/RNAseq_Analyses/DevelopmentxpHTreatment_RNAseqDE.html
+
+---
+
+#### Gene count data were generated using [Salmon](https://combine-lab.github.io/salmon/). See [my notebook entry from 20200429](https://robertslab.github.io/sams-notebook/2020/04/29/Transcript-Abundance-C.bairdi-Alignment-free-with-Salmon-Using-2020-GW-Data-on-Mox.html) for more info.
 
 
-```{r libraries}
+---
+
+Load libraries:
+
+```{r load libraries}
 library("DESeq2")
 library("tidyverse")
 library("dplyr")
@@ -24,90 +39,24 @@ library("adegenet")
 library("tximport")
 ```
 
-```{r download files}
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/72_quant/quant.sf",
-destfile = "../data/72_quant.sf")
 
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/73_quant/quant.sf",
-destfile = "../data/73_quant.sf")
 
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/113_quant/quant.sf",
-destfile = "../data/113_quant.sf")
+Examine quant file layouts:
 
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/118_quant/quant.sf",
-destfile = "../data/118_quant.sf")
-
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/127_quant/quant.sf",
-destfile = "../data/127_quant.sf")
-
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/132_quant/quant.sf",
-destfile = "../data/132_quant.sf")
-
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/151_quant/quant.sf",
-destfile = "../data/151_quant.sf")
-
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/173_quant/quant.sf",
-destfile = "../data/173_quant.sf")
-
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/178_quant/quant.sf",
-destfile = "../data/178_quant.sf")
-
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/221_quant/quant.sf",
-destfile = "../data/221_quant.sf")
-
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/222_quant/quant.sf",
-destfile = "../data/222_quant.sf")
-
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/254_quant/quant.sf",
-destfile = "../data/254_quant.sf")
-
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/272_quant/quant.sf",
-destfile = "../data/272_quant.sf")
-
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/280_quant/quant.sf",
-destfile = "../data/280_quant.sf")
-
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/294_quant/quant.sf",
-destfile = "../data/294_quant.sf")
-
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/334_quant/quant.sf",
-destfile = "../data/334_quant.sf")
-
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/349_quant/quant.sf",
-destfile = "../data/349_quant.sf")
-
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/359_quant/quant.sf",
-destfile = "../data/359_quant.sf")
-
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/425_quant/quant.sf",
-destfile = "../data/425_quant.sf")
-
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/427_quant/quant.sf",
-destfile = "../data/427_quant.sf")
-
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/445_quant/quant.sf",
-destfile = "../data/445_quant.sf")
-
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/463_quant/quant.sf",
-destfile = "../data/463_quant.sf")
-
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/481_quant/quant.sf",
-destfile = "../data/481_quant.sf")
-
-download.file(url = "https://gannet.fish.washington.edu/Atumefaciens/20200429_cbai_salmon_2020GW_transcript_abundances/485_quant/quant.sf",
-destfile = "../data/485_quant.sf")
-
-```
-
-```{bash check downloaded files}
+```{bash check quant files}
 head ../data/72_quant.sf | column -t
 ```
-```{r treatment info}
+
+
+Import sample info:
+
+```{r sample info}
 treatmentinfo <- read.csv("../data/cbai_2020gw_rnaseq_sample_info.csv", header = TRUE, sep = ",")
 treatmentinfo
 ```
 
 
+Import gene count matrix:
 
 ```{r import gene counts}
 # Read in salmon gene count data
@@ -118,8 +67,15 @@ gcount <- read.csv("../data/salmon.gene.counts.matrix",
                    check.names = FALSE,
                    sep = "\t")
 head(gcount)
+```
 
+
+Round gene counts to integers:
+
+```{r round gene counts}
 # Round numbers to integers
+# The `rownames_to_column` and `column_to_rownames` is needed to preserve gene_id rownames
+# when using `mutate_if`
 gcount <- gcount %>% 
   rownames_to_column('gene_id') %>% 
   mutate_if(is.numeric, round, 0) %>% 
@@ -128,11 +84,12 @@ gcount <- gcount %>%
 head(gcount)
 ```
 
+### Construct DESeq2 dataset
 
-
+#### Check sample IDs match to conform to DESeq2 naming requirements:
 
 ```{r match sample IDs}
-#Ensure all sample IDs in colData are also in CountData and match their orders
+# Ensure all sample IDs in colData are also in CountData and match their orders
 # Sort column names
 gcount <- gcount[ , order(names(gcount))]
 
@@ -152,32 +109,40 @@ head(gcount)
 # Check row and column names match. Should return "TRUE".
 all(rownames(treatmentinfo) %in% colnames(gcount))
 all(rownames(treatmentinfo) == colnames(gcount))
-```
-```{r}
-inf_status <- sort(unique(treatmentinfo$infection_status))
-days <- sort(unique(treatmentinfo$day))
+
 ```
 
-```{r}
-treatmentinfo$infection_status <- factor(treatmentinfo$infection_status, levels = inf_status)
-treatmentinfo$day <- factor(treatmentinfo$day) #set group values as factor variables
+#### Construct DESeq2 dataset
 
-head(treatmentinfo)
-```
-
+Create a DESeqDataSet design from gene count matrix and labels. Here we set the design to look at the interaction of `infection_status` and `day` to test for any differences in gene expression across `infection_status` attributed to `day`.
 
 ```{r}
 #Set DESeq2 design
 gdds <- DESeqDataSetFromMatrix(countData = gcount,
                               colData = treatmentinfo,
                               design = ~infection_status + day + infection_status:day)
+
 ```
 
-```{r}
-SF.gdds <- estimateSizeFactors( gdds ) #estimate size factors to determine if we can use vst  to transform our data. Size factors should be less than for to use vst
-print(sizeFactors(SF.gdds)) #View size factors
-```
+### Visualize gene count data
 
+We’re looking to see if the samples of the same infection status and day treatment cluster.
+
+#### Log-transform the count data
+First we are going to log-transform the data using a variance stabilizing transforamtion (vst). This is only for visualization purposes. Essentially, this is roughly similar to putting the data on the log2 scale. It will deal with the sampling variability of low counts by calculating within-group variability (if blind=FALSE).
+
+NOTE: Running `rlog` on this data produces the following helpful message from DESeq2:
+
+```
+rlog(gdds, blind = FALSE)
+the rlog assumes that data is close to a negative binomial distribution, an assumption
+which is sometimes not compatible with datasets where many genes have many zero counts
+despite a few very large counts.
+In this data, for 42% of genes with a sum of normalized counts above 100, it was the case 
+that a single sample's normalized count made up more than 90% of the sum over all samples.
+the threshold for this warning is 10% of genes. See plotSparsity(dds) for a visualization of this.
+We recommend instead using the varianceStabilizingTransformation or shifted log (see vignette).
+```
 ```{r}
 gvst <- vst(gdds, blind = FALSE)
 
@@ -208,7 +173,7 @@ ggplot(gPCAdata, aes(PC1, PC2, color=infection_status, shape=day)) +
 ```
 
 ```{r}
-DEG.group <- DESeq(gdds, test = "LRT", reduced = ~infection_status + day) #run differential expression test by group using the LRT model
+DEG.group <- DESeq(gdds, test = "Wald") #run differential expression test by group using Wald (default)
 DEG.group.results <- results(DEG.group) #save DE results
 resultsNames(DEG.group) #view DE results
 ```
@@ -221,5 +186,34 @@ summary(DEG.group.results) #view results summary
 ```{r}
 sig.num <- sum(DEG.group.results$padj < 0.05, na.rm=TRUE) #How many adjusted p-values were less than 0.05?
 sig.num
+```
+
+```{r}
+DEGs <- subset(DEG.group.results, padj<0.05)
+DEGlist <- gdds[which(rownames(gdds) %in% rownames(DEGs))]
+print(DEGlist)
+```
+
+Have to use esimateSizeFactors outside of typical `vst()` because all genes contain a sample with zero. Using `type = "poscounts"` adjusts for this.
+
+Use of `varianceStabilizingTransformation()` instead of `vst()` was recommended in error message by DESeq2.
+```{r}
+DEGlist <- estimateSizeFactors(DEGlist, type = "poscounts")
+DEGvst <- varianceStabilizingTransformation(DEGlist, blind=FALSE) #apply a variance stabilizing transforamtion to minimize effects of small counts and normalize wrt library size
+head(assay(DEGvst), 3) #view transformed gene count data
+```
+
+```{r}
+topVarGenes <- head(order(rowVars(assay(DEGvst)),decreasing=TRUE),sig.num) #sort by decreasing sig
+mat <- assay(DEGvst)[ topVarGenes, ] #make an expression object
+mat <- mat - rowMeans(mat) #difference in expression compared to average across all samples
+ann_colors <-  list(time_point=c(Eggs="darkgreen", Fertilized_embryos="darkgreen", Cleavage="cadetblue4", Prawn_chip="deepskyblue", Gastrulation="cornflowerblue", Morulae="blueviolet", Blastula="darkorchid4", Planulae="deeppink4"), treatment= c(AMB="chartreuse", l="pink", xl="violetred3"))#, treatment=AMB="chartreuse", l="pink", xl="violetred3")
+df1 <- as.data.frame(colData(DEGvst)[c("time_point", "treatment")]) #make dataframe for column naming 
+DEGheatmap <- pheatmap(mat, scale="row", annotation_col=df1, annotation_colors = ann_colors,
+         clustering_distance_rows="euclidean", clustering_method = "average",
+         show_rownames =FALSE,
+         show_colnames =FALSE,
+         cluster_cols = TRUE) 
+DEGheatmap
 ```
 

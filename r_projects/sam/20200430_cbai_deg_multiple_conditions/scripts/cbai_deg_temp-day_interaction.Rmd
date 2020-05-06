@@ -8,8 +8,6 @@ output: html_document
 knitr::opts_chunk$set(message = FALSE)
 ```
 
-### Differential Expression of _C.bairdi_ Genes Across Infection Status and Time Points Using DESeq2
-
 ---
 
 This follows the excellent example from Erin Chille's repo:
@@ -18,10 +16,6 @@ https://github.com/echille/Montipora_OA_Development_Timeseries/blob/master/RNAse
 
 ---
 
-#### Gene count data were generated using [Salmon](https://combine-lab.github.io/salmon/). See [my notebook entry from 20200429](https://robertslab.github.io/sams-notebook/2020/04/29/Transcript-Abundance-C.bairdi-Alignment-free-with-Salmon-Using-2020-GW-Data-on-Mox.html) for more info.
-
-
----
 
 Load libraries:
 
@@ -40,10 +34,15 @@ library("adegenet")
 library("tximport")
 ```
 
+### Display R Session Information
 ```{r include = TRUE}
 sessionInfo()
 ```
 
+
+---
+
+#### Gene count data were generated using [Salmon](https://combine-lab.github.io/salmon/). See [my notebook entry from 20200429](https://robertslab.github.io/sams-notebook/2020/04/29/Transcript-Abundance-C.bairdi-Alignment-free-with-Salmon-Using-2020-GW-Data-on-Mox.html) for more info.
 
 Examine quant file layouts:
 

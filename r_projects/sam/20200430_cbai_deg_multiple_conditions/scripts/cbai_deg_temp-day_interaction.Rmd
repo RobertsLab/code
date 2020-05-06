@@ -1,5 +1,6 @@
 ---
-title: "cbai_deg_temp-day_interaction"
+title: "Differential Expression of _C.bairdi_ Genes Across Infection Status and Time Points Using DESeq2"
+author: Sam White
 output: html_document
 ---
 
@@ -39,6 +40,9 @@ library("adegenet")
 library("tximport")
 ```
 
+```{r include = TRUE}
+sessionInfo()
+```
 
 
 Examine quant file layouts:

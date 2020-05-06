@@ -179,6 +179,7 @@ ggplot(gPCAdata, aes(PC1, PC2, color=infection_status, shape=day)) +
 
 ### Differential Gene Expression Analysis
 
+NOTE: This will take a few minutes to run.
 ```{r}
 DEG.group <- DESeq(gdds, test = "Wald") #run differential expression test by group using Wald (default)
 DEG.group.results <- results(DEG.group) #save DE results
@@ -195,13 +196,19 @@ sig.num <- sum(DEG.group.results$padj < 0.05, na.rm=TRUE) #How many adjusted p-v
 sig.num
 ```
 
+### Visualize differentially-expressed genes
+
+##### Subset the list of genes by those in which padj>0.05.
 ```{r}
 DEGs <- subset(DEG.group.results, padj<0.05)
 DEGlist <- gdds[which(rownames(gdds) %in% rownames(DEGs))]
 print(DEGlist)
 ```
 
-Have to use esimateSizeFactors outside of typical `vst()` because all genes contain a sample with zero. Using `type = "poscounts"` adjusts for this.
+
+##### Log-transform the data using a variance stabilizing transforamtion (vst) for visualization purposes, only.
+
+In this instance, have to use `esimateSizeFactors()` outside of typical `vst()` usage because all genes contain a sample with zero. Using `type = "poscounts"` adjusts for this.
 
 Use of `varianceStabilizingTransformation()` instead of `vst()` was recommended in error message by DESeq2.
 ```{r}
@@ -210,17 +217,30 @@ DEGvst <- varianceStabilizingTransformation(DEGlist, blind=FALSE) #apply a varia
 head(assay(DEGvst), 3) #view transformed gene count data
 ```
 
+### Heatmap of differentially-expressed genes
+
 ```{r}
 topVarGenes <- head(order(rowVars(assay(DEGvst)),decreasing=TRUE),sig.num) #sort by decreasing sig
 mat <- assay(DEGvst)[ topVarGenes, ] #make an expression object
 mat <- mat - rowMeans(mat) #difference in expression compared to average across all samples
-ann_colors <-  list(day=c(D9="darkgreen", D12="cadetblue4", D26="deepskyblue"), infection_status= c(infected="chartreuse", uninfected="violetred3"))#, treatment=AMB="chartreuse", l="pink", xl="violetred3")
+
+day_color = c(D9="#BDBDBD", D12="#737373", D26="#252525")
+inf_color = c(infected="#C51B7D", uninfected="#4D9221")
+
+
+ann_colors <-  list(day=day_color, infection_status=inf_color)
+
 df1 <- as.data.frame(colData(DEGvst)[c("day", "infection_status")]) #make dataframe for column naming 
-DEGheatmap <- pheatmap(mat, scale="row", annotation_col=df1, annotation_colors = ann_colors,
-         clustering_distance_rows="euclidean", clustering_method = "average",
-         show_rownames =FALSE,
-         show_colnames =FALSE,
-         cluster_cols = TRUE) 
+DEGheatmap <- pheatmap(mat,
+                       scale="row",
+                       annotation_col=df1,
+                       annotation_colors = ann_colors,
+                       clustering_distance_rows="euclidean",
+                       clustering_method = "average",
+                       show_rownames =FALSE,
+                       show_colnames =FALSE,
+                       cluster_cols = TRUE
+                       ) 
 DEGheatmap
 ```
 

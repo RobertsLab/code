@@ -59,6 +59,31 @@ treatmentinfo <- read.csv("../data/cbai_2020gw_rnaseq_sample_info.csv", header =
 treatmentinfo
 ```
 
+Capture vector of warm `sample_id` to use for filtering gene count dataframe:
+
+```{r}
+warm_ids <- treatmentinfo %>% 
+  filter(treatmentinfo$temperature == "warm") %>% 
+  select(sample_id)
+
+# Convert to character vector
+warm_ids <- as.vector(as.character(warm_ids$sample_id))
+
+```
+
+Filter treatment info to exclude "warm" temperature - since no uninfected/warm samples. Otherwise, DESeq2 throws the following error:
+
+```
+Error in checkFullRank(modelMatrix) : the model matrix is not full rank, so the model cannot be fit as specified. Levels or combinations of levels without any samples have resulted in column(s) of zeros in the model matrix. Please read the vignette section 'Model matrix not full rank': vignette('DESeq2')
+```
+
+```{r}
+treatmentinfo <- treatmentinfo %>% 
+  filter(treatmentinfo$temperature != "warm")
+treatmentinfo
+```
+
+
 
 Import gene count matrix:
 
@@ -104,6 +129,13 @@ colnames(gcount) = gsub(pattern = "_quant", replacement = "", colnames(gcount))
 
 head(gcount)
 
+# Remove sample IDs that matched the warm set
+gcount <- gcount %>% 
+  select(-all_of(warm_ids))
+
+head(gcount)
+```
+
 rownames(treatmentinfo) <- treatmentinfo$sample_id
 colnames(gcount) <- treatmentinfo$sample_id
 
@@ -114,7 +146,6 @@ head(gcount)
 all(rownames(treatmentinfo) %in% colnames(gcount))
 all(rownames(treatmentinfo) == colnames(gcount))
 
-```
 
 #### Construct DESeq2 dataset
 

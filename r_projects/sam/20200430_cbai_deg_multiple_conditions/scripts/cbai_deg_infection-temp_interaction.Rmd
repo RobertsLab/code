@@ -1,0 +1,263 @@
+---
+title: Differential Expression of _C.bairdi_ Genes Across Infection Status and Temperature
+  Using DESeq2
+author: "Sam White"
+date: "5/7/2020"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE)
+```
+
+---
+
+This follows the excellent example from Erin Chille's repo:
+
+https://github.com/echille/Montipora_OA_Development_Timeseries/blob/master/RNAseq_Analyses/DevelopmentxpHTreatment_RNAseqDE.html
+
+---
+
+
+Load libraries:
+
+```{r load libraries}
+library("DESeq2") # Bioconductor
+library("tidyverse")
+library("dplyr")
+library("pheatmap")
+library("RColorBrewer")
+library("genefilter") # Bioconductor
+library("ggplot2")
+library("gplots")
+library("limma") # Bioconductor
+library("spdep") 
+library("adegenet")
+library("tximport") # Bioconducto
+```
+
+### Display R Session Information
+```{r include = TRUE}
+sessionInfo()
+```
+
+
+---
+
+#### Gene count data were generated using [Salmon](https://combine-lab.github.io/salmon/). See [my notebook entry from 20200429](https://robertslab.github.io/sams-notebook/2020/04/29/Transcript-Abundance-C.bairdi-Alignment-free-with-Salmon-Using-2020-GW-Data-on-Mox.html) for more info.
+
+Examine quant file layouts:
+
+```{bash check quant files}
+head ../data/72_quant.sf | column -t
+```
+
+
+Import sample info:
+
+```{r sample info}
+treatmentinfo <- read.csv("../data/cbai_2020gw_rnaseq_sample_info.csv", header = TRUE, sep = ",")
+treatmentinfo
+```
+
+
+Import gene count matrix:
+
+```{r import gene counts}
+# Read in salmon gene count data
+# First column has no label, so use "empty" row.names to assign Trinity gene IDs to row names
+gcount <- read.csv("../data/salmon.gene.counts.matrix",
+                   header = TRUE,
+                   row.names = "",
+                   check.names = FALSE,
+                   sep = "\t")
+head(gcount)
+```
+
+
+Round gene counts to integers:
+
+```{r round gene counts}
+# Round numbers to integers
+# The `rownames_to_column` and `column_to_rownames` is needed to preserve gene_id rownames
+# when using `mutate_if`
+gcount <- gcount %>% 
+  rownames_to_column('gene_id') %>% 
+  mutate_if(is.numeric, round, 0) %>% 
+  column_to_rownames('gene_id')
+
+head(gcount)
+```
+
+### Construct DESeq2 dataset
+
+#### Check sample IDs match to conform to DESeq2 naming requirements:
+
+```{r match sample IDs}
+# Ensure all sample IDs in colData are also in CountData and match their orders
+# Sort column names
+gcount <- gcount[ , order(names(gcount))]
+
+head(gcount)
+
+# Remove "_quant" from column names
+colnames(gcount) = gsub(pattern = "_quant", replacement = "", colnames(gcount))
+
+head(gcount)
+
+rownames(treatmentinfo) <- treatmentinfo$sample_id
+colnames(gcount) <- treatmentinfo$sample_id
+
+head(treatmentinfo)
+head(gcount)
+
+# Check row and column names match. Should return "TRUE".
+all(rownames(treatmentinfo) %in% colnames(gcount))
+all(rownames(treatmentinfo) == colnames(gcount))
+
+```
+
+#### Construct DESeq2 dataset
+
+Create a DESeqDataSet design from gene count matrix and labels. Here we set the design to look at the interaction of `infection_status` and `temperture` to test for any differences in gene expression across `infection_status` attributed to `temperture`.
+
+```{r}
+#Set DESeq2 design
+gdds <- DESeqDataSetFromMatrix(countData = gcount,
+                              colData = treatmentinfo,
+                              design = ~infection_status + temperature + infection_status:temperature)
+
+```
+
+### Visualize gene count data
+
+We’re looking to see if the samples of the same infection status and temperture treatment cluster.
+
+#### Log-transform the count data
+First we are going to log-transform the data using a variance stabilizing transforamtion (vst). This is only for visualization purposes. Essentially, this is roughly similar to putting the data on the log2 scale. It will deal with the sampling variability of low counts by calculating within-group variability (if blind=FALSE).
+
+NOTE: Running `rlog` on this data produces the following helpful message from DESeq2:
+
+```
+rlog(gdds, blind = FALSE)
+the rlog assumes that data is close to a negative binomial distribution, an assumption
+which is sometimes not compatible with datasets where many genes have many zero counts
+despite a few very large counts.
+In this data, for 42% of genes with a sum of normalized counts above 100, it was the case 
+that a single sample's normalized count made up more than 90% of the sum over all samples.
+the threshold for this warning is 10% of genes. See plotSparsity(dds) for a visualization of this.
+We recommend instead using the varianceStabilizingTransformation or shifted log (see vignette).
+```
+```{r}
+gvst <- vst(gdds, blind = FALSE)
+
+head (assay(gvst), 3)
+```
+
+```{r}
+gsampleDists <- dist(t(assay(gvst))) #calculate distance matix
+gsampleDistMatrix <- as.matrix(gsampleDists) #distance matrix
+rownames(gsampleDistMatrix) <- colnames(gvst) #assign row names
+colnames(gsampleDistMatrix) <- NULL #assign col names
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255) #assign colors
+pheatmap(gsampleDistMatrix, #plot matrix
+         clustering_distance_rows=gsampleDists, #cluster rows
+         clustering_distance_cols=gsampleDists, #cluster columns
+         col=colors) #set colors
+```
+
+This does not appear to show any distinct groupings.
+
+
+#### Principal component plot of samples
+
+```{r}
+gPCAdata <- plotPCA(gvst, intgroup = c("infection_status", "temperture"), returnData=TRUE)
+percentVar <- round(100*attr(gPCAdata, "percentVar")) #plot PCA of samples with all data
+ggplot(gPCAdata, aes(PC1, PC2, color=infection_status, shape=temperture)) + 
+  geom_point(size=3) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  scale_color_manual(values = c(infected="red", uninfected="blue")) +
+  coord_fixed()
+```
+
+### Differential Gene Expression Analysis
+
+NOTE: This will take a few minutes to run.
+```{r}
+DEG.group <- DESeq(gdds, test = "Wald") #run differential expression test by group using Wald (default)
+DEG.group.results <- results(DEG.group) #save DE results
+resultsNames(DEG.group) #view DE results
+```
+
+```{r}
+group.results.ordered <- order(DEG.group.results$pvalue) #Order p-values by smallest value first
+summary(DEG.group.results) #view results summary
+```
+
+```{r}
+sig.num <- sum(DEG.group.results$padj < 0.05, na.rm=TRUE) #How many adjusted p-values were less than 0.05?
+sig.num
+```
+
+### Visualize differentially-expressed genes
+
+##### Subset the list of genes by those in which padj>0.05.
+```{r}
+DEGs <- subset(DEG.group.results, padj<0.05)
+DEGlist <- gdds[which(rownames(gdds) %in% rownames(DEGs))]
+print(DEGlist)
+```
+
+
+##### Log-transform the data using a variance stabilizing transforamtion (vst) for visualization purposes, only.
+
+In this instance, have to use `esimateSizeFactors()` outside of typical `vst()` usage because all genes contain a sample with zero. Using `type = "poscounts"` adjusts for this.
+
+Use of `varianceStabilizingTransformation()` instead of `vst()` was recommended in error message by DESeq2.
+```{r}
+DEGlist <- estimateSizeFactors(DEGlist, type = "poscounts")
+DEGvst <- varianceStabilizingTransformation(DEGlist, blind=FALSE) #apply a variance stabilizing transforamtion to minimize effects of small counts and normalize wrt library size
+head(assay(DEGvst), 3) #view transformed gene count data
+```
+
+### Heatmap of differentially-expressed genes
+
+```{r}
+topVarGenes <- head(order(rowVars(assay(DEGvst)),decreasing=TRUE),sig.num) #sort by decreasing sig
+mat <- assay(DEGvst)[ topVarGenes, ] #make an expression object
+mat <- mat - rowMeans(mat) #difference in expression compared to average across all samples
+
+temperture_color = c(D9="#BDBDBD", D12="#737373", D26="#252525")
+inf_color = c(infected="#C51B7D", uninfected="#4D9221")
+
+
+ann_colors <-  list(temperture=temperture_color, infection_status=inf_color)
+
+df1 <- as.data.frame(colData(DEGvst)[c("temperture", "infection_status")]) #make dataframe for column naming 
+DEGheatmap <- pheatmap(mat,
+                       scale="row",
+                       annotation_col=df1,
+                       annotation_colors = ann_colors,
+                       clustering_distance_rows="euclidean",
+                       clustering_method = "average",
+                       show_rownames =FALSE,
+                       show_colnames =FALSE,
+                       cluster_cols = TRUE
+                       ) 
+DEGheatmap
+```
+
+### Principal component plot of differentially-expressed genes
+```{r}
+DEGPCAdata <- plotPCA(DEGvst, intgroup = c("infection_status", "temperture"), returnData=TRUE)
+percentVar <- round(100*attr(DEGPCAdata, "percentVar")) #plot PCA of samples with all data
+ggplot(DEGPCAdata, aes(PC1, PC2, color=infection_status, shape=temperture)) + 
+  geom_point(size=3) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  scale_color_manual(values = c(infected="red", uninfected="blue")) +
+  coord_fixed()
+```
+```
+

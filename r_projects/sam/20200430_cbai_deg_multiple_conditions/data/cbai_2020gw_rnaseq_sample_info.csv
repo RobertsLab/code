@@ -1,10 +1,10 @@
 sample_id,day,infection_status,temperature
-113,D9,uninfected,cold
+113,D9,uninfected,ambient
 118,D9,infected,ambient
-127,D9,infected,warm
+127,D9,infected,ambient
 132,D9,infected,ambient
-151,D9,infected,cold
-173,D9,infected,warm
+151,D9,infected,ambient
+173,D9,infected,ambient
 178,D9,infected,ambient
 221,D12,uninfected,cold
 222,D12,uninfected,cold
@@ -21,5 +21,5 @@ sample_id,day,infection_status,temperature
 463,D26,infected,ambient
 481,D26,infected,ambient
 485,D26,infected,ambient
-72,D9,infected,warm
-73,D9,uninfected,cold
+72,D9,infected,ambient
+73,D9,uninfected,ambient

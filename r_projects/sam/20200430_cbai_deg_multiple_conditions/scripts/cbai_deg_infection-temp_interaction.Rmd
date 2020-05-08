@@ -208,10 +208,9 @@ This does not appear to show any distinct groupings.
 gPCAdata <- plotPCA(gvst, intgroup = c("infection_status", "temperature"), returnData=TRUE)
 percentVar <- round(100*attr(gPCAdata, "percentVar")) #plot PCA of samples with all data
 ggplot(gPCAdata, aes(PC1, PC2, color=infection_status, shape=temperature)) + 
-  geom_point(size=3) +
+  geom_point(size=4, alpha = 5/10) +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
-  scale_color_manual(values = c(infected="red", uninfected="blue")) +
   coord_fixed()
 ```
 
@@ -233,6 +232,13 @@ summary(DEG.group.results) #view results summary
 sig.num <- sum(DEG.group.results$padj < 0.05, na.rm=TRUE) #How many adjusted p-values were less than 0.05?
 sig.num
 ```
+
+
+
+
+
+
+
 
 ### Visualize differentially-expressed genes
 

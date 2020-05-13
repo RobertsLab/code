@@ -235,10 +235,171 @@ sig.num
 
 
 
+---
+
+### Infected Samples Only
+
+Import sample info:
+
+```{r sample info}
+treatmentinfo <- read.csv("../data/cbai_2020gw_rnaseq_sample_info.csv", header = TRUE, sep = ",")
+
+treatmentinfo$sample_id <- as.character(treatmentinfo$sample_id)
+treatmentinfo
+```
+
+
+
+Filter treatment info to retain only `infected` - since no uninfected/warm samples.
+
+
+```{r}
+treatmentinfo <- treatmentinfo %>% 
+  filter(treatmentinfo$infection_status == "infected")
+treatmentinfo
+```
+
+
+Capture vector of infected `sample_id` to use for filtering gene count dataframe:
+
+```{r}
+infected_ids <- treatmentinfo %>%
+  select(sample_id)
+
+# Convert to character vector
+infected_ids <- as.vector(as.character(infected_ids$sample_id))
+
+```
+
+
+
+Import gene count matrix:
+
+```{r import gene counts}
+# Read in salmon gene count data
+# First column has no label, so use "empty" row.names to assign Trinity gene IDs to row names
+gcount <- read.csv("../data/salmon.gene.counts.matrix",
+                   header = TRUE,
+                   row.names = "",
+                   check.names = FALSE,
+                   sep = "\t")
+head(gcount)
+```
+
+
+Round gene counts to integers:
+
+```{r round gene counts}
+# Round numbers to integers
+# The `rownames_to_column` and `column_to_rownames` is needed to preserve gene_id rownames
+# when using `mutate_if`
+gcount <- gcount %>% 
+  rownames_to_column('gene_id') %>% 
+  mutate_if(is.numeric, round, 0) %>% 
+  column_to_rownames('gene_id')
+
+head(gcount)
+```
+
+### Construct DESeq2 dataset
+
+#### Check sample IDs match to conform to DESeq2 naming requirements:
+
+```{r match sample IDs}
+# Ensure all sample IDs in colData are also in CountData and match their orders
+# Sort column names
+gcount <- gcount[ , order(names(gcount))]
+
+head(gcount)
+
+# Remove "_quant" from column names
+colnames(gcount) = gsub(pattern = "_quant", replacement = "", colnames(gcount))
+
+head(gcount)
+
+# Remove sample IDs that matched the infected set
+gcount <- gcount %>% 
+  select(infected_ids)
+
+head(gcount)
+```
+
+
+```{r}
+rownames(treatmentinfo) <- treatmentinfo$sample_id
+colnames(gcount) <- treatmentinfo$sample_id
+
+head(treatmentinfo)
+head(gcount)
+
+# Check row and column names match. Should return "TRUE".
+all(rownames(treatmentinfo) %in% colnames(gcount))
+all(rownames(treatmentinfo) == colnames(gcount))
+```
+
+
+#### Construct DESeq2 dataset
+
+Create a DESeqDataSet design from gene count matrix and labels. Here we set the design to look at the interaction of `infection_status` and `temperature` to test for any differences in gene expression across `infection_status` attributed to `temperature`.
+
+```{r}
+#Set DESeq2 design
+gdds <- DESeqDataSetFromMatrix(countData = gcount,
+                              colData = treatmentinfo,
+                              design = ~1)
+
+```
+
+### Visualize gene count data
+
+We’re looking to see if the samples of the same infection status and temperature treatment cluster.
+
+#### Log-transform the count data
+First we are going to log-transform the data using a variance stabilizing transforamtion (vst). This is only for visualization purposes. Essentially, this is roughly similar to putting the data on the log2 scale. It will deal with the sampling variability of low counts by calculating within-group variability (if blind=FALSE).
+
+NOTE: Running `rlog` on this data produces the following helpful message from DESeq2:
+
+```
+rlog(gdds, blind = FALSE)
+the rlog assumes that data is close to a negative binomial distribution, an assumption
+which is sometimes not compatible with datasets where many genes have many zero counts
+despite a few very large counts.
+In this data, for 42% of genes with a sum of normalized counts above 100, it was the case 
+that a single sample's normalized count made up more than 90% of the sum over all samples.
+the threshold for this warning is 10% of genes. See plotSparsity(dds) for a visualization of this.
+We recommend instead using the varianceStabilizingTransformation or shifted log (see vignette).
+```
+```{r}
+gvst <- vst(gdds, blind = FALSE)
+
+head (assay(gvst), 3)
+```
+
+#### Principal component plot of samples
+
+```{r}
+temperature_color = c(ambient="#6A3D9A", cold="#1F78B4", warm="#FF7F00")
+gPCAdata <- plotPCA(gvst, intgroup = c("temperature", "day", "infection_status"), returnData=TRUE)
+percentVar <- round(100*attr(gPCAdata, "percentVar")) #plot PCA of samples with all data
+ggplot(gPCAdata, aes(PC1, PC2, color=temperature, shape=day)) + 
+  geom_point(size=4, alpha = 6/10) +
+  scale_color_manual(values = temperature_color) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  coord_fixed()
+```
 
 
 
 
+### Differential Gene Expression Analysis
+
+NOTE: This will take a few minutes to run.
+```{r}
+DEG.group <- DESeq(gdds, test = "Wald") #run differential expression test by group using Wald (default)
+DEG.group.results <- results(DEG.group) #save DE results
+resultsNames(DEG.group) #view DE results
+```
 
 ### Visualize differentially-expressed genes
 
@@ -261,6 +422,12 @@ DEGvst <- varianceStabilizingTransformation(DEGlist, blind=FALSE) #apply a varia
 head(assay(DEGvst), 3) #view transformed gene count data
 ```
 
+```{r}
+sig.num <- sum(DEG.group.results$padj < 0.05, na.rm=TRUE) #How many adjusted p-values were less than 0.05?
+sig.num
+```
+
+
 ### Heatmap of differentially-expressed genes
 
 ```{r}
@@ -268,13 +435,13 @@ topVarGenes <- head(order(rowVars(assay(DEGvst)),decreasing=TRUE),sig.num) #sort
 mat <- assay(DEGvst)[ topVarGenes, ] #make an expression object
 mat <- mat - rowMeans(mat) #difference in expression compared to average across all samples
 
-temperature_color = c(D9="#BDBDBD", D12="#737373", D26="#252525")
-inf_color = c(infected="#C51B7D", uninfected="#4D9221")
+temperature_color = c(ambient="#BDBDBD", cold="#737373", warm="#252525")
+inf_color = c(infected="#C51B7D")
 
 
-ann_colors <-  list(temperature=temperature_color, infection_status=inf_color)
+ann_colors <-  list(temperature=temperature_color)
 
-df1 <- as.data.frame(colData(DEGvst)[c("temperature", "infection_status")]) #make dataframe for column naming 
+df1 <- as.data.frame(colData(DEGvst)[c("temperature")]) #make dataframe for column naming 
 DEGheatmap <- pheatmap(mat,
                        scale="row",
                        annotation_col=df1,
@@ -290,13 +457,12 @@ DEGheatmap
 
 ### Principal component plot of differentially-expressed genes
 ```{r}
-DEGPCAdata <- plotPCA(DEGvst, intgroup = c("infection_status", "temperature"), returnData=TRUE)
+DEGPCAdata <- plotPCA(DEGvst, intgroup = c("temperature", "day"), returnData=TRUE)
 percentVar <- round(100*attr(DEGPCAdata, "percentVar")) #plot PCA of samples with all data
-ggplot(DEGPCAdata, aes(PC1, PC2, color=infection_status, shape=temperature)) + 
+ggplot(DEGPCAdata, aes(PC1, PC2, color=temperature, shape=day)) + 
   geom_point(size=3) +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
-  scale_color_manual(values = c(infected="red", uninfected="blue")) +
   coord_fixed()
 ```
 ```

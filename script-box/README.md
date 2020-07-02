@@ -17,7 +17,7 @@ Accepts this input (GO terms have to be in last field):
 |:--------|:--------|:-----------|:--------------------------------------|
 | field 1 | field 2 | field 3..n | GOterm1; GOterm2; GOterm3; GOterm_n...|
  ----------
- 
+
 Outputs the following:
 
 | Record 1| Record 2| Record 3 | Record 4 |
@@ -38,3 +38,7 @@ A bash script to download all Roberts Lab GitHub repos.
 #### owluploader.R - Uploads file to Owl in the appropriate directory and checks MD5 sums against a canonical MD5 file (facility provided) at each copy step. Requires User script updates on line 12, 13, and 14 of new data location, the canonical MD5 file, and the destination owl directory.
 
 OwlUploader.ipynb - Jupyter notebook implementation of owluploader.R. Same requirements as the R script.
+
+#### uniprot2go.sh
+
+Bash script to retrieve GO terms from a list of SwissProt accessions.

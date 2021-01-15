@@ -1,8 +1,8 @@
 # readme
  In this directory code snippets are organized in separate markdown files based on software, task, etc.
- 
+
  The [Wiki for this repo](https://github.com/RobertsLab/code/wiki) contains more detailed guides and instructions on things like:
- 
+
  - [Jupyter Notebooks](https://github.com/RobertsLab/code/wiki/Jupyter-Notebook-Guide).
      - Jupyter Notebooks are an ideal means to document (and improve reproducibility) of computing commands.
  - [Super Computing with Mox (hyak)](https://github.com/RobertsLab/hyak_mox/wiki)
@@ -29,5 +29,7 @@
 - **misc.md** - Tips for using SSH, MD5 checksums, and gzip manipulation.
 
 - **[remote_connections.md](https://github.com/RobertsLab/code/blob/master/remote_connections.md)** - Ways to connect to computers remotely (via SSH), how to create/use SSH keys, create tunnels, and tmux to keep jobs running after closing SSH sessions.
+
+- **snippets.cson**: Atom text editor snippets file which allows for autocompletion of markdown-formatted text frequently used by Roberts Lab members when writing in markdown (e.g. in notebooks).
 
 - **sqlshare.md** - Tips for using SQLshare, but most commands are compatible with MySQL and/or SQLite. Lots of tips on joining tables and counting values.

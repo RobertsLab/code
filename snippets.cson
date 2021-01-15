@@ -1,0 +1,79 @@
+# Collection of useful Atom editor snippets which allow for autocompletion
+# of frequently used text.
+#
+# Includes GitHub Flavored Markdown (GFM), providing ability to format links
+# and other markdown.
+#
+# Comment section below this is the default file explanation of snippets
+# included with Atom.
+#
+################################
+# Your snippets
+#
+# Atom snippets allow you to enter a simple prefix in the editor and hit tab to
+# expand the prefix into a larger code block with templated values.
+#
+# You can create a new snippet in this file by typing "snip" and then hitting
+# tab.
+#
+# An example CoffeeScript snippet to expand log to console.log:
+#
+# '.source.coffee':
+#   'Console log':
+#     'prefix': 'log'
+#     'body': 'console.log $1'
+#
+# Each scope (e.g. '.source.coffee' above) can only be declared once.
+#
+# This file uses CoffeeScript Object Notation (CSON).
+# If you are unfamiliar with CSON, you can read more about it in the
+# Atom Flight Manual:
+# http://flight-manual.atom.io/using-atom/sections/basic-customization/#_cson
+
+# GFM snippets
+# New snippets of this type need to be "nested" underneat the `.gfm.source`
+# using spaces.
+'.gfm.source':
+  'Genomic Resources Wiki':
+    'prefix': 'GenResWiki'
+    'body': '[Genomic Resources wiki](https://github.com/RobertsLab/resources/wiki/Genomic-Resources)'
+
+  'Bismark link':
+    'prefix': 'Bismark'
+    'body': '[`Bismark`](https://github.com/FelixKrueger/Bismark)'
+
+  'Bowtie2 link':
+    'prefix': 'Bowtie2'
+    'body': '[`bowtie2`](https://github.com/BenLangmead/bowtie2)'
+
+  'Fastp link':
+    'prefix': 'fastp'
+    'body': '[`fastp`](https://github.com/OpenGene/fastp)'
+
+  'FastQC link':
+    'prefix': 'fastqc'
+    'body': '[`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)'
+
+  'MultiQC link':
+    'prefix': 'MultiQC'
+    'body': '[`MultiQC`](https://multiqc.info/)'
+
+  'HISAT2 link':
+    'prefix': 'HISAT2'
+    'body': '[`HISAT2`](https://daehwankimlab.github.io/hisat2/)'
+
+  'Nightingales link':
+    'prefix': 'Nightingales'
+    'body': '[`Nightingales`](https://b.link/nightingales) (Google Sheet)'
+
+  'STAR link':
+    'prefix': 'STAR'
+    'body': '[`STAR`](https://github.com/alexdobin/STAR)'
+
+  'StringTie link':
+    'prefix': 'StringTie'
+    'body': '[`StringTie`](https://ccb.jhu.edu/software/stringtie/)'
+
+  'Trinity wiki link':
+    'prefix': 'Trinity'
+    'body': '[`Trinity`](https://github.com/trinityrnaseq/trinityrnaseq/wiki)'

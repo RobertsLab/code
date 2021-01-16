@@ -31,13 +31,57 @@
 # http://flight-manual.atom.io/using-atom/sections/basic-customization/#_cson
 
 # GFM snippets
-# New snippets of this type need to be "nested" underneat the `.gfm.source`
+# New snippets of this type need to be "nested" underneath the `.gfm.source`
 # using spaces.
 '.gfm.source':
+
+# Roberts Lab resources links
   'Genomic Resources Wiki':
     'prefix': 'GenResWiki'
     'body': '[Genomic Resources wiki](https://github.com/RobertsLab/resources/wiki/Genomic-Resources)'
 
+# Animal genus and species with links to corresponding Wikipedia links.
+  'Chionoecetes bairdi':
+    'prefix': 'Chionoecetes bairdi'
+    'body': '[_Chionoecetes bairdi_ (Tanner crab)](http://en.wikipedia.org/wiki/Chionoecetes_bairdi)'
+
+  'Crassostrea gigas':
+    'prefix': 'Crassostrea gigas'
+    'body': '[_Crassostrea gigas_ (Pacific oyster)](http://en.wikipedia.org/wiki/Pacific_oyster)'
+
+  'Crassostrea virginica':
+    'prefix': 'Crassostrea virginica'
+    'body': '[_Crassostrea virginica_ (Eastern oyster)](https://en.wikipedia.org/wiki/Eastern_oyster)'
+
+  'Eastern oyster':
+    'prefix': 'Eastern oyster'
+    'body': '[Eastern oyster (_Crassostrea virginica_)](https://en.wikipedia.org/wiki/Eastern_oyster)'
+
+  'Ostrea lurida':
+    'prefix': 'Ostrea lurida'
+    'body': '[_Ostrea lurida_ (Olympia oyster)](http://en.wikipedia.org/wiki/Pacific_oyster)'
+
+  'Olympia oyster':
+    'prefix': 'Olympia oyster'
+    'body': '[Olympia oyster (_Ostrea lurida_)](http://en.wikipedia.org/wiki/Pacific_oyster)'
+
+  'Pacific geoduck':
+    'prefix': 'Pacific geoduck'
+    'body': '[Pacific geoduck (_Panopea generosa_)](http://en.wikipedia.org/wiki/Geoduck)'
+
+  'Pacific oyster':
+    'prefix': 'Pacific oyster'
+    'body': '[Pacific oyster (_Crassostrea gigas_)](http://en.wikipedia.org/wiki/Pacific_oyster)'
+
+  'Panopea generosa':
+    'prefix': 'Panopea generosa'
+    'body': '[_Panopea generosa_ (Panopea generosa)](http://en.wikipedia.org/wiki/Geoduck)'
+
+  'Tanner crab':
+    'prefix': 'Tanner crab'
+    'body': '[Tanner crab (_Chionoecetes bairdi_)](http://en.wikipedia.org/wiki/Chionoecetes_bairdi)'
+
+# Software links
   'Bismark link':
     'prefix': 'Bismark'
     'body': '[`Bismark`](https://github.com/FelixKrueger/Bismark)'
@@ -45,6 +89,14 @@
   'Bowtie2 link':
     'prefix': 'Bowtie2'
     'body': '[`bowtie2`](https://github.com/BenLangmead/bowtie2)'
+
+  'Circos link':
+    'prefix': 'Circos'
+    'body': '[Circos](http://circos.ca/)'
+
+  'Cutadapt link':
+    'prefix': 'cutadapt'
+    'body': '[`cutadapt`](https://cutadapt.readthedocs.io/en/stable/index.html)'
 
   'Fastp link':
     'prefix': 'fastp'
@@ -69,6 +121,10 @@
   'STAR link':
     'prefix': 'STAR'
     'body': '[`STAR`](https://github.com/alexdobin/STAR)'
+
+  'TrimGalore link':
+    'prefix': 'TrimGalore'
+    'body': '[`TrimGalore`](https://github.com/FelixKrueger/TrimGalore)'
 
   'StringTie link':
     'prefix': 'StringTie'

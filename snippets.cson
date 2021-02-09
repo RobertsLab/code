@@ -33,7 +33,7 @@
 # GFM snippets
 # New snippets of this type need to be "nested" underneath the `.gfm.source`
 # using spaces.
-'.gfm.source':
+'.text.md, .source.gfm':
 
 # Roberts Lab resources links
   'Genomic Resources Wiki':
@@ -85,6 +85,10 @@
   'Bismark link':
     'prefix': 'Bismark'
     'body': '[`Bismark`](https://github.com/FelixKrueger/Bismark)'
+
+  'BLAST link':
+    'prefix': 'BLAST'
+    'body': '[`BLAST`](https://www.ncbi.nlm.nih.gov/books/NBK279690/)'
 
   'Bowtie2 link':
     'prefix': 'Bowtie2'

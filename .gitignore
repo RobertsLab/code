@@ -4,3 +4,5 @@
 .Rproj.user*
 .Rhistory
 .Rproj.user
+.ipynb_checkpoints/
+.gitignore

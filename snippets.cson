@@ -106,6 +106,10 @@
     'prefix': 'cutadapt'
     'body': '[`cutadapt`](https://cutadapt.readthedocs.io/en/stable/index.html)'
 
+  'DIAMOND link':
+    'prefix': 'DIAMOND'
+    'body': '[`DIAMOND`](https://github.com/bbuchfink/diamond)'
+
   'Fastp link':
     'prefix': 'fastp'
     'body': '[`fastp`](https://github.com/OpenGene/fastp)'

@@ -45,9 +45,9 @@
     'prefix': 'Chionoecetes bairdi'
     'body': '[_Chionoecetes bairdi_ (Tanner crab)](http://en.wikipedia.org/wiki/Chionoecetes_bairdi)'
 
-  'Chionoecetes_opilio':
-    'prefix': 'Chionoecetes_opilio'
-    'body': '[_Chionoecetes_opilio_ (Snow crab)](https://en.wikipedia.org/wiki/Chionoecetes_opilio)'
+  'Chionoecetes opilio':
+    'prefix': 'Chionoecetes opilio'
+    'body': '[_Chionoecetes opilio_ (Snow crab)](https://en.wikipedia.org/wiki/Chionoecetes_opilio)'
 
   'Crassostrea gigas':
     'prefix': 'Crassostrea gigas'

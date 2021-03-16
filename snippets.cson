@@ -134,6 +134,10 @@
     'prefix': 'TrimGalore'
     'body': '[`TrimGalore`](https://github.com/FelixKrueger/TrimGalore)'
 
+  'SeqKit link':
+    'prefix': 'SeqKit'
+    'body': '[`SeqKit`](https://bioinf.shenwei.me/seqkit/)'
+
   'StringTie link':
     'prefix': 'StringTie'
     'body': '[`StringTie`](https://ccb.jhu.edu/software/stringtie/)'

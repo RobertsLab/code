@@ -1,0 +1,136 @@
+{
+	// Place your global snippets here. Each snippet is defined under a snippet name and has a scope, prefix, body and 
+	// description. Add comma separated ids of the languages where the snippet is applicable in the scope field. If scope 
+	// is left empty or omitted, the snippet gets applied to all languages. The prefix is what is 
+	// used to trigger the snippet and the body will be expanded and inserted. Possible variables are: 
+	// $1, $2 for tab stops, $0 for the final cursor position, and ${1:label}, ${2:another} for placeholders. 
+	// Placeholders with the same ids are connected.
+	// Example:
+	// "Print to console": {
+	// 	"scope": "javascript,typescript",
+	// 	"prefix": "log",
+	// 	"body": [
+	// 		"console.log('$1');",
+	// 		"$2"
+	// 	],
+	// 	"description": "Log output to console"
+	// }
+
+	// Roberts Lab resources links
+
+	"Genomic Resources Wiki": {
+        "prefix": "GenResWiki",
+        "body": "[Genomic Resources wiki](https://robertslab.github.io/resources/Genomic-Resources/)$0",
+        "description": "Genomic Resources link"
+    },
+	// Animal genus and species with links to corresponding Wikipedia links.
+    "Chionoecetes bairdi": {
+        "prefix": "Chionoecetes bairdi",
+        "body": "[_Chionoecetes bairdi_ (Tanner crab)](http://en.wikipedia.org/wiki/Chionoecetes_bairdi)$0"
+    },
+    "Chionoecetes opilio": {
+        "prefix": "Chionoecetes opilio",
+        "body": "[_Chionoecetes opilio_ (Snow crab)](https://en.wikipedia.org/wiki/Chionoecetes_opilio)$0"
+    },
+    "Crassostrea gigas": {
+        "prefix": "Crassostrea gigas",
+        "body": "[_Crassostrea gigas_ (Pacific oyster)](http://en.wikipedia.org/wiki/Pacific_oyster)$0"
+    },
+    "Crassostrea virginica": {
+        "prefix": "Crassostrea virginica",
+        "body": "[_Crassostrea virginica_ (Eastern oyster)](https://en.wikipedia.org/wiki/Eastern_oyster)$0"
+    },
+    "Eastern oyster": {
+        "prefix": "Eastern oyster",
+        "body": "[Eastern oyster (_Crassostrea virginica_)](https://en.wikipedia.org/wiki/Eastern_oyster)$0"
+    },
+    "Ostrea lurida": {
+        "prefix": "Ostrea lurida",
+        "body": "[_Ostrea lurida_ (Olympia oyster)](http://en.wikipedia.org/wiki/Pacific_oyster)$0"
+    },
+    "Olympia oyster": {
+        "prefix": "Olympia oyster",
+        "body": "[Olympia oyster (_Ostrea lurida_)](http://en.wikipedia.org/wiki/Pacific_oyster)$0"
+    },
+    "Pacific geoduck": {
+        "prefix": "Pacific geoduck",
+        "body": "[Pacific geoduck (_Panopea generosa_)](http://en.wikipedia.org/wiki/Geoduck)$0"
+    },
+    "Pacific oyster": {
+        "prefix": "Pacific oyster",
+        "body": "[Pacific oyster (_Crassostrea gigas_)](http://en.wikipedia.org/wiki/Pacific_oyster)$0"
+    },
+    "Panopea generosa": {
+        "prefix": "Panopea generosa",
+        "body": "[_Panopea generosa_ (Panopea generosa)](http://en.wikipedia.org/wiki/Geoduck)$0"
+    },
+    "Tanner crab": {
+        "prefix": "Tanner crab",
+        "body": "[Tanner crab (_Chionoecetes bairdi_)](http://en.wikipedia.org/wiki/Chionoecetes_bairdi)$0"
+    },
+    // Software links
+    "Bismark link": {
+        "prefix": "Bismark",
+        "body": "[`Bismark`](https://github.com/FelixKrueger/Bismark)$0"
+    },
+    "BLAST link": {
+        "prefix": "BLAST",
+        "body": "[`BLAST`](https://www.ncbi.nlm.nih.gov/books/NBK279690/)$0"
+    },
+    "Bowtie2 link": {
+        "prefix": "Bowtie2",
+        "body": "[`bowtie2`](https://github.com/BenLangmead/bowtie2)$0"
+    },
+    "Circos link": {
+        "prefix": "Circos",
+        "body": "[Circos](http://circos.ca/)$0"
+    },
+    "Cutadapt link": {
+        "prefix": "cutadapt",
+        "body": "[`cutadapt`](https://cutadapt.readthedocs.io/en/stable/index.html)$0"
+    },
+    "DIAMOND link": {
+        "prefix": "DIAMOND",
+        "body": "[`DIAMOND`](https://github.com/bbuchfink/diamond)$0"
+    },
+    "Fastp link": {
+        "prefix": "fastp",
+        "body": "[`fastp`](https://github.com/OpenGene/fastp)$0"
+    },
+    "FastQC link": {
+        "prefix": "fastqc",
+        "body": "[`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)$0"
+    },
+    "MultiQC link": {
+        "prefix": "MultiQC",
+        "body": "[`MultiQC`](https://multiqc.info/)$0"
+    },
+    "HISAT2 link": {
+        "prefix": "HISAT2",
+        "body": "[`HISAT2`](https://daehwankimlab.github.io/hisat2/)$0"
+    },
+    "Nightingales link": {
+        "prefix": "Nightingales",
+        "body": "[`Nightingales`](https://b.link/nightingales) (Google Sheet)$0"
+    },
+    "STAR link": {
+        "prefix": "STAR",
+        "body": "[`STAR`](https://github.com/alexdobin/STAR)$0"
+    },
+    "TrimGalore link": {
+        "prefix": "TrimGalore",
+        "body": "[`TrimGalore`](https://github.com/FelixKrueger/TrimGalore)$0"
+    },
+    "SeqKit link": {
+        "prefix": "SeqKit",
+        "body": "[`SeqKit`](https://bioinf.shenwei.me/seqkit/)$0"
+    },
+    "StringTie link": {
+        "prefix": "StringTie",
+        "body": "[`StringTie`](https://ccb.jhu.edu/software/stringtie/)$0"
+    },
+    "Trinity wiki link": {
+        "prefix": "Trinity",
+        "body": "[`Trinity`](https://github.com/trinityrnaseq/trinityrnaseq/wiki)$0"
+    }
+}

@@ -33,3 +33,5 @@
 - **snippets.cson**: Atom text editor snippets file which allows for autocompletion of markdown-formatted text frequently used by Roberts Lab members when writing in markdown (e.g. in notebooks). This file can be copied to `~/.atom/` on your computer for use and will overwrite the default snippets file.
 
 - **sqlshare.md** - Tips for using SQLshare, but most commands are compatible with MySQL and/or SQLite. Lots of tips on joining tables and counting values.
+
+- **vscode-snippets.code-snippets**: Visual Studio Code global snippets file which allows for autocompletion of markdown-formatted text frequently used by Roberts Lab members when writing in markdown (e.g. in notebooks). This file can be copied to `~/.config/Code/User/snippets/vscode-snippets.code-snippets` on your computer for use and will overwrite the default snippets file.

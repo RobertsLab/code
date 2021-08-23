@@ -1,0 +1,25 @@
+---
+title: "gene_annotation"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include = FASLE}
+library(GSEABase)
+library(tidyverse)
+```
+
+```{r}
+goslims <- "goslim_generic.obo"
+goslims_url <- "http://current.geneontology.org/ontology/subsets/goslim_generic.obo"
+```
+
+```{r}
+gseabase_location <- find.package("GSEABase")
+outfile_dest <- file.path(gseabase_location, "extdata", goslims, fsep = "/")
+download.file(url = goslims_url,
+              destfile = outfile_dest)
+```

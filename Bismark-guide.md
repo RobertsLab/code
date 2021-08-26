@@ -18,6 +18,7 @@ https://github.com/RobertsLab/code/blob/master/20-bismark.sh
 
 - https://github.com/sr320/paper-oly-wgbs/blob/master/submission/Narrative.Rmd part of Rmd narrative, used for WGBS Olympia oyster data. Author: Steven Roberts
 
+- https://github.com/hputnam/Geoduck_Meth/blob/master/code/03-bismark.sh geoduck environmental memory project. Run on Mox. Author: Steven Roberts
 
 
 ## Diagram 

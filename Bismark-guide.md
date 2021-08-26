@@ -10,7 +10,9 @@ User Guides
 
 ## Use cases from our lab
 
-- 
+https://github.com/RobertsLab/code/blob/master/20-bismark.sh
+
+- https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/code/00-Bismark.sh -  used to processes BS-MBDSeq Data from Olympia oysters, run on Mox. Author: Steven Roberts
 
 
 

@@ -1,4 +1,4 @@
-# Canonical Guide to using Methykit
+# Canonical Guide to using Methylkit
 
 See also the official documentation - [MethylKit Vignette](https://bioconductor.org/packages/release/bioc/vignettes/methylKit/inst/doc/methylKit.html)
 

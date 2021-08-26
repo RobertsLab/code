@@ -5,7 +5,7 @@ See also the official documentation - [MethylKit Vignette](https://bioconductor.
 
 ## Use cases from our lab
 
-- https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/code/01-methylkit.Rmd - used to processes BS-MBDSeq Data from Olympia oysters, run on personal computer (not Mox). Author: Laura Spencer 
+- https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/code/01-methylkit.Rmd - used to processes BS-MBDSeq Data from Olympia oysters, run on personal computer (not Mox). Author: Laura Spencer ![GitHub last commit](https://img.shields.io/github/last-commit/sr320/paper-oly-mbdbs-gen)
 
 - https://github.com/hputnam/Meth_Compare/blob/master/code/MethCompare_methylKit_analysis.R coral methylation comparison of methods.
 

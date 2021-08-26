@@ -9,6 +9,8 @@ See also the official documentation - [MethylKit Vignette](https://bioconductor.
 
 - https://github.com/hputnam/Meth_Compare/blob/master/code/MethCompare_methylKit_analysis.R coral methylation comparison of methods.
 
+- https://github.com/epigeneticstoocean/paper-gonad-meth/blob/master/code/04-methylkit.Rmd eastern oyster OA work 
+
 ## Diagram of MethylKit Workflow 
 
 ![image](https://user-images.githubusercontent.com/17264765/131020085-f32e8a51-9a29-474c-aa56-2fa599e006d9.png)

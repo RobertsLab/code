@@ -20,6 +20,9 @@ https://github.com/RobertsLab/code/blob/master/20-bismark.sh
 
 - https://github.com/hputnam/Geoduck_Meth/blob/master/code/03-bismark.sh geoduck environmental memory project. Run on Mox. Author: Steven Roberts
 
+- https://raw.githubusercontent.com/epigeneticstoocean/paper-gonad-meth/master/code/02-bismark.sh eastern oyster data, run on Mox
+
+
 
 ## Diagram 
 

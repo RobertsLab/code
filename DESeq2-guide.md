@@ -1,10 +1,9 @@
 # Canonical Guide to using DESeq2
 
 See also the official documentation.
-- [Analyzing RNA-seq data with DESeq2](http://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html)
 
 User Guides
-
+- [Analyzing RNA-seq data with DESeq2](http://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html)
 
 
 ## Use cases from our lab

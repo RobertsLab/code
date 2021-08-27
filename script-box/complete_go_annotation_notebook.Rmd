@@ -11,8 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{bash blastx}
 #####################################################################
 ## CHANGE VARIABLES IN THIS SECTION TO MATCH YOUR SYSTEM
+
 # Set programs and database paths
-{
 programs_dir=~/programs
 blast_dir=${programs_dir}
 blastdbs_dir=~/data/databases/blastdbs/
@@ -30,8 +30,38 @@ output_format=6
 # Check https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
 # to determine if newer version is available.
 blast_version=2.12.0
-} >> .rvars
+
 #####################################################################
+
+
+
+
+# DO NOT EDIT BELOW
+
+# Write variables to file for downstream use in other Bash chunks
+{
+echo "# Bash variables file for use with BLAST Rmd notebook."
+echo "#######################################################
+echo 'export programs_dir=~/programs'
+echo 'export blast_dir=${programs_dir}'
+echo 'export blastdbs_dir=~/data/databases/blastdbs/'
+echo 'export blastx="${blast_dir}"/diamond'
+echo 'export blastdb="${blastdbs_dir}"/uniprot_sprot_20200123/uniprot_sprot.dmnd'
+echo 'export evalue="1E-20"'
+echo 'export threads=48'
+echo 'export max_target_seqs=1'
+echo 'export max_hsps=1'
+echo 'export output_format=6'
+echo 'export blast_version=2.12.0'
+} > .rvars
+
+```
+
+```{bash download_ncbi_blast}
+# Load bash variables from file
+source .rvars
+
+# Download NCBI BLAST
 
 ```
 

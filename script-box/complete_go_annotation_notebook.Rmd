@@ -7,6 +7,34 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+### Run BLASTx
+```{bash blastx}
+#####################################################################
+## CHANGE VARIABLES IN THIS SECTION TO MATCH YOUR SYSTEM
+# Set programs and database paths
+{
+programs_dir=~/programs
+blast_dir=${programs_dir}
+blastdbs_dir=~/data/databases/blastdbs/
+blastx="${blast_dir}"/diamond
+blastdb="${blastdbs_dir}"/uniprot_sprot_20200123/uniprot_sprot.dmnd
+
+# Set BLASTx parameters
+evalue="1E-20"
+threads=48
+max_target_seqs=1
+max_hsps=1
+output_format=6
+
+# Set desired BLAST verion here.
+# Check https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
+# to determine if newer version is available.
+blast_version=2.12.0
+} >> .rvars
+#####################################################################
+
+```
+
 ### Load necessary libraries
 
 ```{r libraries, message = FALSE}

@@ -12,24 +12,25 @@ knitr::opts_chunk$set(echo = TRUE)
 #####################################################################
 ## CHANGE VARIABLES IN THIS SECTION TO MATCH YOUR SYSTEM
 
+# Set desired BLAST verion here.
+# Check https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
+# to determine if newer version is available.
+blast_version=2.12.0
+
 # Set programs and database paths
 programs_dir=~/programs
-blast_dir=${programs_dir}
 blastdbs_dir=~/data/databases/blastdbs/
 blastx="${blast_dir}"/diamond
 blastdb="${blastdbs_dir}"/uniprot_sprot_20200123/uniprot_sprot.dmnd
+blast_dir=${programs_dir}/"ncbi-blast-${blast_version}+"
 
 # Set BLASTx parameters
-evalue="1E-20"
+evalue=1E-20
 threads=48
 max_target_seqs=1
 max_hsps=1
 output_format=6
 
-# Set desired BLAST verion here.
-# Check https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
-# to determine if newer version is available.
-blast_version=2.12.0
 
 #####################################################################
 
@@ -38,12 +39,20 @@ blast_version=2.12.0
 
 # DO NOT EDIT BELOW
 
+
+
+echo ${os}
+
 # Write variables to file for downstream use in other Bash chunks
 {
-echo "# Bash variables file for use with BLAST Rmd notebook."
-echo "#######################################################
+# Determine Linux/Mac
+if [[ ${OSTYPE} == 'darwin'* ]] || [[ ${OSTYPE} == "Darwin" ]]; then
+  echo 'export os=macosx'
+else
+  echo 'export os=linux'
+fi
 echo 'export programs_dir=~/programs'
-echo 'export blast_dir=${programs_dir}'
+echo 'export blast_dir=${programs_dir}/"ncbi-blast-${blast_version}+"'
 echo 'export blastdbs_dir=~/data/databases/blastdbs/'
 echo 'export blastx="${blast_dir}"/diamond'
 echo 'export blastdb="${blastdbs_dir}"/uniprot_sprot_20200123/uniprot_sprot.dmnd'
@@ -61,7 +70,13 @@ echo 'export blast_version=2.12.0'
 # Load bash variables from file
 source .rvars
 
+echo ${programs_dir}
 # Download NCBI BLAST
+# and unpack to programs directory
+curl \
+--show-error \
+https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-${blast_version}+-x64-${os}.tar.gz \
+| tar -xzvf - --directory ${programs_dir}
 
 ```
 

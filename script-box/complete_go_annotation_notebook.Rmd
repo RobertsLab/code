@@ -7,19 +7,32 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r include = FASLE}
+### Load necessary libraries
+
+```{r libraries, message = FALSE}
 library(GSEABase)
 library(tidyverse)
 ```
 
-```{r}
-goslims <- "goslim_generic.obo"
-goslims_url <- "http://current.geneontology.org/ontology/subsets/goslim_generic.obo"
-```
 
-```{r}
+### Download Generic GOslim from Gene Ontology Consortium to proper GSEAbase directory
+
+```{r Download_GOslim_file}
+
+# Find install location for GSEAbase
 gseabase_location <- find.package("GSEABase")
+
+# Set GOslim URL
+goslims_url <- "http://current.geneontology.org/ontology/subsets/goslim_generic.obo"
+
+# Set file name of target GO slim file
+goslims <- "goslim_generic.obo"
+
+# Set the download file location for the GOslim file
+# Needs to be in the "extdata" directory where GSEAbase is installed
 outfile_dest <- file.path(gseabase_location, "extdata", goslims, fsep = "/")
+
+# Download the generic GOslim file in the GSEAbase "extdata" directory
 download.file(url = goslims_url,
               destfile = outfile_dest)
 ```

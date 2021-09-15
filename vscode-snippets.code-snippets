@@ -69,6 +69,10 @@
         "body": "[Tanner crab (_Chionoecetes bairdi_)](http://en.wikipedia.org/wiki/Chionoecetes_bairdi)$0"
     },
     // Software links
+    "bcftools": {
+        "prefix": "bcftools",
+        "body": "[`Bismark`](https://samtools.github.io/bcftools/bcftools.html#common_options)$0"
+    },
     "Bismark link": {
         "prefix": "Bismark",
         "body": "[`Bismark`](https://github.com/FelixKrueger/Bismark)$0"

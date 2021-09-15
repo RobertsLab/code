@@ -71,7 +71,7 @@
     // Software links
     "bcftools": {
         "prefix": "bcftools",
-        "body": "[`Bismark`](https://samtools.github.io/bcftools/bcftools.html#common_options)$0"
+        "body": "[`bcftools`](https://samtools.github.io/bcftools/bcftools.html#common_options)$0"
     },
     "Bismark link": {
         "prefix": "Bismark",

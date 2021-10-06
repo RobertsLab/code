@@ -1,0 +1,557 @@
+---
+title: "20211006_cbai_SNP_stats"
+author: "Sam White"
+date: "10/5/2021"
+output: html_document
+---
+
+# Explore and extract SNP data from *C.bairdi* transcritpome assembly v3.1
+
+REQUIRES Linux-based system to run all cells properly; some cells will not work on Mac OS!
+
+REQUIRES the following programs:
+
+- [bcftools](https://github.com/samtools/bcftools)
+
+- [samtools](https://github.com/samtools/samtools)
+
+- [seqtk](https://github.com/lh3/seqtk)
+
+REQUIRES the following R libraries and dependencies:
+
+- `goslim_generic.obo` Downloaded from http://geneontology.org/docs/go-subset-guide/
+  - then i moved it to the R library for GSEABase in the extdata folder in addition to using the command here - I think they're both required.
+
+- `GSEABase` (BioConductor)
+
+- `tidyverse`
+
+
+### Display system info
+
+```{bash}
+echo "TODAY'S DATE:"
+date
+echo "------------"
+echo ""
+#Display operating system info
+lsb_release -a
+echo ""
+echo "------------"
+echo "HOSTNAME: "; hostname 
+echo ""
+echo "------------"
+echo "Computer Specs:"
+echo ""
+lscpu
+echo ""
+echo "------------"
+echo ""
+echo "Memory Specs"
+echo ""
+free -mh
+```
+
+
+### User-defined bash variables
+```{bash}
+{
+echo "# Set directories, input/output files"
+echo ""
+echo "# CPU threads"
+echo 'export threads=8'
+echo ""
+echo "# SNP coverage"
+echo 'export SNP_coverage=10'
+echo ""
+echo "# SNP quality"
+echo 'export SNP_quality=30'
+echo ""
+echo "# Programs"
+echo 'export seqtk="/home/sam/programs/seqtk-1.3/seqtk"'
+echo 'export bcftools="/home/sam/programs/bcftools-1.13/bcftools"'
+echo 'export samtools="/home/sam/programs/samtools-1.12/samtools"'
+echo ""
+echo "# Print formatting"
+echo 'export line="-------------------------------------------------------------------------------------------------"'
+echo ""
+} > .rvars
+```
+
+
+### Confirm variables are accessible.
+```{bash}
+# Confirm contents of .rvars
+cat .rvars
+
+# Load contents of .rvars into the environment
+source .rvars
+
+echo ""
+
+echo "Confirm variables are accessible."
+echo "Checking the variable \$line:"
+echo "${line}"
+```
+
+### Input/output files variables
+```{bash}
+
+{
+echo "# Input files"
+echo ""
+echo "## Transcriptome assembly"
+echo 'export orig_fasta_url_dir="https://owl.fish.washington.edu/halfshell/genomic-databank"'
+echo 'export transcriptome_fasta="cbai_transcriptome_v3.1.fasta"'
+echo ""
+echo "## Transcriptome md5 checksum"
+echo 'export transcriptome_fasta_md5="aeec8ffbf8fa44fb1750caee6abaf68a"'
+echo ""
+echo "## Transcriptome GO terms"
+echo 'export cbai_v3_1_GO_url="https://gannet.fish.washington.edu/Atumefaciens/20200828_cbai_trinotate_transcriptome-v3.1"'
+echo 'export cbai_v3_1_GO="20200828.cbai_transcriptome_v3.1.fasta.trinotate.go_annotations.txt"'
+echo ""
+echo "## VCF with variant calls"
+echo 'export orig_vcf_url_dir="https://gannet.fish.washington.edu/Atumefaciens/20210909-cbai-bcftools-snp_calling"'
+echo 'export orig_vcf="cbai_v3.1-SNPS.vcf"'
+echo ""
+
+echo "# Output files"
+echo 'export transcriptome_SNPS_fasta="cbai_transcriptome_v3.1_SNPs-${SNP_quality}Q-${SNP_coverage}x.fasta"'
+echo 'export contigs_list="cbai_v3.1-SNPS_${SNP_quality}Q-${SNP_coverage}x_contig-IDs.txt"'
+echo 'export genes_list="cbai_v3.1-SNPS_${SNP_quality}Q-${SNP_coverage}x_gene-IDs.txt"'
+echo 'export vcf_filtered="cbai_v3.1-SNPS-${SNP_quality}Q-${SNP_coverage}x.vcf"'
+echo 'export genes_GO_list"=cbai_v3.1-SNPS_${SNP_quality}Q-${SNP_coverage}x_GO.tab"'
+echo 'export flattened_GO="cbai_v3_1-SNPS_${SNP_quality}Q-${SNP_coverage}x_GO.flattened-go.txt"'
+} >> .rvars
+
+```
+
+
+### Get VCF
+```{bash}
+# Load contents of .rvars into the environment
+source .rvars
+
+# Download with wget. Use --no-check-certificate to avoid issues with Gannet certificate
+# Use --quiet option to prevent wget output from printing too many lines to notebook
+wget --continue --no-check-certificate --quiet ${orig_vcf_url_dir}/${orig_vcf} \
+--directory-prefix ../data
+
+wget --continue --no-check-certificate --quiet ${orig_vcf_url_dir}/checksums.md5 \
+--directory-prefix ../data
+
+# Confirm checksum for transcriptome FastA is good
+cd ../data
+md5sum --check ../data/checksums.md5 | grep "${orig_vcf}"
+```
+
+### Get transcriptome
+```{bash}
+# Load contents of .rvars into the environment
+source .rvars
+
+# Download with wget. Use --no-check-certificate to avoid issues with Gannet certificate
+# Use --quiet option to prevent wget output from printing too many lines to notebook
+wget --continue --no-check-certificate --quiet ${orig_fasta_url_dir}/${transcriptome_fasta} \
+--directory-prefix ../data
+
+
+# Confirm checksum for transcriptome FastA is good
+# Uses grep to highlight the desired file.
+if [ "$(md5sum ../data/${transcriptome_fasta} | awk '{print $1}')" = "${transcriptome_fasta_md5}" ]; then echo "Checksums match"; fi
+```
+
+### Get transcriptome GO annotations file
+```{bash}
+# Load contents of .rvars into the environment
+source .rvars
+
+# Download with wget. Use --no-check-certificate to avoid issues with Gannet certificate
+# Use --quiet option to prevent wget output from printing too many lines to notebook
+wget --continue --no-check-certificate --quiet ${cbai_v3_1_GO_url}/${cbai_v3_1_GO} \
+--directory-prefix ../data
+
+echo ""
+
+head ../data/${cbai_v3_1_GO}
+```
+
+### Inspect original VCF
+```{bash}
+# Load contents of .rvars into the environment
+source .rvars
+
+echo "'head' view of ${orig_vcf}:"
+echo ""
+head "../data/${orig_vcf}"
+echo ""
+echo "End of 'head' view of ${orig_vcf}"
+echo ""
+echo "${line}"
+echo ""
+
+echo "VCF header info:"
+echo ""
+
+# Capture first line of header (skipping list of contigs)
+begin=$("${bcftools}" view --header-only ../data/${orig_vcf} \
+| grep --line-number "##ALT=<ID" \
+| awk -F":" '{print $1}')
+
+# Caputure last line of header
+end=$("${bcftools}" view --header-only ../data/${orig_vcf} | wc -l)
+
+# Use sed to print range of lines
+sed --quiet "${begin},${end} p" ../data/${orig_vcf}
+echo ""
+echo "${line}"
+echo ""
+
+echo "List of samples in VCF:"
+echo ""
+${bcftools} query --list-samples ../data/${orig_vcf}
+```
+
+### Subset VCF to minimum coverage and quality
+```{bash}
+# Load contents of .rvars into the environment
+source .rvars
+
+# Subset VCF to only SNPs with ${SNP_coverage}x raw read coverage
+# and quality >= ${SNP_qual}
+"${bcftools}" filter \
+--include "TYPE='snp' & MIN(DP)>=${SNP_coverage} & QUAL>=${SNP_quality}" \
+--threads ${threads} \
+../data/${orig_vcf} \
+> ../analyses/${vcf_filtered}
+```
+
+### Inspect filtered VCF
+```{bash}
+# Load contents of .rvars into the environment
+source .rvars
+
+echo "'head' view of ${vcf_filtered}:"
+echo ""
+head "../analyses/${vcf_filtered}"
+echo ""
+echo "End of 'head' view of ${vcf_filtered}"
+echo ""
+echo "${line}"
+echo ""
+
+echo "VCF header info:"
+echo ""
+
+# Capture first line of header (skipping list of contigs)
+begin=$("${bcftools}" view --header-only ../analyses/${vcf_filtered} \
+| grep --line-number "##ALT=<ID" \
+| awk -F":" '{print $1}')
+
+# Caputure last line of header
+end=$("${bcftools}" view --header-only ../analyses/${vcf_filtered} | wc -l)
+
+# Use sed to print range of lines
+ sed --quiet "${begin},${end} p" ../analyses/${vcf_filtered}
+
+echo ""
+echo "${line}"
+echo ""
+
+echo "List of samples in VCF:"
+echo ""
+${bcftools} query --list-samples ../analyses/${vcf_filtered}
+```
+
+
+### Extract Transcripts Having SNPs with `${SNP_coverage}x` Read Coverage and Quality >= `${SNP_qual}`
+
+The resulting FastA is useful to use in IGV, so that we don't have to deal with browsing contigs with no variants.
+```{bash}
+# Load contents of .rvars into the environment
+source .rvars
+
+# List of FastA IDs with ${SNP_coverage}x SNP coverage
+# Uses awk to skip all lines beginning with '#'
+awk '/^[^#]/{print $1}' ../analyses/${vcf_filtered} \
+| sort -u \
+> ../analyses/${contigs_list}
+
+# Use seqtk to generate a FastA from original transcriptome assembly and list of contigs with ${SNP_coverage}x SNP coverage
+"${seqtk}" subseq ../data/${transcriptome_fasta} ../analyses/${contigs_list} > ../data/${transcriptome_SNPS_fasta}
+
+# Generate FastA index file for new FastA
+"${samtools}" faidx ../data/${transcriptome_SNPS_fasta}
+
+ls -ltrh ../analyses
+
+```
+
+
+
+### Compare number of original transcripts with number of those with SNPs
+```{bash}
+# Load contents of .rvars into the environment
+source .rvars
+
+for fasta in ../data/*.fasta
+do
+  grep --count --with-filename "^>" ${fasta}
+done | column -t -s ":"
+```
+
+
+## SNP Stats
+
+### Summary stats
+```{bash}
+# Load contents of .rvars into the environment
+source .rvars
+
+# Shows summary stats for all samples
+${bcftools} stats \
+--samples - \
+../analyses/${vcf_filtered} \
+| head -n 31
+```
+
+
+#### Transitions/Transversions and Substitution types
+```{bash}
+# Load contents of .rvars into the environment
+source .rvars
+
+${bcftools} stats \
+--samples - \
+../analyses/${vcf_filtered} \
+| grep "ST"
+```
+
+
+### Individual sample stats
+```{bash}
+# Load contents of .rvars into the environment
+source .rvars
+
+# Shows samples stats.
+# Uses sed/column/tail to format output nicely
+${bcftools} stats \
+--samples - \
+../analyses/${vcf_filtered} \
+| grep "PSC" \
+| sed 's/^# *//' \
+| sed 's/average depth/avg_dp/' \
+| column -t \
+| tail -n 5
+```
+
+
+
+### Percentage of transcripts with SNPS
+```{bash}
+# Load contents of .rvars into the environment
+source .rvars
+
+# Count number of transcripts in transcriptome assembly
+transcripts_count=$(grep -c "^>" ../data/${transcriptome_fasta})
+printf "%s\t%s\n" "Original transcriptome transcripts:" "${transcripts_count}"
+
+# Count number of transcripts with SNPs
+# Parses Trinity ID and counts unique Trinity IDs
+snp_transcripts_count=$(awk '/^[^#]/{print $1}' ../analyses/${vcf_filtered} | sort -u| wc -l)
+printf "%s\t%s\n" "Transcripts with SNPs:" "${snp_transcripts_count}"
+
+echo ""
+# Calculate percentage
+printf "%s\t%s\n" "Percentage of transcripts with SNPs:" "$(bc <<< "scale=4; ( ${snp_transcripts_count} / ${transcripts_count} * 100)")"
+```
+
+
+### Get max/min/mean number of SNPs per transcript
+```{bash}
+# Load contents of .rvars into the environment
+source .rvars
+
+awk '/^[^#]/{print $1}' ../analyses/${vcf_filtered} \
+| sort \
+| uniq -c \
+| sort -k1n,1 \
+| awk '{sum+=$1;cnt++;max=$1;min=cnt==1?$1:min} END{print "min="min, "max="max, "mean="sum/cnt}'
+```
+
+
+### Extract FastA IDs
+Strips Trinity isoform designations from end of ID to match gene IDs in GO term annotation file
+```{bash}
+# Load contents of .rvars into the environment
+source .rvars
+
+awk '/^[^#]/{print $1}' ../analyses/${vcf_filtered} \
+| awk 'BEGIN { FS = "_"; OFS = "_" } {print $1, $2, $3, $4}' \
+| sort -u \
+> ../analyses/${genes_list}
+
+wc -l ../analyses/"${genes_list}"
+
+echo ""
+echo "${line}"
+echo ""
+
+head ../analyses/"${genes_list}"
+```
+
+
+### Extract genes with SNPs from transcriptome annotation file
+```{bash}
+# Load contents of .rvars into the environment
+source .rvars
+
+# Uses a list of Trinity gene IDs to extract gene IDs and corresponding GO accessions.
+# Expects Trinotate annotations file as input.
+# Uses sed to convert commas to tabs in preparation for subsequent "flattening"
+while read -r line
+do 
+  grep "${line}" ../data/${cbai_v3_1_GO}
+done < ../analyses/${genes_list} \
+| sed $'s/,/\t/g' \
+> ../analyses/${genes_GO_list}
+
+# Check number of records
+wc -l ../analyses/${genes_GO_list}
+
+echo ""
+echo "${line}"
+echo ""
+
+head ../analyses/${genes_GO_list}
+```
+
+
+### Flatten `${genes_GO_list}` to have one GO accession per line.
+```{bash}
+# Load contents of .rvars into the environment
+source .rvars
+
+# Identify first field containing a GO term.
+# Search file with grep for "GO:" and pipe to awk.
+# Awk sets tab as field delimiter (-F'\t'), runs a for loop that looks for "GO:" (~/GO:/), and then prints the field number).
+# Awk results are piped to sort, which sorts unique by number (-ug).
+# Sort results are piped to head to retrieve the lowest value (i.e. the top of the list; "-n1").
+begin_goterms=$(grep "GO:" ../analyses/"${genes_GO_list}" | awk -F'\t' '{for (i=1;i<=NF;i++) if($i ~/GO:/) print i}' | sort -ug | head -n1)
+
+# Flatten GO terms annotation file.
+# Expects tab-delimited input file where:
+## First field (column) is Trinity gene IDs.
+## Remaining fields (columns) are each individual GO accessions.
+while read -r line
+do
+  # Capture maximum number of fields to handle differing number of GO terms.
+  max_field=$(echo "$line" | awk -F'\t' '{print NF}')
+  
+  # Set which fields are "fixed" (i.e. Trinity gene IDs)
+  fixed_fields=$(echo "$line" | cut -f1)
+  
+  # Identifies if a line has GO accessions,
+  # reads them into an array,
+  # and then prints the Trinity Id and single GO accession on each line.
+  if (( "$max_field" < "$begin_goterms" )); then
+    printf "%s\n" "$line"
+  else
+    # Set range of GO accessions for each line
+    goterms=$(echo "$line" | cut -f"$begin_goterms"-"$max_field")
+    # Set Internal Field Separator to a <tab> and read $goterms into array.
+    IFS=$'\t' read -r -a array <<< "$goterms"
+    # Loop through array and print tab-delimited file of Trinity ID and single GO accession.
+    for element in "${!array[@]}"
+      do printf "%s\t%s\n" "$fixed_fields" "${array[$element]}"
+    done
+  fi
+done < ../analyses/"${genes_GO_list}" > ../analyses/"${flattened_GO}"
+
+# Check number of records
+wc -l ../analyses/${flattened_GO}
+
+echo ""
+echo "${line}"
+echo ""
+
+head ../analyses/${flattened_GO}
+```
+```{bash}
+source .rvars
+echo "../analyses/${flattened_GO}" > .flattened_GO
+```
+
+
+```{r}
+string <- paste(readLines(".flattened_GO"), collapse=" ")
+print(string)
+
+```
+
+
+```{r }
+library(GSEABase)
+library(tidyverse)
+
+# Script to retrieve GOslims from Trinity-based, EdgeR GOseq differential gene expression.
+# Identifies enriched and depleted output files.
+# Requires "goslim_generic.obo" from http://geneontology.org/docs/go-subset-guide/
+  
+  ## Get max number of fields
+  # Needed to handle reading in file with different number of columns in each row
+  max_fields <- max(na.omit((count.fields(string, sep = "\t", blank.lines.skip = TRUE))))
+  
+  ## Read in tab-delimited GOseq file
+  # Use "max_fields" to populate all columns with a sequentially numbered header
+  go_seqs <- read.table(string,
+                        sep = "\t",
+                        header = FALSE,
+                        col.names = paste0("V",seq_len(max_fields)),
+                        fill = TRUE)
+  
+  ## Grab just the individual GO terms from the "2nd" column)
+  goterms <- as.character(go_seqs$V2)
+  
+  ### Use GSEA to map GO terms to GOslims
+  
+  ## Store goterms as GSEA object
+  myCollection <- GOCollection(goterms)
+  
+  ## Use generic GOslim file to create a GOslim collection
+  
+  # I downloaded goslim_generic.obo from http://geneontology.org/docs/go-subset-guide/
+  # then i moved it to the R library for GSEABase in the extdata folder
+  # in addition to using the command here - I think they're both required.
+  slim <- getOBOCollection("~/data/goslim_generic.obo")
+  
+  ## Map GO terms to GOslims and select Biological Processes group
+  slims <- goSlim(myCollection, slim, "BP", verbose = TRUE)
+  
+  # Rename first column
+  slims <- slims %>% rownames_to_column(var = "GOslim")
+  
+  ## Write output file
+  write.csv(slims, file = "S10-SNPs_GO-GOslims.csv", quote = FALSE, row.names = FALSE)
+
+# Remove GOslim accession for the generic "biological_process" term to improve visualization of other terms.
+slims <- slims[slims$GOslim != "GO:0008150",]
+
+# Create bar plot.
+# "Open" PNG file for saving subsequent plot
+pdf("../figures/S9-SNPs_GO-GOslims_barplot.pdf", height = 10, width = 12)
+
+ggplot(data = slims, aes(x=slims$Percent, y=slims$Term)) +
+  labs(title = "",
+       caption = "Supplemental Figure 1. Barplot of percentages of gene ontology assignments to GOslims for transcripts containing at least on SNP.
+       Excludes the generic \"biological_process\" GOslim (55.53% of all GO terms) to aid in visualization of other GOslim categories.",
+       x = "Percent GO terms assigned to GOslim",
+       y = "GOslim") +
+  geom_bar(stat = "identity") +
+  theme(plot.caption = element_text(hjust = 0)
+  )
+
+# Close PNG file
+dev.off()
+```

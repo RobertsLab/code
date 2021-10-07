@@ -5,6 +5,10 @@ date: "10/5/2021"
 output: html_document
 ---
 
+```{r include = FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
 # Explore and extract SNP data from *C.bairdi* transcritpome assembly v3.1
 
 REQUIRES Linux-based system to run all cells properly; some cells will not work on Mac OS!
@@ -54,50 +58,36 @@ free -mh
 
 
 ### User-defined bash variables
-```{bash}
+
+Set program paths for your own computer.
+
+Variables are saved to a "dot file" and that file needs to be sourced in each Bash chunk to have access to the Bash variables
+across Bash chunks.
+
+```{bash echo = TRUE}
 {
-echo "# Set directories, input/output files"
-echo ""
 echo "# CPU threads"
 echo 'export threads=8'
-echo ""
-echo "# SNP coverage"
-echo 'export SNP_coverage=10'
-echo ""
-echo "# SNP quality"
-echo 'export SNP_quality=30'
 echo ""
 echo "# Programs"
 echo 'export seqtk="/home/sam/programs/seqtk-1.3/seqtk"'
 echo 'export bcftools="/home/sam/programs/bcftools-1.13/bcftools"'
 echo 'export samtools="/home/sam/programs/samtools-1.12/samtools"'
 echo ""
-echo "# Print formatting"
-echo 'export line="-------------------------------------------------------------------------------------------------"'
-echo ""
 } > .rvars
 ```
 
 
-### Confirm variables are accessible.
-```{bash}
-# Confirm contents of .rvars
-cat .rvars
-
-# Load contents of .rvars into the environment
-source .rvars
-
+### Input/output files variables
+```{bash echo = TRUE}
+{
+echo "# SNP coverage"
+echo 'export SNP_coverage=10'
+echo ""
+echo "# SNP quality"
+echo 'export SNP_quality=30'
 echo ""
 
-echo "Confirm variables are accessible."
-echo "Checking the variable \$line:"
-echo "${line}"
-```
-
-### Input/output files variables
-```{bash}
-
-{
 echo "# Input files"
 echo ""
 echo "## Transcriptome assembly"
@@ -123,13 +113,33 @@ echo 'export genes_list="cbai_v3.1-SNPS_${SNP_quality}Q-${SNP_coverage}x_gene-ID
 echo 'export vcf_filtered="cbai_v3.1-SNPS-${SNP_quality}Q-${SNP_coverage}x.vcf"'
 echo 'export genes_GO_list"=cbai_v3.1-SNPS_${SNP_quality}Q-${SNP_coverage}x_GO.tab"'
 echo 'export flattened_GO="cbai_v3_1-SNPS_${SNP_quality}Q-${SNP_coverage}x_GO.flattened-go.txt"'
+echo ""
+
+echo "# Print formatting"
+echo 'export line="-------------------------------------------------------------------------------------------------"'
+echo ""
 } >> .rvars
 
 ```
 
 
+### Confirm variables are accessible.
+```{bash echo = TRUE}
+# Confirm contents of .rvars
+cat .rvars
+
+# Load contents of .rvars into the environment
+source .rvars
+
+echo ""
+
+echo "Confirm variables are accessible."
+echo "Checking the variable \$line:"
+echo "${line}"
+```
+
 ### Get VCF
-```{bash}
+```{bash echo = TRUE}
 # Load contents of .rvars into the environment
 source .rvars
 
@@ -147,7 +157,7 @@ md5sum --check ../data/checksums.md5 | grep "${orig_vcf}"
 ```
 
 ### Get transcriptome
-```{bash}
+```{bash echo = TRUE}
 # Load contents of .rvars into the environment
 source .rvars
 
@@ -163,7 +173,7 @@ if [ "$(md5sum ../data/${transcriptome_fasta} | awk '{print $1}')" = "${transcri
 ```
 
 ### Get transcriptome GO annotations file
-```{bash}
+```{bash echo = TRUE}
 # Load contents of .rvars into the environment
 source .rvars
 
@@ -178,7 +188,7 @@ head ../data/${cbai_v3_1_GO}
 ```
 
 ### Inspect original VCF
-```{bash}
+```{bash echo = TRUE}
 # Load contents of .rvars into the environment
 source .rvars
 
@@ -214,7 +224,7 @@ ${bcftools} query --list-samples ../data/${orig_vcf}
 ```
 
 ### Subset VCF to minimum coverage and quality
-```{bash}
+```{bash echo = TRUE}
 # Load contents of .rvars into the environment
 source .rvars
 
@@ -228,7 +238,7 @@ source .rvars
 ```
 
 ### Inspect filtered VCF
-```{bash}
+```{bash echo = TRUE}
 # Load contents of .rvars into the environment
 source .rvars
 
@@ -268,7 +278,7 @@ ${bcftools} query --list-samples ../analyses/${vcf_filtered}
 ### Extract Transcripts Having SNPs with `${SNP_coverage}x` Read Coverage and Quality >= `${SNP_qual}`
 
 The resulting FastA is useful to use in IGV, so that we don't have to deal with browsing contigs with no variants.
-```{bash}
+```{bash echo = TRUE}
 # Load contents of .rvars into the environment
 source .rvars
 
@@ -291,7 +301,7 @@ ls -ltrh ../analyses
 
 
 ### Compare number of original transcripts with number of those with SNPs
-```{bash}
+```{bash echo = TRUE}
 # Load contents of .rvars into the environment
 source .rvars
 
@@ -305,7 +315,7 @@ done | column -t -s ":"
 ## SNP Stats
 
 ### Summary stats
-```{bash}
+```{bash echo = TRUE}
 # Load contents of .rvars into the environment
 source .rvars
 
@@ -318,7 +328,7 @@ ${bcftools} stats \
 
 
 #### Transitions/Transversions and Substitution types
-```{bash}
+```{bash echo = TRUE}
 # Load contents of .rvars into the environment
 source .rvars
 
@@ -330,7 +340,7 @@ ${bcftools} stats \
 
 
 ### Individual sample stats
-```{bash}
+```{bash echo = TRUE}
 # Load contents of .rvars into the environment
 source .rvars
 
@@ -349,7 +359,7 @@ ${bcftools} stats \
 
 
 ### Percentage of transcripts with SNPS
-```{bash}
+```{bash echo = TRUE}
 # Load contents of .rvars into the environment
 source .rvars
 
@@ -369,7 +379,7 @@ printf "%s\t%s\n" "Percentage of transcripts with SNPs:" "$(bc <<< "scale=4; ( $
 
 
 ### Get max/min/mean number of SNPs per transcript
-```{bash}
+```{bash echo = TRUE}
 # Load contents of .rvars into the environment
 source .rvars
 
@@ -383,7 +393,7 @@ awk '/^[^#]/{print $1}' ../analyses/${vcf_filtered} \
 
 ### Extract FastA IDs
 Strips Trinity isoform designations from end of ID to match gene IDs in GO term annotation file
-```{bash}
+```{bash echo = TRUE}
 # Load contents of .rvars into the environment
 source .rvars
 
@@ -403,7 +413,7 @@ head ../analyses/"${genes_list}"
 
 
 ### Extract genes with SNPs from transcriptome annotation file
-```{bash}
+```{bash echo = TRUE}
 # Load contents of .rvars into the environment
 source .rvars
 
@@ -429,7 +439,7 @@ head ../analyses/${genes_GO_list}
 
 
 ### Flatten `${genes_GO_list}` to have one GO accession per line.
-```{bash}
+```{bash echo = TRUE}
 # Load contents of .rvars into the environment
 source .rvars
 
@@ -478,20 +488,25 @@ echo ""
 
 head ../analyses/${flattened_GO}
 ```
-```{bash}
+
+### Create file with path to `${flattened_GO}` file
+
+Used to pass Bash variable to R.
+```{bash echo = TRUE}
 source .rvars
 echo "../analyses/${flattened_GO}" > .flattened_GO
 ```
 
 
-```{r}
+### Create R string with path to Bash variable, `${flattened_GO}`
+```{r echo = TRUE}
 string <- paste(readLines(".flattened_GO"), collapse=" ")
 print(string)
 
 ```
 
 
-```{r }
+```{r echo = TRUE}
 library(GSEABase)
 library(tidyverse)
 

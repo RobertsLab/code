@@ -2,7 +2,7 @@
 title: "20211006_cbai_SNP_stats"
 author: "Sam White"
 date: "10/5/2021"
-output: html_document
+output: md_document
 ---
 
 ```{r include = FALSE}
@@ -146,14 +146,14 @@ source .rvars
 # Download with wget. Use --no-check-certificate to avoid issues with Gannet certificate
 # Use --quiet option to prevent wget output from printing too many lines to notebook
 wget --continue --no-check-certificate --quiet ${orig_vcf_url_dir}/${orig_vcf} \
---directory-prefix ../data
+--directory-prefix ./data
 
 wget --continue --no-check-certificate --quiet ${orig_vcf_url_dir}/checksums.md5 \
---directory-prefix ../data
+--directory-prefix ./data
 
 # Confirm checksum for transcriptome FastA is good
-cd ../data
-md5sum --check ../data/checksums.md5 | grep "${orig_vcf}"
+cd ./data
+md5sum --check checksums.md5 | grep "${orig_vcf}"
 ```
 
 ### Get transcriptome
@@ -164,12 +164,12 @@ source .rvars
 # Download with wget. Use --no-check-certificate to avoid issues with Gannet certificate
 # Use --quiet option to prevent wget output from printing too many lines to notebook
 wget --continue --no-check-certificate --quiet ${orig_fasta_url_dir}/${transcriptome_fasta} \
---directory-prefix ../data
+--directory-prefix ./data
 
 
 # Confirm checksum for transcriptome FastA is good
 # Uses grep to highlight the desired file.
-if [ "$(md5sum ../data/${transcriptome_fasta} | awk '{print $1}')" = "${transcriptome_fasta_md5}" ]; then echo "Checksums match"; fi
+if [ "$(md5sum ./data/${transcriptome_fasta} | awk '{print $1}')" = "${transcriptome_fasta_md5}" ]; then echo "Checksums match"; fi
 ```
 
 ### Get transcriptome GO annotations file
@@ -180,11 +180,11 @@ source .rvars
 # Download with wget. Use --no-check-certificate to avoid issues with Gannet certificate
 # Use --quiet option to prevent wget output from printing too many lines to notebook
 wget --continue --no-check-certificate --quiet ${cbai_v3_1_GO_url}/${cbai_v3_1_GO} \
---directory-prefix ../data
+--directory-prefix ./data
 
 echo ""
 
-head ../data/${cbai_v3_1_GO}
+head ./data/${cbai_v3_1_GO}
 ```
 
 ### Inspect original VCF
@@ -194,7 +194,7 @@ source .rvars
 
 echo "'head' view of ${orig_vcf}:"
 echo ""
-head "../data/${orig_vcf}"
+head "./data/${orig_vcf}"
 echo ""
 echo "End of 'head' view of ${orig_vcf}"
 echo ""
@@ -205,22 +205,22 @@ echo "VCF header info:"
 echo ""
 
 # Capture first line of header (skipping list of contigs)
-begin=$("${bcftools}" view --header-only ../data/${orig_vcf} \
+begin=$("${bcftools}" view --header-only ./data/${orig_vcf} \
 | grep --line-number "##ALT=<ID" \
 | awk -F":" '{print $1}')
 
 # Caputure last line of header
-end=$("${bcftools}" view --header-only ../data/${orig_vcf} | wc -l)
+end=$("${bcftools}" view --header-only ./data/${orig_vcf} | wc -l)
 
 # Use sed to print range of lines
-sed --quiet "${begin},${end} p" ../data/${orig_vcf}
+sed --quiet "${begin},${end} p" ./data/${orig_vcf}
 echo ""
 echo "${line}"
 echo ""
 
 echo "List of samples in VCF:"
 echo ""
-${bcftools} query --list-samples ../data/${orig_vcf}
+${bcftools} query --list-samples ./data/${orig_vcf}
 ```
 
 ### Subset VCF to minimum coverage and quality
@@ -233,8 +233,8 @@ source .rvars
 "${bcftools}" filter \
 --include "TYPE='snp' & MIN(DP)>=${SNP_coverage} & QUAL>=${SNP_quality}" \
 --threads ${threads} \
-../data/${orig_vcf} \
-> ../analyses/${vcf_filtered}
+./data/${orig_vcf} \
+> ./analyses/${vcf_filtered}
 ```
 
 ### Inspect filtered VCF
@@ -244,7 +244,7 @@ source .rvars
 
 echo "'head' view of ${vcf_filtered}:"
 echo ""
-head "../analyses/${vcf_filtered}"
+head "./analyses/${vcf_filtered}"
 echo ""
 echo "End of 'head' view of ${vcf_filtered}"
 echo ""
@@ -255,15 +255,15 @@ echo "VCF header info:"
 echo ""
 
 # Capture first line of header (skipping list of contigs)
-begin=$("${bcftools}" view --header-only ../analyses/${vcf_filtered} \
+begin=$("${bcftools}" view --header-only ./analyses/${vcf_filtered} \
 | grep --line-number "##ALT=<ID" \
 | awk -F":" '{print $1}')
 
 # Caputure last line of header
-end=$("${bcftools}" view --header-only ../analyses/${vcf_filtered} | wc -l)
+end=$("${bcftools}" view --header-only ./analyses/${vcf_filtered} | wc -l)
 
 # Use sed to print range of lines
- sed --quiet "${begin},${end} p" ../analyses/${vcf_filtered}
+ sed --quiet "${begin},${end} p" ./analyses/${vcf_filtered}
 
 echo ""
 echo "${line}"
@@ -271,7 +271,7 @@ echo ""
 
 echo "List of samples in VCF:"
 echo ""
-${bcftools} query --list-samples ../analyses/${vcf_filtered}
+${bcftools} query --list-samples ./analyses/${vcf_filtered}
 ```
 
 
@@ -284,17 +284,17 @@ source .rvars
 
 # List of FastA IDs with ${SNP_coverage}x SNP coverage
 # Uses awk to skip all lines beginning with '#'
-awk '/^[^#]/{print $1}' ../analyses/${vcf_filtered} \
+awk '/^[^#]/{print $1}' ./analyses/${vcf_filtered} \
 | sort -u \
-> ../analyses/${contigs_list}
+> ./analyses/${contigs_list}
 
 # Use seqtk to generate a FastA from original transcriptome assembly and list of contigs with ${SNP_coverage}x SNP coverage
-"${seqtk}" subseq ../data/${transcriptome_fasta} ../analyses/${contigs_list} > ../data/${transcriptome_SNPS_fasta}
+"${seqtk}" subseq ./data/${transcriptome_fasta} ./analyses/${contigs_list} > ./data/${transcriptome_SNPS_fasta}
 
 # Generate FastA index file for new FastA
-"${samtools}" faidx ../data/${transcriptome_SNPS_fasta}
+"${samtools}" faidx ./data/${transcriptome_SNPS_fasta}
 
-ls -ltrh ../analyses
+ls -ltrh ./analyses
 
 ```
 
@@ -305,7 +305,7 @@ ls -ltrh ../analyses
 # Load contents of .rvars into the environment
 source .rvars
 
-for fasta in ../data/*.fasta
+for fasta in ./data/*.fasta
 do
   grep --count --with-filename "^>" ${fasta}
 done | column -t -s ":"
@@ -322,7 +322,7 @@ source .rvars
 # Shows summary stats for all samples
 ${bcftools} stats \
 --samples - \
-../analyses/${vcf_filtered} \
+./analyses/${vcf_filtered} \
 | head -n 31
 ```
 
@@ -334,7 +334,7 @@ source .rvars
 
 ${bcftools} stats \
 --samples - \
-../analyses/${vcf_filtered} \
+./analyses/${vcf_filtered} \
 | grep "ST"
 ```
 
@@ -348,7 +348,7 @@ source .rvars
 # Uses sed/column/tail to format output nicely
 ${bcftools} stats \
 --samples - \
-../analyses/${vcf_filtered} \
+./analyses/${vcf_filtered} \
 | grep "PSC" \
 | sed 's/^# *//' \
 | sed 's/average depth/avg_dp/' \
@@ -364,12 +364,12 @@ ${bcftools} stats \
 source .rvars
 
 # Count number of transcripts in transcriptome assembly
-transcripts_count=$(grep -c "^>" ../data/${transcriptome_fasta})
+transcripts_count=$(grep -c "^>" ./data/${transcriptome_fasta})
 printf "%s\t%s\n" "Original transcriptome transcripts:" "${transcripts_count}"
 
 # Count number of transcripts with SNPs
 # Parses Trinity ID and counts unique Trinity IDs
-snp_transcripts_count=$(awk '/^[^#]/{print $1}' ../analyses/${vcf_filtered} | sort -u| wc -l)
+snp_transcripts_count=$(awk '/^[^#]/{print $1}' ./analyses/${vcf_filtered} | sort -u| wc -l)
 printf "%s\t%s\n" "Transcripts with SNPs:" "${snp_transcripts_count}"
 
 echo ""
@@ -383,7 +383,7 @@ printf "%s\t%s\n" "Percentage of transcripts with SNPs:" "$(bc <<< "scale=4; ( $
 # Load contents of .rvars into the environment
 source .rvars
 
-awk '/^[^#]/{print $1}' ../analyses/${vcf_filtered} \
+awk '/^[^#]/{print $1}' ./analyses/${vcf_filtered} \
 | sort \
 | uniq -c \
 | sort -k1n,1 \
@@ -397,18 +397,18 @@ Strips Trinity isoform designations from end of ID to match gene IDs in GO term 
 # Load contents of .rvars into the environment
 source .rvars
 
-awk '/^[^#]/{print $1}' ../analyses/${vcf_filtered} \
+awk '/^[^#]/{print $1}' ./analyses/${vcf_filtered} \
 | awk 'BEGIN { FS = "_"; OFS = "_" } {print $1, $2, $3, $4}' \
 | sort -u \
-> ../analyses/${genes_list}
+> ./analyses/${genes_list}
 
-wc -l ../analyses/"${genes_list}"
+wc -l ./analyses/"${genes_list}"
 
 echo ""
 echo "${line}"
 echo ""
 
-head ../analyses/"${genes_list}"
+head ./analyses/"${genes_list}"
 ```
 
 
@@ -422,19 +422,19 @@ source .rvars
 # Uses sed to convert commas to tabs in preparation for subsequent "flattening"
 while read -r line
 do 
-  grep "${line}" ../data/${cbai_v3_1_GO}
-done < ../analyses/${genes_list} \
+  grep "${line}" ./data/${cbai_v3_1_GO}
+done < ./analyses/${genes_list} \
 | sed $'s/,/\t/g' \
-> ../analyses/${genes_GO_list}
+> ./analyses/${genes_GO_list}
 
 # Check number of records
-wc -l ../analyses/${genes_GO_list}
+wc -l ./analyses/${genes_GO_list}
 
 echo ""
 echo "${line}"
 echo ""
 
-head ../analyses/${genes_GO_list}
+head ./analyses/${genes_GO_list}
 ```
 
 
@@ -448,7 +448,7 @@ source .rvars
 # Awk sets tab as field delimiter (-F'\t'), runs a for loop that looks for "GO:" (~/GO:/), and then prints the field number).
 # Awk results are piped to sort, which sorts unique by number (-ug).
 # Sort results are piped to head to retrieve the lowest value (i.e. the top of the list; "-n1").
-begin_goterms=$(grep "GO:" ../analyses/"${genes_GO_list}" | awk -F'\t' '{for (i=1;i<=NF;i++) if($i ~/GO:/) print i}' | sort -ug | head -n1)
+begin_goterms=$(grep "GO:" ./analyses/"${genes_GO_list}" | awk -F'\t' '{for (i=1;i<=NF;i++) if($i ~/GO:/) print i}' | sort -ug | head -n1)
 
 # Flatten GO terms annotation file.
 # Expects tab-delimited input file where:
@@ -477,16 +477,16 @@ do
       do printf "%s\t%s\n" "$fixed_fields" "${array[$element]}"
     done
   fi
-done < ../analyses/"${genes_GO_list}" > ../analyses/"${flattened_GO}"
+done < ./analyses/"${genes_GO_list}" > ./analyses/"${flattened_GO}"
 
 # Check number of records
-wc -l ../analyses/${flattened_GO}
+wc -l ./analyses/${flattened_GO}
 
 echo ""
 echo "${line}"
 echo ""
 
-head ../analyses/${flattened_GO}
+head ./analyses/${flattened_GO}
 ```
 
 ### Create file with path to `${flattened_GO}` file
@@ -494,7 +494,7 @@ head ../analyses/${flattened_GO}
 Used to pass Bash variable to R.
 ```{bash echo = TRUE}
 source .rvars
-echo "../analyses/${flattened_GO}" > .flattened_GO
+echo "./analyses/${flattened_GO}" > .flattened_GO
 ```
 
 
@@ -548,14 +548,14 @@ library(tidyverse)
   slims <- slims %>% rownames_to_column(var = "GOslim")
   
   ## Write output file
-  write.csv(slims, file = "S10-SNPs_GO-GOslims.csv", quote = FALSE, row.names = FALSE)
+  write.csv(slims, file = "./analyses/S10-SNPs_GO-GOslims.csv", quote = FALSE, row.names = FALSE)
 
 # Remove GOslim accession for the generic "biological_process" term to improve visualization of other terms.
 slims <- slims[slims$GOslim != "GO:0008150",]
 
 # Create bar plot.
 # "Open" PNG file for saving subsequent plot
-pdf("../figures/S9-SNPs_GO-GOslims_barplot.pdf", height = 10, width = 12)
+pdf("./figures/S9-SNPs_GO-GOslims_barplot.pdf", height = 10, width = 12)
 
 ggplot(data = slims, aes(x=slims$Percent, y=slims$Term)) +
   labs(title = "",

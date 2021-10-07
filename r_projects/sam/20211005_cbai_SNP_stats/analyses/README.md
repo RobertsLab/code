@@ -2,17 +2,17 @@
 
 ---
 
-- cbai_v3.1-SNPS_30Q-10x_contig-IDs.txt: List of Trinity transcript IDs containing SNPs with minimum quality of 30 and minimum coverage of 10x.
+- `cbai_v3.1-SNPS_30Q-10x_contig-IDs.txt`: List of Trinity transcript IDs containing SNPs with minimum quality of 30 and minimum coverage of 10x.
 
-- cbai_v3.1-SNPS_30Q-10x_gene-IDs.txt: List of Trinity gene IDs containing SNPs with minimum quality of 30 and minimum coverage of 10x.
+- `cbai_v3.1-SNPS_30Q-10x_gene-IDs.txt`: List of Trinity gene IDs containing SNPs with minimum quality of 30 and minimum coverage of 10x.
 
-- cbai_v3_1-SNPS_30Q-10x_GO.flattened-go.txt: Two column, tab-delimited file. One GO accession with correspoding Trinity ID per line. <Trinity gene IDs>\t<GO accession.>
+- `cbai_v3_1-SNPS_30Q-10x_GO.flattened-go.txt`: Two column, tab-delimited file. One GO accession with correspoding Trinity ID per line. <Trinity gene IDs>\t<GO accession.>
 
-- cbai_v3.1-SNPS_30Q-10x_GO.tab: Two column, tab-delimited file. <Trinity gene IDs>\t<comma-separated list of all corresponding GO accessions>
+- `cbai_v3.1-SNPS_30Q-10x_GO.tab`: Two column, tab-delimited file. <Trinity gene IDs>\t<comma-separated list of all corresponding GO accessions>
 
-- cbai_v3.1-SNPS-30Q-10x.vcf: Filtered VCF file containing SNPs with minimum quality of 30 and minimum coverage of 10x.
+- `cbai_v3.1-SNPS-30Q-10x.vcf`: Filtered VCF file containing SNPs with minimum quality of 30 and minimum coverage of 10x.
 
-- [S10-SNPs_GO-GOslims.csv](https://github.com/RobertsLab/paper-tanner-crab/blob/master/supplementary-information/S10-SNPs_GO-GOslims.csv): Supplemental data number 10. Comma-separated list of Biological Process GOslim assignments for all genes containing at least one SNP. Excludes generic GOslim term `biological_process`. Columns:
+- [`S10-SNPs_GO-GOslims.csv`](https://github.com/RobertsLab/paper-tanner-crab/blob/master/supplementary-information/S10-SNPs_GO-GOslims.csv): Supplemental data number 10. Comma-separated list of Biological Process GOslim assignments for all genes containing at least one SNP. Excludes generic GOslim term `biological_process`. Columns:
 
   - `GOslim`: GOslim accession.
 

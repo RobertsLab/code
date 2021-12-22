@@ -44,6 +44,10 @@
         "prefix": "Eastern oyster",
         "body": "[Eastern oyster (_Crassostrea virginica_)](https://en.wikipedia.org/wiki/Eastern_oyster)$0"
     },
+    "Mytilus trossulus": {
+        "prefix": "Mytilus trossulus",
+        "body": "[_Mytilus trossulus_ (bay mussel)](https://en.wikipedia.org/wiki/Mytilus_trossulus)$0"
+    },
     "Ostrea lurida": {
         "prefix": "Ostrea lurida",
         "body": "[_Ostrea lurida_ (Olympia oyster)](http://en.wikipedia.org/wiki/Pacific_oyster)$0"

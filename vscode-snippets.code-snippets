@@ -48,6 +48,10 @@
         "prefix": "Mytilus trossulus",
         "body": "[_Mytilus trossulus_ (bay mussel)](https://en.wikipedia.org/wiki/Mytilus_trossulus)$0"
     },
+    "Oncorhynchus nerka": {
+        "prefix": "Oncorhynchus nerka",
+        "body": "[_Oncorhynchus nerka_ (sockeye salmon)](https://en.wikipedia.org/wiki/Sockeye_salmon)$0"
+    },
     "Ostrea lurida": {
         "prefix": "Ostrea lurida",
         "body": "[_Ostrea lurida_ (Olympia oyster)](http://en.wikipedia.org/wiki/Pacific_oyster)$0"

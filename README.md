@@ -28,6 +28,8 @@
 
 - **misc.md** - Tips for using SSH, MD5 checksums, and gzip manipulation.
 
+- `nf_core-base-srlab-500GB-node.config`: Nextflow config file for use with Roberts Lab 500GB Mox computing node.
+
 - **[remote_connections.md](https://github.com/RobertsLab/code/blob/master/remote_connections.md)** - Ways to connect to computers remotely (via SSH), how to create/use SSH keys, create tunnels, and tmux to keep jobs running after closing SSH sessions.
 
 - **snippets.cson**: Atom text editor snippets file which allows for autocompletion of markdown-formatted text frequently used by Roberts Lab members when writing in markdown (e.g. in notebooks). This file can be copied to `~/.atom/` on your computer for use and will overwrite the default snippets file.

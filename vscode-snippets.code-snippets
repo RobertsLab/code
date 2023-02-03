@@ -17,10 +17,9 @@
 	// }
 
 	// Roberts Lab resources links
-
-	"Genomic Resources Wiki": {
-        "prefix": "GenResWiki",
-        "body": "[Genomic Resources wiki](https://robertslab.github.io/resources/Genomic-Resources/)$0",
+	"Genomic Resources Handbook page": {
+        "prefix": "Genomic Resources",
+        "body": "[Genomic Resources Handbook page](https://robertslab.github.io/resources/Genomic-Resources/)$0",
         "description": "Genomic Resources link"
     },
 	// Animal genus and species with links to corresponding Wikipedia links.
@@ -76,6 +75,7 @@
         "prefix": "Tanner crab",
         "body": "[Tanner crab (_Chionoecetes bairdi_)](http://en.wikipedia.org/wiki/Chionoecetes_bairdi)$0"
     },
+
     // Software links
     "bcftools": {
         "prefix": "bcftools",

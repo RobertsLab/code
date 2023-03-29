@@ -1,0 +1,17 @@
+##### Set directories #####
+export analysis_dir="../outputs/01-uniprot_parsing"
+###########################
+##### Input files #####
+# URL for input data retrieval
+export base_url="https://gannet.fish.washington.edu/Atumefaciens/20220419-pgen-gene_annotation_mapping"
+# UniProt batch results from 20220419
+export uniprot_output="20220419-pgen-uniprot_batch-results.txt"
+# Genome IDs and SPIDs
+export genome_IDs_SPIDs="Panopea-generosa-v1.0.a4-blast-diamond-functional-genome_IDs-SPIDs.txt"
+#######################
+##### Output files #####
+# Parsed UniProt
+export parsed_uniprot="20230328-pgen-accession-gene_name-gene_description-go_ids.tab"
+# Final output
+export joined_output="20230328-pgen-gene-annotations.tab"
+########################

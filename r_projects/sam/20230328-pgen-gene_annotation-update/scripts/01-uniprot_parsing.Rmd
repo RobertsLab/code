@@ -1,0 +1,390 @@
+---
+title: "20230328-pgen-gene_annotation-update-uniprot_parsing"
+author: "Sam White"
+date: "3/28/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Update _P.generosa_ primary gene annotations mapping file from 20220419
+
+See this [GitHub Issue](https://github.com/RobertsLab/resources/issues/1602).
+
+This notebook utilized files generated on [20220419](https://robertslab.github.io/sams-notebook/2022/04/19/Data-Wrangling-Create-Primary-P.generosa-Genome-Annotation-File.html) (Notebook entry).
+
+This Rmd file is a part of the overall process. This Rmd file utilizes Bash only, as it's a transfer from a Jupyter Notebook.
+
+## Uniprot Parsing
+
+### Save Bash variables
+
+```{bash save-bash-variables-to-file}
+# Send text to export Bash variables to 01-uniprot_parsing-bash_variables.txt file
+{
+echo "##### Set directories #####"
+
+echo export 'analysis_dir="../outputs/01-uniprot_parsing"'
+echo "###########################"
+
+echo "##### Input files #####"
+
+echo "# URL for input data retrieval"
+echo export 'base_url="https://gannet.fish.washington.edu/Atumefaciens/20220419-pgen-gene_annotation_mapping"'
+
+echo "# UniProt batch results from 20220419"
+echo export 'uniprot_output="20220419-pgen-uniprot_batch-results.txt"'
+
+echo "# Genome IDs and SPIDs"
+echo export 'genome_IDs_SPIDs="Panopea-generosa-v1.0.a4-blast-diamond-functional-genome_IDs-SPIDs.txt"'
+echo "#######################"
+
+echo "##### Output files #####"
+
+echo "# Parsed UniProt"
+echo export 'parsed_uniprot="20230328-pgen-accession-gene_name-gene_description-go_ids.tab"'
+
+echo "# Final output"
+echo export 'joined_output="20230328-pgen-gene-annotations.tab"'
+echo "########################"
+
+} > 01-uniprot_parsing-bash_variables.txt
+```
+
+### Make input/output directories
+```{bash make-input-output-directories}
+# Load contents of 01-uniprot_parsing-bash_variables.txt into memory so variables are accessible
+source 01-uniprot_parsing-bash_variables.txt
+
+# If directories don't exist, make them
+mkdir --parents "${analysis_dir}"
+```
+
+### Download and inspect annotation files
+
+`--quiet`: Prevents `wget` output from overwhelming Jupyter Notebook
+
+`--continue`: If download was previously initiated, will continue where leftoff and will not create a second file if one already exists.
+
+```{bash download-input-files}
+# Load contents of 01-uniprot_parsing-bash_variables.txt into memory so variables are accessible
+source 01-uniprot_parsing-bash_variables.txt
+
+cd "${analysis_dir}"
+
+wget --quiet --continue "${base_url}/${uniprot_output}"
+wget --quiet --continue "${base_url}/${genome_IDs_SPIDs}"
+
+ls -ltrh
+
+echo ""
+echo "---------------------------------------------------------"
+echo ""
+head -n 25 *.txt
+```
+
+### Check UniProt batch retrieval
+
+Print the first entry (end of each entry denoted by line beginning with `//`.
+
+Let's break it down step by step:
+
+- `grep -n "^//"` - This command searches for all lines that begin with `//` in the file.txt and uses the -n flag to include line numbers in the output.
+
+- `head -n 1` - This command takes the first line of the output from grep, which is the line number of the first line that begins with`//`.
+
+- `cut -d ":" -f 1` - This command extracts the line number from the output of head by splitting the output at the colon (:) and selecting the first field.
+
+- `xargs -I {} head -n {}` - This command uses the line number as an argument for the head command, which prints the first n lines of a file. The xargs command is used to pass the line number to head as an argument.
+This command will print all lines in `${uniprot_output}` up to the first line that begins with `//`.
+
+---
+
+Counting accessions:
+
+- `grep -c "^AC"`Counts Accession lines (beginning with `AC`).
+
+NOTE: This will produce a "`broken pipe`" error message, but the outputs for both `grep` commands are fine.
+
+```{bash inspect-uniprot-retrieval-file}
+# Load contents of 01-uniprot_parsing-bash_variables.txt into memory so variables are accessible
+source 01-uniprot_parsing-bash_variables.txt
+
+cd "${analysis_dir}"
+
+grep -n "^//" "${uniprot_output}" \
+| head -n 1 \
+| cut -d ":" -f 1 \
+| xargs -I {} head -n {} "${uniprot_output}"
+
+echo ""
+
+echo "----------------------------------------------------"
+
+echo ""
+
+echo "Number of accessions:"
+
+echo ""
+
+grep -c "^AC" "${uniprot_output}"
+```
+
+### Parse the stuff we want
+
+- UniProt accession
+
+- Gene name/abbreviation
+
+- Gene description
+
+- GO IDs
+
+- GO aspect (cellular component `C`, molecular function `F`, and biological process `P`)
+
+
+#### Check DE descriptor lines to decide pattern matching
+
+Checks lines beginning with `DE` to identify values in the 2nd field with `Name` in them.
+
+Identifies unique values. This will determine how to parse properly after this.
+
+```{bash check-DE-descriptor-lines}
+# Load contents of 01-uniprot_parsing-bash_variables.txt into memory so variables are accessible
+source 01-uniprot_parsing-bash_variables.txt
+
+cd "${analysis_dir}"
+
+grep "^DE" "${uniprot_output}" | awk '$2 ~ /Name/ { print $2 }' | sort -u
+```
+
+
+### Parse and print tab-delimited file
+
+Will produce file like this:
+
+| gene | gene_description | alternate_gene_description | all_GO_IDs | BP_GO_IDs | CC_GO_IDs | MF_GO_IDs |
+|------|------------------|----------------------------|------------|-----------|-----------|-----------|
+
+```{bash parse-uniprot-file}
+# Load contents of 01-uniprot_parsing-bash_variables.txt into memory so variables are accessible
+source 01-uniprot_parsing-bash_variables.txt
+
+
+cd "${analysis_dir}"
+
+# Create column headers
+printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
+"accessions" \
+"gene_id" \
+"gene" \
+"gene_description" \
+"alt_gene_description" \
+"all_GO_ids" \
+"BP_GO_ids" \
+"CC_GO_ids" \
+"MF_GO_ids" \
+> "${parsed_uniprot}"
+
+# Loop through UniProt records
+time \
+while read -r line
+do
+  # Get record line descriptor
+  descriptor=$(echo "${line}" | awk '{print $1}')
+
+  # Capture second field for evaluation
+  go_line=$(echo "${line}" | awk '{print $2}')
+
+  # Append GO IDs to array
+  if [[ "${go_line}" == "GO;" ]]; then
+    go_id=$(echo "${line}" | awk '{print $3}')
+    go_ids_array+=("${go_id}")
+    go_id_aspect=$(echo "${line}" | awk '{print $4}' | awk -F":" '{print $1}')
+    if [[ "${go_id_aspect}" == "C" ]]; then
+      go_id_C_array+=("${go_id}")
+    elif [[ "${go_id_aspect}" == "F" ]]; then
+      go_id_F_array+=("${go_id}")
+    elif [[ "${go_id_aspect}" == "P" ]]; then
+      go_id_P_array+=("${go_id}")
+    fi
+  elif [[ "${go_line}" == "GeneID;" ]]; then
+    # Uses sed to strip trailing semi-colon
+    gene_id=$(echo "${line}" | awk '{print $3}' | sed 's/;$//')
+  fi
+
+  # Get gene description
+  if [[ "${descriptor}" == "DE" ]] && [[ "${go_line}" == "RecName:" ]]; then
+    # Uses sed to strip trailing spaces at end of line and remove commas
+    gene_description=$(echo "${line}" | awk -F "[={]" '{print $2}' | sed 's/[[:blank:]]*$//' | sed 's/,//g' | sed 's/;$//')
+
+  # Get alternate name
+  elif [[ "${descriptor}" == "DE" ]] && [[ "${go_line}" == "AltName:" ]]; then
+    # Uses sed to strip trailing spaces at end of line and remove commas
+    alt_gene_description=$(echo "${line}" | awk -F "[={]" '{print $2}' | sed 's/[[:blank:]]*$//' | sed 's/,//g' | sed 's/;$//')
+
+  # Get gene name
+  elif [[ "${descriptor}" == "GN"  ]] && [[ $(echo "${line}" | awk -F "=" '{print $1}') == "GN   Name" ]]; then
+    # Uses sed to strip trailing spaces at end of line
+    gene=$(echo "${line}" | awk -F 'Name=|{|;' '{print $2}' | sed 's/[[:blank:]]*$//')
+
+  # Get UniProt accession
+  elif [[ "${descriptor}" == "AC" ]]; then
+    # awk removes "AC" notation
+    # sed removes all spaces
+    # sed removes trailing semi-colon
+    # Uses array to handle accessions being on multiple lines of UniProt records file
+    accession=$(echo "${line}" | awk '{$1="";print $0}' | sed 's/[[:space:]]*//g' | sed 's/;$//')
+    accessions_array+=("${accession}")
+
+  # Identify beginning on new record
+  elif [[ "${descriptor}" == "//" ]]; then
+
+    ### Format GO arrays for easier printing ###
+    
+    # Remove semi-colon delimiters
+    go_ids_array=("${go_ids_array[@]/;}")
+    go_id_C_array=("${go_id_C_array[@]/;}")
+    go_id_F_array=("${go_id_F_array[@]/;}")
+    go_id_P_array=("${go_id_P_array[@]/;}")
+    
+    # Join array elements using semi-colon
+    # sets the IFS (Internal Field Separator) to semicolon
+    joined_go_ids=$(IFS=';' && echo "${go_ids_array[*]}")
+    joined_go_id_C=$(IFS=';' && echo "${go_id_C_array[*]}")
+    joined_go_id_F=$(IFS=';' && echo "${go_id_F_array[*]}")
+    joined_go_id_P=$(IFS=';' && echo "${go_id_P_array[*]}")
+    
+    ### End GO array formatting ###
+    
+    ### Print tab-delimited ###
+    
+    (IFS=; printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
+     "${accessions_array[*]}" \
+     "${gene_id}" \
+     "${gene}" \
+     "${gene_description}" \
+     "${alt_gene_description}" \
+     "${joined_go_ids}" \
+     "${joined_go_id_P}" \
+     "${joined_go_id_C}" \
+     "${joined_go_id_F}")
+    
+    ### END PRINTING ###
+
+    # Re-initialize variables
+    accession=""  
+    accessions_array=()
+    descriptor=""
+    gene=""
+    gene_description=""
+    gene_id=""
+    go_id=""
+    go_ids_array=()
+    go_id_C_array=()
+    go_id_F_array=()
+    go_id_P_array=()
+  fi
+
+
+done < "${uniprot_output}" >> "${parsed_uniprot}"
+```
+
+### Inspect parsed UniProt file
+
+```{bash inspect-parse-UniProt-file}
+# Load contents of 01-uniprot_parsing-bash_variables.txt into memory so variables are accessible
+source 01-uniprot_parsing-bash_variables.txt
+
+cd "${analysis_dir}"
+
+wc -l "${parsed_uniprot}"
+
+echo ""
+echo "------------------------------------------------------------------"
+echo ""
+
+head -n 25 "${parsed_uniprot}" | column -t
+```
+
+### Join with original list of genes and SPIDs
+
+Output format (tab-delimited):
+
+| gene_ID | SPIDs | UniProt_gene_ID | gene | gene_description | alternate_gene_description | all_GO_IDs | BP_GO_IDs | CC_GO_IDs | MF_GO_IDs |
+|---------|-------|-----------------|------|------------------|----------------------------|------------|-----------|-----------|-----------|
+
+
+Explanation:
+
+- `awk -v FS='[;[:space:]]+'`: Sets the Field Separator variable to handle `; ` (notice the <space> after the semi-colon) in UniProt accessions. Allows for proper searching.
+
+- `FNR == NR`: Restricts next block (designated by `{}`) to work only on first input file.
+
+- `{array[$1]=$0; next}`: Adds the entire line (`$0`) of the first file to the array names `array` and then moves on to the next set of commands for the second input file.
+
+- `($1 in array)`: Looks for the value of the first column (`$1`, which is SPID) from the second file to see if there's a match from the array (which contains the line from the first file).
+
+- `{print $2,array[$1]}'`: If there's a match, print the second column (`$2`, which is gene ID) from the second file, followed by the line from the first file.
+
+- `"${parsed_uniprot}" "${spid_list}"`: The first and second input files.
+
+- `"${joined_output}"`: Result of the join.
+
+```{bash join-with-genes-and-SPIDs}
+# Load contents of 01-uniprot_parsing-bash_variables.txt into memory so varaibles are accessible
+source 01-uniprot_parsing-bash_variables.txt
+
+cd "${analysis_dir}"
+
+# Output written to temporary file to
+# allow for insertion of header in next step.
+awk \
+-v FS='[;[:space:]]+' \
+'NR==FNR \
+{array[$1]=$0; next} \
+($1 in array) \
+{print $2"\t"array[$1]}' \
+"${parsed_uniprot}" "${genome_IDs_SPIDs}" \
+> tmp.tab
+
+# Add header
+# Create column headers
+{ printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
+"gene" \
+"accessions" \
+"gene_id" \
+"gene_name" \
+"gene_description" \
+"alt_gene_description" \
+"all_GO_ids" \
+"BP_GO_ids" \
+"CC_GO_ids" \
+"MF_GO_ids"; \
+cat tmp.tab; 
+} \
+> "${joined_output}"
+
+# Remove temporary file
+rm tmp.tab
+```
+
+### Inspect final annotation file
+
+```{bash inspect-final-annotation-file}
+# Load contents of 01-uniprot_parsing-bash_variables.txt into memory so varaibles are accessible
+source 01-uniprot_parsing-bash_variables.txt
+
+cd "${analysis_dir}"
+
+wc -l "${joined_output}"
+
+echo ""
+echo "------------------------------------------------------------------"
+echo ""
+
+head -n 25 "${joined_output}" | column -t -s $'\t'
+```
+

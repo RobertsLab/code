@@ -1,0 +1,171 @@
+---
+title: "02-goslim-mapping"
+author: "Sam White"
+date: "3/29/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Load packages
+```{r load-packages}
+library(tidyverse)
+library(GSEABase)
+library(GO.db)
+```
+
+
+# Download `goslim_generic.obo`
+```{r download-generic-goslim-obo}
+goslims <- "goslim_generic.obo"
+goslims_url <- "http://current.geneontology.org/ontology/subsets/goslim_generic.obo"
+```
+
+# Set GSEAbase location and download `goslim_generic.obo`
+```{r}
+# Find GSEAbase installation location
+gseabase_location <- find.package("GSEABase")
+
+# Load path to GOslim OBO file
+goslim_obo_destintation <- file.path(gseabase_location, "extdata", goslims, fsep = "/")
+
+# Download the GOslim OBO file
+download.file(url = goslims_url, destfile = goslim_obo_destintation)
+
+# Loads package files
+gseabase_files <- system.file("extdata", goslims, package="GSEABase")
+```
+
+
+# Create formatted file for GO ID/gene mapping
+```{bash created-GOID-gene-mapping-file}
+# Isolate GO IDs and genes
+# Remove "hidden" spaces, but preserve tabs, using sed
+awk -F "\t" '{print $7, "\t", $1}' \
+../outputs/01-uniprot_parsing/20230328-pgen-gene-annotations.tab \
+| sed 's/ \+//g' \
+> ../outputs/02-goslim-mapping/pgen-go_ids-gene.tab
+
+head ../outputs/02-goslim-mapping/pgen-go_ids-gene.tab
+```
+
+# Read files
+```{r read-in-files}
+# Read in gene annotaitons file tab-delimited file
+big_annotation_df <- read.csv("../outputs/01-uniprot_parsing/20230328-pgen-gene-annotations.tab", header = TRUE, sep = "\t")
+
+# Read in GO IDs/gene mappings
+pgen_GO_gene_mappings_table <- read.csv("../outputs/02-goslim-mapping/pgen-go_ids-gene.tab", header = TRUE, sep = "\t")
+```
+
+
+
+# Clean GO IDs/gene data frame and group genes by GO ID
+```{r clean-and-group-by-GOID}
+# Remove rows with no GO ID
+pgen_GO_gene_mappings_table_cleaned <- pgen_GO_gene_mappings_table[!(pgen_GO_gene_mappings_table$all_GO_ids == ""), ]
+
+# "Flatten" file so each row is single GO ID with corresponding gene
+pgen_GO_gene_mappings_table_cleaned_separated <- separate_rows(pgen_GO_gene_mappings_table_cleaned, all_GO_ids, sep = ";")
+
+
+# Group by unique GO ID
+pgen_GO_gene_mappings_table_cleaned_separated_grouped_df <- pgen_GO_gene_mappings_table_cleaned_separated %>%
+  group_by(all_GO_ids) %>%
+  summarise(gene = paste(gene, collapse = ","))
+
+str(pgen_GO_gene_mappings_table_cleaned_separated_grouped_df)
+```
+
+# Map GO IDs to GOslims
+
+The mapping steps were derived from this [bioconductor forum response](https://support.bioconductor.org/p/128407/#128408)
+```{r}
+# Vector of GO IDs
+go_ids <- pgen_GO_gene_mappings_table_cleaned_separated_grouped_df$all_GO_ids
+
+# Create GSEAbase GOCollection using `go_ids`
+myCollection <- GOCollection(go_ids)
+
+# Retrieve GOslims from GO OBO file set
+slim <- getOBOCollection(gseabase_files)
+
+# Retrieve Biological Process (BP) GOslims
+slimdf <- goSlim(myCollection, slim, "BP", verbose)
+
+# List of GOslims and all GO IDs from `go_ids`
+gomap <- as.list(GOBPOFFSPRING[rownames(slimdf)])
+
+# Maps `go_ids` to matching GOslims
+mapped <- lapply(gomap, intersect, ids(myCollection))
+
+# Append all mapped GO IDs to `slimdf`
+# `sapply` needed to apply paste() to create semi-colon delimited values
+slimdf$ids <- sapply(lapply(gomap, intersect, ids(myCollection)), paste, collapse=";")
+
+# Remove "character(0) string from "ids" column
+slimdf$ids[slimdf$ids == "character(0)"] <- ""
+
+# Add self-matching GOIDs to "ids" column, if not present
+for (go_id in go_ids) {
+  # Check if the go_id is present in the row names
+  if (go_id %in% rownames(slimdf)) {
+    # Check if the go_id is not present in the ids column
+    # Also removes white space "trimws()" and converts all to upper case to handle
+    # any weird, "invisible" formatting issues.
+    if (!go_id %in% trimws(toupper(strsplit(slimdf[go_id, "ids"], ";")[[1]]))) {
+      # Append the go_id to the ids column with a semi-colon separator
+      if (length(slimdf$ids) > 0 && nchar(slimdf$ids[nrow(slimdf)]) > 0) {
+        slimdf[go_id, "ids"] <- paste0(slimdf[go_id, "ids"], "; ", go_id)
+      } else {
+        slimdf[go_id, "ids"] <- go_id
+      }
+    }
+  }
+}
+
+str(slimdf)
+```
+
+
+# Flatten file
+```{r flatten-file}
+# "Flatten" file so each row is single GO ID with corresponding GOslim
+# rownames_to_column needed to retain row name info
+slimdf_separated <- as.data.frame(slimdf %>% 
+  rownames_to_column('GOslim') %>% 
+  separate_rows(ids, sep = ";"))
+
+# Group by unique GO ID
+grouped_slimdf <- slimdf_separated %>%
+  filter(!is.na(ids) & ids != "") %>%
+  group_by(ids) %>%
+  summarize(GOslim = paste(GOslim, collapse = ";"),
+            Term = paste(Term, collapse = ";"))
+
+
+str(grouped_slimdf)
+```
+
+# Join tables
+```{r join-tables}
+# Join with tab-delimited GOID<tab>gene_names
+joined <- left_join(pgen_GO_gene_mappings_table_cleaned_separated, grouped_slimdf, by = join_by("all_GO_ids" == "ids"))
+
+
+# Remove rows with empty entries in GOslim and Term columns
+# GOslims and Terms will be delimited with semi-colons
+grouped_joined <- joined %>% 
+  filter(!is.na(GOslim) & GOslim != "") %>%
+  filter(!is.na(Term) & Term != "") %>%
+  group_by(gene) %>% 
+  summarize(GOslim = paste(GOslim, collapse = ";"),
+  Term = paste(Term, collapse = ";"))
+
+# Join the two tables
+ultimate_annotation <- left_join(big_annotation_df, grouped_joined, by = join_by("gene" == "gene"))
+
+```

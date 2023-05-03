@@ -7,8 +7,8 @@ From: ubuntu-22.04-base.sif
   ls -l /gscratch
   cd /gscratch/srlab/programs
   wget https://github.com/arq5x/bedtools2/releases/download/v2.31.0/bedtools.static
-  mv bedtools.static bedtools-v2.31.0
-  chmod a+x bedtools-v2.31.0
+  mv bedtools.static bedtools
+  chmod a+x bedtools
 
 %labels
   Author Sam White

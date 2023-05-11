@@ -67,7 +67,8 @@ Stage: build
 	libpango1.0-dev \
 	tree \
     htop \
-    python3
+    python3 \
+    libbz2-dev
 
     # Make programs directory
     mkdir --parents /gscratch/srlab/programs

@@ -1,18 +1,42 @@
 Bootstrap: localimage
 From: ubuntu-22.04-base.sif
 
+##################################################################
+# Apptainer (Singularity) definition file geared towards isoform #
+# expression analysis.                                           #
+# Includes the following software:                               #
+# - bedtools v2.31.0                                             #
+# - gffcompare 0.12.6                                            #
+# - stringtie 2.2.1                                              #
+# - samtools 1.17                                                #
+##################################################################
+
+
 %post
+
+  # Set program versions
+  bedtools_version="v2.31.0"
+  gffcomare_version="gffcompare-0.12.6"
+  stringtie_version="stringtie-2.2.1"
+  samtools_version="samtools-1.17"
+
+  # Change to installation directory
   cd /gscratch/srlab/programs
 
+  # Install bedtools
+  wget https://github.com/arq5x/bedtools2/releases/download/${bedtools_version}/bedtools.static
+  mv bedtools.static bedtools
+  chmod a+x bedtools
+
   # Install gffcompare
-  wget http://ccb.jhu.edu/software/stringtie/dl/gffcompare-0.12.6.Linux_x86_64.tar.gz
-  tar -xzvf gffcompare-0.12.6.Linux_x86_64.tar.gz
-  rm gffcompare-0.12.6.Linux_x86_64.tar.gz
+  wget http://ccb.jhu.edu/software/stringtie/dl/${gffcomare_version}.Linux_x86_64.tar.gz
+  tar -xzvf ${gffcomare_version}.Linux_x86_64.tar.gz
+  rm ${gffcomare_version}.Linux_x86_64.tar.gz
 
   # Install StringTie
-  wget http://ccb.jhu.edu/software/stringtie/dl/stringtie-2.2.1.Linux_x86_64.tar.gz
-  tar -xzvf stringtie-2.2.1.Linux_x86_64.tar.gz
-  rm stringtie-2.2.1.Linux_x86_64.tar.gz
+  wget http://ccb.jhu.edu/software/stringtie/dl/${stringtie_version}.Linux_x86_64.tar.gz
+  tar -xzvf ${stringtie_version}.Linux_x86_64.tar.gz
+  rm ${stringtie_version}.Linux_x86_64.tar.gz
 
   # Install HISAT2
   git clone https://github.com/DaehwanKimLab/hisat2.git
@@ -20,15 +44,16 @@ From: ubuntu-22.04-base.sif
   make -j
 
   # Install samtools
-  wget https://github.com/samtools/samtools/releases/download/1.17/samtools-1.17.tar.bz2
-  tar -xjvf samtools-1.17.tar.bz2
+  wget https://github.com/samtools/samtools/releases/download/1.17/${samtools_version}.tar.bz2
+  tar -xjvf ${samtools_version}.tar.bz2
   ./configure
   make -j
-  rm samtools-1.17.tar.bz2
+  rm ${samtools_version}.tar.bz2
 
 %labels
   Author Sam White
-  Version v0.0.1
+
+  Version v0.0.2
 
 %help
   This is a definition file for an isoform expression workflow utilizing HISAT2, StringTie and gffcompare.

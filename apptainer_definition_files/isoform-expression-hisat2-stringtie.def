@@ -46,6 +46,7 @@ From: ubuntu-22.04-base.sif
   # Install samtools
   wget https://github.com/samtools/samtools/releases/download/1.17/${samtools_version}.tar.bz2
   tar -xjvf ${samtools_version}.tar.bz2
+  cd ${samtools_version}
   ./configure
   make -j
   rm ${samtools_version}.tar.bz2

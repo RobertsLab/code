@@ -32,17 +32,20 @@ From: ubuntu-22.04-base.sif
   wget http://ccb.jhu.edu/software/stringtie/dl/${gffcomare_version}.Linux_x86_64.tar.gz
   tar -xzvf ${gffcomare_version}.Linux_x86_64.tar.gz
   rm ${gffcomare_version}.Linux_x86_64.tar.gz
+  ln --symbolic ${gffcomare_version}.Linux_x86_64/gffcompare gffcompare
 
   # Install StringTie
   wget http://ccb.jhu.edu/software/stringtie/dl/${stringtie_version}.Linux_x86_64.tar.gz
   tar -xzvf ${stringtie_version}.Linux_x86_64.tar.gz
   rm ${stringtie_version}.Linux_x86_64.tar.gz
+  ln --symbolic ${stringtie_version}.Linux_x86_64/stringtie stringtie
 
   # Install HISAT2
   git clone https://github.com/DaehwanKimLab/hisat2.git
   cd hisat2
   make -j 40
   cd -
+  ln --symbolic hisat2/hisat2 hisat2
 
   # Install samtools
   wget https://github.com/samtools/samtools/releases/download/1.17/${samtools_version}.tar.bz2
@@ -52,6 +55,7 @@ From: ubuntu-22.04-base.sif
   make -j 40
   cd -
   rm ${samtools_version}.tar.bz2
+  ln --symbolic ${samtools_version}/samtools samtools
 
 %labels
   Author Sam White

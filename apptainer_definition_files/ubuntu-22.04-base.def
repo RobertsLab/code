@@ -69,7 +69,8 @@ Stage: build
     htop \
     python3 \
     libbz2-dev \
-    liblzma-dev
+    liblzma-dev \
+    rsync
 
     # Make programs directory
     mkdir --parents /gscratch/srlab/programs

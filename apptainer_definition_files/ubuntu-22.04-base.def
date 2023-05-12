@@ -68,7 +68,8 @@ Stage: build
 	tree \
     htop \
     python3 \
-    libbz2-dev
+    libbz2-dev \
+    liblzma-dev
 
     # Make programs directory
     mkdir --parents /gscratch/srlab/programs

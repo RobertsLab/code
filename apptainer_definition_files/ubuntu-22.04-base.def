@@ -70,7 +70,9 @@ Stage: build
     python3 \
     libbz2-dev \
     liblzma-dev \
-    rsync
+    rsync \
+    tee \
+    tree
 
     # Make programs directory
     mkdir --parents /gscratch/srlab/programs

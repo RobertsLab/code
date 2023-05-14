@@ -71,7 +71,7 @@ Stage: build
     libbz2-dev \
     liblzma-dev \
     rsync \
-    tee \
+    coreutils \
     tree
 
     # Make programs directory

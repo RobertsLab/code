@@ -47,7 +47,7 @@ From: ubuntu-22.04-base.sif
   cd hisat2-${hisat2_version}
   make -j 40
   cd -
-  ln --symbolic hisat2-${hisat2_version} hisat2
+  ln --symbolic hisat2-${hisat2_version}/hisat2 hisat2
 
   # Install samtools
   wget https://github.com/samtools/samtools/releases/download/1.17/${samtools_version}.tar.bz2

@@ -42,11 +42,12 @@ From: ubuntu-22.04-base.sif
   ln --symbolic ${stringtie_version}.Linux_x86_64/stringtie stringtie
 
   # Install HISAT2
-  wget https://github.com/DaehwanKimLab/hisat2/archive/refs/tags/v2.2.1.tar.gz
+  wget https://github.com/DaehwanKimLab/hisat2/archive/refs/tags/v${hisat2_version}.tar.gz
   tar -xzvf v${hisat2_version}.tar.gz
   cd hisat2-${hisat2_version}
   make -j 40
   cd -
+  rm v${hisat2_version}.tar.gz
   ln --symbolic hisat2-${hisat2_version}/hisat2 hisat2
 
   # Install samtools

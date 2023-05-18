@@ -22,7 +22,7 @@ From: ubuntu-22.04-base.sif
   samtools_version="samtools-1.17"
 
   # Change to installation directory
-  cd /gscratch/srlab/programs
+  cd /srlab/programs
 
   # Install bedtools
   wget https://github.com/arq5x/bedtools2/releases/download/${bedtools_version}/bedtools.static

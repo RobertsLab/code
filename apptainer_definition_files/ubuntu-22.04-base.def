@@ -75,7 +75,7 @@ Stage: build
     tree
 
     # Make programs directory
-    mkdir --parents /gscratch/srlab/programs
+    mkdir --parents /srlab/programs
 
 NOW=`date`
     echo "export NOW=\"${NOW}\"" >> $APPTAINER_ENVIRONMENT

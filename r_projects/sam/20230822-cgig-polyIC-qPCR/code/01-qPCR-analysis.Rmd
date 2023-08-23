@@ -1,0 +1,187 @@
+---
+title: "qPCR-analysis"
+author: "Sam White"
+date: "2023-08-22"
+output: html_document
+---
+
+# Load libraries
+```{r load-libraries}
+if ("tidyverse" %in% rownames(installed.packages()) == 'FALSE') install.packages('tidyverse')
+
+library("tidyverse")
+```
+
+# Read in files
+```{r read-in-files}
+qpcr_20230726 <- read.csv('https://owl.fish.washington.edu/Athaliana/qPCR_data/sam_2023-07-26_13-06-28_Connect-Quantification%20-Cq-Results.csv')
+
+qpcr_20230817 <- read.csv('https://owl.fish.washington.edu/Athaliana/qPCR_data/sam_2023-08-17_11-58-46_Connect-Quantification-Cq-Results.csv')
+
+head(qpcr_20230726)
+
+head(qpcr_20230817)
+```
+
+# Combine data
+```{r combine-data}
+qpcr_all <- rbind(qpcr_20230726, qpcr_20230817)
+
+# Change truncated target name to full name
+qpcr_all$Target[qpcr_all$Target == 'Cg_citrate-synt'] <- 'Cg_citrate-synthase'
+
+str(qpcr_all)
+```
+# Filter for diploids
+```{r filter-for-diploids}
+# Diploids begin with the letter "D"
+qpcr_diploids <- qpcr_all %>% 
+  filter(grepl('^D', Sample))
+
+str(qpcr_diploids)
+```
+
+# Normalize to Actin using delta Cq
+```{r delta-Cq}
+# Create column indicating Control or Injected
+qpcr_diploids_IC <- qpcr_diploids %>%
+  mutate(Injected_Control = ifelse(substr(Sample, nchar(Sample), nchar(Sample)) == "I", "Injected", "Control")) %>%
+  group_by(Target, Injected_Control)
+
+
+# Calculate the differences
+# Subtract Cq values and calculate delta.Cg_Actin
+qpcr_diploids_delta_Cq <- qpcr_diploids_IC %>%
+  group_by(Sample) %>%
+  mutate(delta.Cg_Actin = Cq - Cq[Target == "Cg_Actin"]) %>%
+  ungroup()
+```
+
+
+# T-test Stats for delta Cqs
+```{r t-test-statistics}
+# Filter rows with non-NA "delta.Cg_Actin" values
+filtered_df <- qpcr_diploids_delta_Cq.no_housekeeping %>% filter(!is.na(delta.Cg_Actin))
+
+# Perform t-tests for each Target
+t_test_results <- filtered_df %>%
+  group_by(Target) %>%
+  summarise(p_value = t.test(delta.Cg_Actin[Injected_Control == "Injected"], delta.Cg_Actin[Injected_Control == "Control"])$p.value)
+
+# Add asterisk information to data frame
+t_test_results$asterisk <- ifelse(t_test_results$p_value < 0.05, "*", "")
+
+print(t_test_results)
+```
+
+# Create box plots of delta Cq
+```{r box-plots}
+# Remove "housekeeping" genes - Actin and GAPDH
+qpcr_diploids_delta_Cq.no_housekeeping <- qpcr_diploids_delta_Cq %>%
+  filter(!Target %in% c("Cg_Actin", "Cg_GAPDH")) %>% 
+  mutate(Injected_Control = ifelse(substr(Sample, nchar(Sample), nchar(Sample)) == "I", "Injected", "Control")) %>%
+  group_by(Target, Injected_Control) %>% 
+  filter(!is.na(Injected_Control)) %>%
+  ungroup()
+
+# Get the y-coordinate for placing the asterisk above Cg_DICER
+# It's the only target with a p-value < 0.05
+y_position <- max(qpcr_diploids_delta_Cq.no_housekeeping$delta.Cg_Actin[qpcr_diploids_delta_Cq.no_housekeeping$Target == "Cg_DICER"]) + 0.5
+
+# Create box plots
+ggplot(qpcr_diploids_delta_Cq.no_housekeeping, aes(x = Target, y = delta.Cg_Actin, fill = Injected_Control)) +
+  geom_boxplot() +
+  geom_jitter(aes(color = Injected_Control), position = position_jitterdodge(dodge.width = 0.9)) +  # Add data points
+  labs(title = "Box Plots of delta Cq Values by Target",
+       x = "Target", y = "delta Cq") +
+  scale_fill_manual(values = c("Control" = "lightblue", "Injected" = "pink"),
+                    labels = c("Control", "Injected")) +
+  scale_color_manual(values = c("Control" = "darkblue", "Injected" = "darkred"),
+                     labels = c("Control", "Injected")) +
+  annotate("text", x = t_test_results$Target, y = y_position, label = t_test_results$asterisk, size = 10, color = "orange") +  # Add asterisks
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate X axis labels
+```
+
+```{r save-box-plots}
+# Save the plot as a TIFF file
+ggsave("../output/01-qPCR-analysis/figures/diploid.delta-Cq.boxplots.tiff", plot = last_plot(), width = 8, height = 6, dpi = 300)
+```
+
+
+# Calculate mean Cq for all genes
+
+The mutate() function creates a new column named "Injected_Control" using the ifelse() function. If the "Sample" ends with "I", it assigns the value "Injected"; otherwise, it assigns the value "Control".
+
+The group_by() function groups the data by both the "Target" column and the "Injected_Control" column.
+
+The summarize() function calculates the mean of the "Cq" column for each group of Target and Injected_Control.
+```{r mean-Cqs}
+qpcr_mean_Cq_per_gene_treatment <- qpcr_diploids %>%
+  mutate(Injected_Control = ifelse(substr(Sample, nchar(Sample), nchar(Sample)) == "I", "Injected", "Control")) %>%
+  group_by(Target, Injected_Control) %>%
+  summarize(mean_Cq = mean(Cq, na.rm = TRUE), std_dev_Cq = sd(Cq, na.rm = TRUE))
+
+str(qpcr_mean_Cq_per_gene_treatment)
+```
+
+# Calculate delta-Cq
+```{r delta-Cq}
+# Calculate the difference between mean_Cq values and Cg_Actin's mean_Cq within each group
+qpcr_delta_Cq <- qpcr_mean_Cq_per_gene_treatment %>%
+  group_by(Injected_Control) %>%
+  mutate(delta_Cq_Cg_Actin = mean_Cq - mean_Cq[Target == "Cg_Actin"]) %>%
+  ungroup()
+
+str(qpcr_delta_Cq)
+```
+
+# Calculate the difference between Injected and Control within each gene
+```{r delta-delta-Cq}
+qpcr_delta_delta_Cq <- qpcr_delta_Cq %>%
+  group_by(Target) %>%
+  mutate(delta_delta_Cq = delta_Cq_Cg_Actin[Injected_Control == "Injected"] -
+                             delta_Cq_Cg_Actin[Injected_Control == "Control"]) %>%
+  ungroup()
+
+str(qpcr_delta_delta_Cq)
+```
+
+# Calculate the fold change for each Target
+```{r fold-change}
+qpcr_fold_change <- qpcr_delta_delta_Cq %>%
+  mutate(fold_change = 2^(-delta_delta_Cq)) %>% 
+  distinct(Target, fold_change)
+
+str(qpcr_fold_change)
+```
+
+# Plot fold change
+
+Excludes Actin and GAPDH.
+```{r plot-fold-change}
+# Filter and create a numeric label for the x-axis
+# Exclude Actin and GAPDH
+qpcr_fold_change_filtered <- qpcr_fold_change %>%
+  filter(Target != "Cg_Actin" & Target != "Cg_GAPDH") %>%
+  mutate(numeric_label = seq_along(Target))
+
+# Create the plot with fold changes relative to baseline of 1
+ggplot(qpcr_fold_change_filtered, aes(x = Target, y = fold_change - 1)) +
+  geom_bar(stat = "identity") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +  # Baseline
+  labs(x = "Target", y = "Relative Fold Change (2^(-ddCq))", title = "Expression: Fold Change") +
+  theme_minimal() +
+  scale_y_continuous(limits = c(-1, 2))
+
+```
+# Save fold change bar plots
+```{r save-fold-change-plots}
+# Save the plot as a TIFF file
+ggsave("../output/01-qPCR-analysis/figures/diploid.delta-delta-Cq.fold-change.barplots.tiff", plot = last_plot(), width = 8, height = 6, dpi = 300)
+```
+
+# Display R Session Information
+```{r session-info, include = TRUE}
+sessionInfo()
+```

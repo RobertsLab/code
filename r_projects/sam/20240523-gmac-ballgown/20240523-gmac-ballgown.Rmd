@@ -1,0 +1,1272 @@
+---
+title: "Identification of differentially expressed transcripts in G.macrocephalus"
+author: "Sam White"
+date: "2024-05-24"
+output: 
+  bookdown::html_document2:
+    theme: cosmo
+    toc: true
+    toc_float: true
+    number_sections: true
+    code_folding: show
+    code_download: true
+  github_document:
+    toc: true
+    number_sections: true
+  html_document:
+    theme: cosmo
+    toc: true
+    toc_float: true
+    number_sections: true
+    code_folding: show
+    code_download: true
+bibliography: references.bib
+link-citations: true
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(
+  echo = TRUE,         # Display code chunks
+  eval = FALSE,        # Evaluate code chunks
+  warning = FALSE,     # Hide warnings
+  message = FALSE,     # Hide messages
+  comment = ""         # Prevents appending '##' to beginning of lines in code output
+)
+```
+
+# Use [Ballgown](https://github.com/alyssafrazee/ballgown) for identification of differentially expressed isoforms in *G.macrocephalus* gonad tissue exposed to different temperatures.
+
+REQUIRES Linux-based system to run all chunks properly; some chunks will
+not work on Mac OS!
+
+REQUIRES the following Bash programs:
+
+-   `wget`
+
+-   `tree`
+
+-   `md5sum`
+
+REQUIRES the following R libraries:
+
+-   [`Ballgown`](https://github.com/alyssafrazee/ballgown)
+    (Bioconductor)
+
+-   `tidyverse`
+
+# Load `R` libraries
+
+```{r}
+library("ballgown")
+library("tidyverse")
+library("ggplot2")
+library("ggrepel")
+library("patchwork")
+```
+
+# Set user variables!
+
+```{r}
+# Set maximum pvalue for isoform expression cutoff
+pvalue <- 0.05
+
+# Set maximum qvalue (false discovery rate) for isoform expression cutoff
+qvalue <- 0.05
+```
+
+# Functions
+
+## Volcano Plots
+
+Accepts:
+
+-   `data`: Input data frame
+
+-   `log2fc_col`: Column with log2 fold change.
+
+-   `pval_col`: Column with p-value.
+
+-   `qval_col`: Column with q-value.
+
+-   `diffexpressed_col`: Column indicating if gene/transcript is
+    differentially expressed (i.e. "No" or != "No")
+
+-   `gene_label_col`: Column with gene label for differentially
+    expressed gene/transcript.
+
+-   `title`: Title for plot.
+
+-   `color_labels`: Labels for legend for data point colors. Three
+    labels are required.
+
+    -   Order is important! As follows:
+
+    1.  Blue: Differentially expressed (p/q-values \<= 0.05). Higher in
+        "left" side of comparison.
+    2.  Red: Differentially expressed (p/q-values \<= 0.05). Higher in
+        "right" side of comparison.
+    3.  Black: P/Q-values \> 0.05
+
+Example usage:
+`create_volcano_plot(stat_results_merged, "log2fc", "pval", "qval", "diffexpressed", "gene_label", "Volcano Plot", c("Higher in females", "Higher in males", "p/q-values > 0.05"))`
+
+```{r}
+
+create_volcano_plot <- function(data, log2fc_col, pval_col, qval_col, diffexpressed_col, gene_label_col, title, color_labels) {
+  
+  # Filter data based on conditions
+  blue_points <- data[data[[diffexpressed_col]] != "No" & 
+                        data[[log2fc_col]] <= log(1) & 
+                        data[[pval_col]] <= pvalue & 
+                        data[[qval_col]] <= qvalue, ]
+  
+  red_points <- data[data[[diffexpressed_col]] != "No" & 
+                       data[[log2fc_col]] > log(1) & 
+                       data[[pval_col]] <= pvalue & 
+                       data[[qval_col]] <= qvalue, ]
+  
+  black_points <- data[!(data$id %in% c(blue_points$id, red_points$id)), ]
+  
+  # Create the plot
+  ggplot(data, aes_string(x = log2fc_col, y = paste0("-log10(", pval_col, ")"))) +
+    geom_point(data = blue_points, aes(color = "blue"), alpha = 0.5) +
+    geom_point(data = red_points, aes(color = "red"), alpha = 0.5) +
+    geom_point(data = black_points, aes(color = "black"), alpha = 0.5) +
+    geom_text(data = rbind(blue_points, red_points), aes_string(label = gene_label_col, color = ifelse(paste0(log2fc_col, "<=", log(1)), "blue", "red")), vjust = 1.5, hjust = 0.5, size = 3.5) +
+    geom_text(data = blue_points, aes_string(label = gene_label_col), vjust = -0.5, hjust = 0.5, size = 3.5, color = "blue") +
+    geom_text(data = red_points, aes_string(label = gene_label_col), vjust = -0.5, hjust = 0.5, size = 3.5, color = "red") +
+    scale_color_identity(guide = "legend", labels = color_labels, breaks = c("blue", "red", "black")) +
+    theme_minimal() +
+    labs(x = "log2 Fold Change", y = "-log10(p-value)", color = NULL) +
+    ggtitle(title)
+}
+
+
+```
+
+# Download Ballgown input files.
+
+```{bash}
+# Download Ballgown input files and directory structure
+wget \
+--directory-prefix ./data/ballgown \
+--recursive \
+--no-check-certificate \
+--continue \
+--cut-dirs 2 \
+--no-host-directories \
+--no-parent \
+--quiet \
+--reject "input_fastqs_checksums.md5" \
+--accept "*.ctab,*checksums.md5" https://gannet.fish.washington.edu/Atumefaciens/20240522-gmac-HISAT2-stringtie-gffcompare-RNAseq/
+```
+
+# Verify checksums
+
+NOTE: Warnings are expected, as the checksums files have checksums for
+files that are not downloaded for this project.
+
+```{bash}
+cd ./data/ballgown
+
+# Make a line
+line="-----------------------------------------------------------------------------------------------"
+
+# Set working directory
+wd=$(pwd)
+
+# Loop through directories and verify checksums
+for directory in */
+do
+  cd "${directory}"
+  # Get sample name; strips trailing slash from directory name
+  sample="${directory%/}"
+  
+  echo ${line}
+  echo "${sample}"
+  echo ""
+  
+  # Confirm checksums; sorts for easier reading
+  md5sum --check "${sample}"_checksums.md5 | sort -V
+  echo ""
+  echo "${line}"
+  echo ""
+  cd ${wd}
+done
+
+# Show downloaded directories/files
+tree
+```
+
+
+# Generate a genes BED file, if needed
+
+### Download NCBI GFF
+
+```{r download-ncbi-gff, engine='bash', eval=TRUE}
+if [ ! -f "./data/GCF_031168955.1_ASM3116895v1_genomic.gff" ]; then
+  wget \
+  --directory-prefix ./data \
+  --quiet \
+https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/031/168/955/GCF_031168955.1_ASM3116895v1/GCF_031168955.1_ASM3116895v1_genomic.gff.gz
+
+  gunzip ./data/GCF_031168955.1_ASM3116895v1_genomic.gff.gz
+fi
+
+head -n 15 ./data/GCF_031168955.1_ASM3116895v1_genomic.gff
+```
+
+### Create genes BED
+```{r create-genes-bed, engine='bash', eval=TRUE}
+if [ ! -f "./data/20240524-gmac-GCF_031168955.1_ASM3116895v1_genomic.genes.bed" ]; then
+  /home/sam/programs/mambaforge/envs/gffutils-0.12.0_env/bin/gtf_extract \
+  --feature gene \
+  --fields=chrom,start,end,ID,strand \
+  --gff ./data/GCF_031168955.1_ASM3116895v1_genomic.gff \
+  | awk 'BEGIN{FS=OFS="\t"}{$5 = 0 OFS $5}1' \
+  > ./data/20240524-gmac-GCF_031168955.1_ASM3116895v1_genomic.genes.bed
+  
+  # Count gene features via GFFutils
+  echo "GFFutils number of extracted genes:"
+  /home/sam/programs/mambaforge/envs/gffutils-0.12.0_env/bin/gtf_extract --feature gene --fields=ID --gff ./data/GCF_031168955.1_ASM3116895v1_genomic.gff | wc -l
+
+  echo ""
+
+  # Count gene features via awk
+  echo "awk number of extracted genes:"
+  awk '$3 == "gene" { print $0 }' ./data/GCF_031168955.1_ASM3116895v1_genomic.gff | wc -l
+  echo ""
+  echo "--------------------------------------------"
+  echo ""
+fi
+
+head -n 15 ./data/20240524-gmac-GCF_031168955.1_ASM3116895v1_genomic.genes.bed
+
+echo "--------------------------------------------"
+echo ""
+echo "Number of genes:"
+wc -l ./data/20240524-gmac-GCF_031168955.1_ASM3116895v1_genomic.genes.bed
+```
+
+
+
+# Read in *G.macrocephalus* genes BED file
+
+```{r read-in-genes-BED}
+genes_BED <- read.table(file = "./data/20240524-gmac-GCF_031168955.1_ASM3116895v1_genomic.genes.bed")
+
+# Add BED column names for more clarity
+colnames(genes_BED) <- c("chr", "start", "end", "name", "score", "strand")
+head(genes_BED)
+```
+
+# Find Ballgown installation location
+
+```{r}
+data_directory <-  system.file('extdata', package='ballgown') # automatically finds ballgown's installation directory
+# examine data_directory:
+data_directory
+```
+
+# Create Ballgown object
+
+```{r}
+# Uses regular expression in samplePattern to find all pertinent folders
+# Load all measurement data
+bg <- ballgown(dataDir="./data/ballgown/", samplePattern='^\\d{1,3}$', meas='all')
+bg
+```
+
+# Download and filter metadata file
+
+Filtered metadata will be used to create a phenotype dataframe needed
+for Ballgown differential expression analysis.
+
+
+```{r create-dataframes-for-ballgwon-pData}
+# Read in metadata file from URL
+sample_metadata_full <- read.csv("https://raw.githubusercontent.com/RobertsLab/project-cod-temperature/main/data/DESeq2_Sample_Information.csv")
+
+# View full metadata
+head(sample_metadata_full)
+
+# Subset metadata in preparation of creating pData data frame far Ballgown
+# Sort by `sample_number` to ensure matches directory structure (required for Ballgown)
+sample_metadata_subset <- sample_metadata_full %>% 
+  select(sample_number, temp_treatment, tissue_type) %>%
+  filter((temp_treatment == 9 | temp_treatment == 16) & tissue_type == "Liver") %>% 
+  arrange(sample_number)
+
+# Set sample names as characters instead of integers
+sample_metadata_subset$sample_number <- as.character(sample_metadata_subset$sample_number)
+
+# View subsetted metadata
+str(sample_metadata_subset)
+
+```
+
+## Load phenotype dataframe into Ballgown object
+
+```{r}
+# Load phenotype info into Ballgown
+pData(bg) <- sample_metadata_subset
+
+# Examine phenotype data as it exists in Ballgown
+phenotype_table <-  pData(bg)
+head(phenotype_table)
+```
+
+## Look at exon info
+
+```{r}
+# Exon info
+structure(bg)$exon
+```
+
+## Look at intron info
+
+```{r}
+# Intron info
+structure(bg)$intron
+```
+
+## Look at transcript (isoform) info
+
+```{r}
+# Transcript info
+structure(bg)$trans
+```
+
+# Load all transcript expression data
+
+```{r load-all-transcript-expression-data}
+# Expression data
+whole_tx_table <-  texpr(bg, 'all')
+
+# Rename gene_names listed as a "."
+whole_tx_table <- whole_tx_table %>% mutate(gene_name = ifelse(gene_name == ".", t_name, gene_name))
+
+head(whole_tx_table)
+
+# FPKM values for all transcripts
+# Converts output to data frame
+transcript_fpkm <- as.data.frame(texpr(bg, 'FPKM'))
+
+# Put rownames into column for further manipulation
+transcript_fpkm <- rownames_to_column(transcript_fpkm, "t_id")
+head(transcript_fpkm)
+
+
+# Gene table
+gene_table <- whole_tx_table %>% select(!t_name)
+head(gene_table)
+
+
+```
+
+## Write all transcript data to files
+
+```{r write-transcript-data-to-file}
+# Write all transcript FPKM data to file
+write.csv(transcript_fpkm,
+          file = "./data/fpkm-all_transcripts.csv",
+          quote = FALSE,
+          row.names = FALSE)
+
+
+# Write whole_tx_table to file
+write.csv(whole_tx_table,
+          file ="./data/whole_tx_table.csv",
+          quote = FALSE,
+          row.names = FALSE)
+```
+
+# Load all gene expression data
+
+```{r load-gene-expression-data}
+whole_gx_table <-  gexpr(bg)
+
+# Convet to data frame
+whole_gx_table <- as.data.frame(whole_gx_table)
+
+# Convert rownames to a column
+whole_gx_table <- rownames_to_column(whole_gx_table, "name")
+
+head(whole_gx_table)
+```
+
+## Write all gene data to files
+
+```{r write-gene-data-to-file}
+# Write whole_gx_table to file
+write.csv(whole_gx_table,
+          file ="./data/whole_gx_table.csv",
+          quote = FALSE,
+          row.names = FALSE)
+```
+
+# Generate boxplots to compare FPKM across all samples
+
+```{r boxplots-to-compare-FPKM-across-all-samples}
+# Load phenotype info into Ballgown
+pData(bg) <- sample_metadata_subset
+
+# Pull all transcript expression values stored in FPKM measurement from ballgown object
+fpkm <- texpr(bg, meas = "FPKM")
+
+
+# Log transform data and add 1 to all values to artificially prevent log2(0).
+fpkm_df <- as.data.frame(log2(fpkm+1))
+head(fpkm_df)
+
+# Rotate data frame
+# Creates a "temp" column by pulling last character from each library name (M/F)
+fpkm_df_pivot <- pivot_longer(
+  fpkm_df, cols = starts_with("FPKM"), 
+  names_to = "library") %>% 
+  mutate(temp = (str_sub(library, -1)
+                )
+         )
+head(fpkm_df_pivot)
+
+
+# Sort data frame by temp
+fpkm_df_pivot_sorted <- fpkm_df_pivot %>% arrange(temp)
+head(fpkm_df_pivot_sorted)
+
+# Set unique library names as vector
+# Will be used to group boxplot by temp
+fpkm_libraries_sorted_unique <- (unique(fpkm_df_pivot_sorted$library))
+head(fpkm_libraries_sorted_unique)
+
+# Re-order data frame by temp-sorted data
+fpkm_df_pivot$library <- factor(fpkm_df_pivot$library, levels = fpkm_libraries_sorted_unique)
+
+
+# Produce boxplots of FPKM for each library
+# Grouped by temp
+ggplot(fpkm_df_pivot, aes(library, value, color = )) +
+  geom_boxplot() +
+  ggtitle("Comparisons of transcript FPKM values across all libraries") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ylab("FPKM") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+# Save boxplot as PDF
+ggsave(filename = "./figures/fpkm_f-vs-m_boxplot.pdf")
+
+```
+
+# Identify differentially expressed transcripts (DETs) between temperatures
+
+Returns FoldChange, too (getFC = TRUE)
+
+```{r DETs-9C-vs-16C}
+# Set string describing comparison
+# Used for final printout in chunk
+comparison <- "9C-vs-16C"
+
+# Load phenotype info into Ballgown
+pData(bg) <- sample_metadata_subset
+
+
+# Identify DETs
+DET_temp_stat_results = stattest(bg, feature='transcript', meas='FPKM', covariate="temp_treatment", getFC = TRUE)
+head(DET_temp_stat_results)
+
+# Add gene names
+DET_temp_stat_results <- data.frame(geneNames=geneNames(bg),
+geneIDs=geneIDs(bg), DET_temp_stat_results)
+
+# Filter based on p-value and q-value
+DET_temp_filtered_stat_results <- filter(DET_temp_stat_results, pval <= pvalue & qval <= qvalue)
+head(DET_temp_filtered_stat_results)
+
+# Filter based on p-value ONLY
+DET_temp_pvalOnly_filtered_stat_results <- filter(DET_temp_stat_results, pval <= pvalue)
+head(DET_temp_pvalOnly_filtered_stat_results)
+
+
+
+# Merge with full table to get subset of just differentially expressed isoforms
+merged_DET_temp_filtered <- merge(x = DET_temp_stat_results, y = whole_tx_table, by.x = "id", by.y = "t_id")
+head(merged_DET_temp_filtered)
+
+# Convert to BED coordinate system, which is 0-based start
+# and end EXCLUSIVE; so need to subtract 1 from start coordinates ONLY
+merged_DET_temp_filtered <- merged_DET_temp_filtered %>% mutate(start = start - 1)
+head(merged_DET_temp_filtered)
+
+# Filter for female up-regulated transcripts (i.e. fold-change < 1)
+# Convert to BED coordinate system, which is 0-based start
+# and end EXCLUSIVE; so need to subtract 1 from start coordinates ONLY
+DET_temp_filtered_female <- filter(merged_DET_temp_filtered, fc < 1) %>% mutate(start = start - 1)
+head(DET_temp_filtered_female)
+
+# Filter for male up-regulated transcripts (i.e. fold-change > 1)
+# Convert to BED coordinate system, which is 0-based start
+# and end EXCLUSIVE; so need to subtract 1 from start coordinates ONLY
+DET_temp_filtered_male <- filter(merged_DET_temp_filtered, fc > 1) %>% mutate(start = start - 1)
+head(DET_temp_filtered_male)
+
+# Count number of DET.
+count_DET_temp_stat_results <-  nrow(DET_temp_stat_results)
+
+# Print number of DET
+cat("Number of", comparison, "DET with p-values and q-values <= ", pvalue, ":", count_DET_temp_stat_results, "\n")
+
+# Count number of female DET.
+count_DET_temp_filtered_female <-  nrow(DET_temp_filtered_female)
+
+# Print number of female DET
+cat("Number of female DET with p-values and q-values <= ", pvalue, ":", count_DET_temp_filtered_female, "\n")
+
+# Count number of male DET.
+count_DET_temp_filtered_male <-  nrow(DET_temp_filtered_male)
+
+# Print number of male DET
+cat("Number of male DET with p-values and q-values <= ", pvalue, ":", count_DET_temp_filtered_male, "\n")
+```
+
+## Write 9C vs 16C DET dataframes to files
+
+```{r write-DETs-9C-vs-16C-to-files}
+write.csv(
+  DET_temp_pvalOnly_filtered_stat_results, 
+  file = "DET_temp_pvalOnly_filtered_stat_results_p-0.05.csv", 
+  quote = FALSE, 
+  row.names = FALSE)
+
+
+# Creates a BED file of all DETs and inserts necessary columns to create properly formatted BED file. 
+write.table(
+  (
+    merged_DET_temp_filtered %>% 
+    select(chr, start, end, t_name, strand) %>% 
+      add_column(
+        score = "0", # Inserts a "score" column and assigns a value of "0" to all rows.
+        .before = "strand"
+        )
+    ), 
+  file = "../output/18-differential-gene-expression-ballgown/DET_temp_filtered_p-0.05_q-0.05.bed",
+  sep = "\t",
+  col.names = FALSE,
+  row.names = FALSE,
+  quote = FALSE
+)
+
+# Creates a BED file of only female DETs and inserts necessary columns to create properly formatted BED file. 
+write.table(
+  (
+    DET_temp_filtered_female %>% 
+    select(chr, start, end, t_name, strand) %>% 
+      add_column(
+        score = "0", # Inserts a "score" column and assigns a value of "0" to all rows.
+        .before = "strand"
+        )
+    ), 
+  file = "../output/18-differential-gene-expression-ballgown/DET_temp_female_filtered_p-0.05_q-0.05.bed",
+  sep = "\t",
+  col.names = FALSE,
+  row.names = FALSE,
+  quote = FALSE
+)
+
+# Creates a BED file of only male DETs and inserts necessary columns to create properly formatted BED file. 
+write.table(
+  (
+    DET_temp_filtered_male %>% 
+    select(chr, start, end, t_name, strand) %>% 
+      add_column(
+        score = "0", # Inserts a "score" column and assigns a value of "0" to all rows.
+        .before = "strand"
+        )
+    ), 
+  file = "../output/18-differential-gene-expression-ballgown/DET_temp_male_filtered_p-0.05_q-0.05.bed",
+  sep = "\t",
+  col.names = FALSE,
+  row.names = FALSE,
+  quote = FALSE
+)
+```
+
+# Identify differentially expressed genes (DEGs) between temperatures
+
+Returns FoldChange, too (getFC = TRUE)
+
+```{r DEGs-9C-vs-16C}
+# Set string describing comparison
+# Used for final printout in chunk
+comparison <- "9C-vs-16C"
+
+# Load phenotype info into Ballgown
+pData(bg) <- sample_metadata_subset
+
+# Determine differentially expressed genes with ballgown
+DEG_temp_stat_results = stattest(bg, feature='gene', meas='FPKM', covariate="temp_treatment", getFC = TRUE)
+head(DEG_temp_stat_results)
+
+# Filter based on p-value and q-value
+DEG_temp_filtered_stat_results <- filter(DEG_temp_stat_results, pval <= pvalue & qval <= qvalue)
+head(DEG_temp_filtered_stat_results)
+
+# Filter based on p-value ONLY
+DEG_temp_pvalOnly_filtered_stat_results <- filter(DEG_temp_stat_results, pval <= pvalue)
+head(DEG_temp_pvalOnly_filtered_stat_results)
+
+# Merge with full table to get subset of just differentially expressed genes
+# and their corresponding transcripts.
+merged_DEG_temp_filtered <- merge(x = DEG_temp_filtered_stat_results, y = whole_tx_table, by.x = "id", by.y = "gene_id")
+head(merged_DEG_temp_filtered)
+
+# Merge with BED file to get DEGs WITHOUT associated transcripts
+merged_DEG_temp_filtered_genes_only <- merge(x = DEG_temp_filtered_stat_results, y = genes_BED, by.x = "id", by.y = "name")
+head(merged_DEG_temp_filtered_genes_only)
+
+
+# Convert to BED coordinate system, which is 0-based start
+# and end EXCLUSIVE; so need to subtract 1 from start coordinates ONLY
+merged_DEG_temp_filtered_ <- merged_DEG_temp_filtered %>% mutate(start = start -1)
+head(merged_DEG_temp_filtered)
+
+# Filter for female up-regulated genes (i.e. fold-change < 1)
+DEG_temp_filtered_female <- filter(merged_DEG_temp_filtered_genes_only, fc < 1)
+head(DEG_temp_filtered_female)
+
+# Filter for male up-regulated genes (i.e. fold-change < 1)
+DEG_temp_filtered_male <- filter(merged_DEG_temp_filtered_genes_only, fc > 1)
+head(DEG_temp_filtered_male)
+
+# Count number of DEG.
+count_merged_DEG_temp_filtered_genes_only <-  nrow(merged_DEG_temp_filtered_genes_only)
+
+# Print number of DEG
+cat("Number of ", comparison, " DEG with p-values and q-values <= ", pvalue, ":", count_merged_DEG_temp_filtered_genes_only, "\n")
+
+# Count number of female DEG.
+count_DEG_temp_filtered_female <-  nrow(DEG_temp_filtered_female)
+
+# Print number of female DEG.
+cat("Number of female DEG with p-values and q-values <= ", pvalue, ":", count_DEG_temp_filtered_female, "\n")
+
+# Count number of male DEG.
+count_DEG_temp_filtered_male <-  nrow(DEG_temp_filtered_male)
+
+# Print number of male DEG.
+cat("Number of male DEG with p-values and q-values <= ", pvalue, ":", count_DEG_temp_filtered_male, "\n")
+```
+
+## Write DEGs male vs. female dataframes to files
+
+```{r write-DEGs-female-vs-male-to-files}
+# Write merged dataframe to CSV
+write.csv(
+  DEG_temp_pvalOnly_filtered_stat_results, 
+  file = "DEG_temp_pvalOnly_filtered_stat_results_p-0.05.csv", 
+  quote = FALSE, 
+  row.names = FALSE)
+
+
+# Creates a BED file of all DEG. 
+write.table(
+  (merged_DEG_temp_filtered_genes_only %>% 
+    select(chr, start, end, id, score, strand)
+    ), 
+  file = "../output/18-differential-gene-expression-ballgown/DEG_temp_filtered_p-0.05_q-0.05.bed",
+  sep = "\t",
+  col.names = FALSE,
+  row.names = FALSE,
+  quote = FALSE
+)
+
+# Creates a BED file of only female DEGs.
+write.table(
+  (
+    DEG_temp_filtered_female %>% 
+    select(chr, start, end, id, score, strand)
+    ),
+  file = "../output/18-differential-gene-expression-ballgown/DEG_temp_female_filtered_p-0.05_q-0.05.bed",
+  sep = "\t",
+  col.names = FALSE,
+  row.names = FALSE,
+  quote = FALSE
+)
+
+# Creates a BED file of only male DEGs. 
+write.table(
+  (
+    DEG_temp_filtered_male %>% 
+    select(chr, start, end, id, score, strand)
+    ),
+  file = "../output/18-differential-gene-expression-ballgown/DEG_temp_male_filtered_p-0.05_q-0.05.bed",
+  sep = "\t",
+  col.names = FALSE,
+  row.names = FALSE,
+  quote = FALSE
+)
+```
+
+# Identify differentially expressed transcripts (DETs) between Treatment.
+
+NOTE: Will not return fold change; not possible in multi-group
+comparisons
+
+```{r DETS-treatments}
+stat_results = stattest(bg, feature='transcript', meas='FPKM', covariate="TreatmentN")
+head(stat_results)
+
+# Filter DET based on set p-avlues and q-values
+filtered_stat_results <- filter(stat_results, pval <= pvalue & qval <= qvalue)
+head(filtered_stat_results)
+
+# Count number of DET.
+# Subtract "1" to account for header row.
+count_filtered_stat_results <-  nrow(filtered_stat_results)
+
+# Print number of DET
+cat("Number of DET with p-values and q-values <= ", pvalue, ":", count_filtered_stat_results)
+```
+
+## Examine if differential expression results are affected by TreatmentN numbering
+
+I.e. Are DET based off of alphanumeric comparisons? Uses the
+`mutated_sample_metadata_subset` with a `0` in place of `4` in
+`TreatmentN` numbers to see if different number of DETs occur. Compare
+to results from analysis in chunk above.
+
+```{r}
+# Load mutated phenotype info into Ballgown for testing
+pData(bg) <- mutated_sample_metadata_subset
+# Examine phenotype data as it exists in Ballgown
+phenotype_table <-  pData(bg)
+
+stat_results = stattest(bg, feature='transcript', meas='FPKM', covariate="TreatmentN")
+head(stat_results)
+
+# Filter DET based on set p-avlues and q-values
+filtered_stat_results <- filter(stat_results, pval <= pvalue & qval <= qvalue)
+head(filtered_stat_results)
+
+# Count number of DET.
+# Subtract "1" to account for header row.
+count_filtered_stat_results <-  nrow(filtered_stat_results)
+
+# Print number of DET
+cat("Number of DET with p-values and q-values <= ", pvalue, ":", count_filtered_stat_results)
+```
+
+# Identify differentially expressed transcripts (DETs) between `Treatment` (control/exposed).
+
+Returns FoldChange, too (getFC = TRUE)
+
+```{r control-exposed-DET}
+# Load phenotype info into Ballgown
+pData(bg) <- sample_metadata_subset
+# Examine phenotype data as it exists in Ballgown
+phenotype_table <-  pData(bg)
+
+stat_results = stattest(bg, feature='transcript', meas='FPKM', covariate="Treatment", getFC = TRUE)
+head(stat_results)
+
+# Filter DET based on set p-avlues and q-values
+filtered_stat_results <- filter(stat_results, pval <= pvalue & qval <= qvalue)
+head(filtered_stat_results)
+
+# Count number of DET.
+count_filtered_stat_results <-  nrow(filtered_stat_results)
+
+# Print number of DET
+cat("Number of DET with p-values and q-values <= ", pvalue, ":", count_filtered_stat_results)
+```
+
+# Identify differentially expressed genes (DEGs) between `Treatment` (control/exposed).
+
+Returns FoldChange, too (getFC = TRUE)
+
+```{r control-exposed-DEG}
+# Load phenotype info into Ballgown
+pData(bg) <- sample_metadata_subset
+# Examine phenotype data as it exists in Ballgown
+phenotype_table <-  pData(bg)
+
+stat_results = stattest(bg, feature='gene', meas='FPKM', covariate="Treatment", getFC = TRUE)
+head(stat_results)
+
+# Filter DEG based on set p-avlues and q-values
+filtered_stat_results <- filter(stat_results, pval <= pvalue & qval <= qvalue)
+head(filtered_stat_results)
+
+# Count number of DEG.
+count_filtered_stat_results <-  nrow(filtered_stat_results)
+
+# Print number of DEG
+cat("Number of DEG with p-values and q-values <= ", pvalue, ":", count_filtered_stat_results)
+```
+
+# Identify differentially expressed genes between all treatments (TreatmentN).
+
+NOTE: Will not return fold change; not possible in multi-group
+comparisons
+
+```{r all-treatments-DEG}
+# Load phenotype info into Ballgown
+pData(bg) <- sample_metadata_subset
+
+stat_results = stattest(bg, feature='gene', meas='FPKM', covariate="TreatmentN")
+head(stat_results)
+
+# Filter DEG based on set p-avlues and q-values
+filtered_stat_results <- filter(stat_results, pval <= pvalue & qval <= qvalue)
+head(filtered_stat_results)
+
+# Count number of DETG.
+count_filtered_stat_results <-  nrow(filtered_stat_results)
+
+# Print number of DEG
+cat("Number of DEG with p-values and q-values <= ", pvalue, ":", count_filtered_stat_results)
+```
+
+# Identify differentially expressed transcripts (DETs) between `Treatment` within females.
+
+Returns FoldChange, too (getFC = TRUE)
+
+NOTE: 1 DET identified as expressed higher in controls.
+
+```{r DETs-female-OA}
+# Load phenotype info into Ballgown
+pData(bg_females) <- sample_metadata_subset_female_only
+
+females_DET_stat_results = stattest(bg_females, feature='transcript', meas='FPKM', covariate="Treatment", getFC = TRUE)
+head(females_DET_stat_results)
+
+# Merge without filter
+merged_females_DET_stat_results <- merge(x = females_DET_stat_results, y = whole_tx_table, by.x = "id", by.y = "t_id")
+head(merged_females_DET_stat_results)
+
+# Filter DT based on set p-values and q-values
+filtered_females_DET_stat_results <- filter(females_DET_stat_results, pval <= pvalue & qval <= qvalue)
+head(filtered_females_DET_stat_results)
+
+# Merge with full table to get subset of just differentially expressed isoforms
+merged_filtered_females_DET_stat_results <- merge(x = filtered_females_DET_stat_results, y = whole_tx_table, by.x = "id", by.y = "t_id")
+head(merged_filtered_females_DET_stat_results)
+
+# Count number of DET.
+count_filtered_females_DET_stat_results <-  nrow(filtered_females_DET_stat_results)
+
+# Print number of DET
+cat("Number of female controls vs exposed DETs with p-values and q-values <= ", pvalue, ":", count_filtered_females_DET_stat_results, "\n")
+
+# Convert to BED coordinate system, which is 0-based start
+# and end EXCLUSIVE; so need to subtract 1 from start coordinates ONLY
+merged_filtered_females_DET_stat_results <- merged_filtered_females_DET_stat_results %>% mutate(start = start - 1)
+head(merged_filtered_females_DET_stat_results)
+
+# Filter for female controls up-regulated transcripts (i.e. fold-change < 1)
+# Convert to BED coordinate system, which is 0-based start
+# and end EXCLUSIVE; so need to subtract 1 from start coordinates ONLY
+DET_females_controls <- filter(merged_filtered_females_DET_stat_results, fc < 1) %>% mutate(start = start - 1)
+head(DET_females_controls)
+
+# Filter for female exposed up-regulated transcripts (i.e. fold-change > 1)
+# Convert to BED coordinate system, which is 0-based start
+# and end EXCLUSIVE; so need to subtract 1 from start coordinates ONLY
+DET_females_exposed <- filter(merged_filtered_females_DET_stat_results, fc > 1) %>% mutate(start = start - 1)
+head(DET_females_exposed)
+
+# Count number of female controls DET.
+count_DET_females_controls <-  nrow(DET_females_controls)
+
+# Print number of female controls DET
+cat("Number of female control samples DET with p-values and q-values <= ", pvalue, ":", count_DET_females_controls, "\n")
+
+# Count number of female exposed DET.
+count_DET_females_exposed <-  nrow(DET_females_exposed)
+
+# Print number of female exposed DET
+cat("Number of female exposed samples DET with p-values and q-values <= ", pvalue, ":", count_DET_females_exposed, "\n")
+```
+
+### Volcano plot
+
+```{r}
+# default all genes to "no change"
+# Used for easier/cleaner parsing
+merged_females_DET_stat_results$diffexpressed <- "No"
+
+# Log transform fold change
+merged_females_DET_stat_results$log2fc <- log2(merged_females_DET_stat_results[,"fc"])
+
+# Filter for female controls up-regulated transcripts (i.e. fold-change < 1) and p/qvalue < 0.05
+merged_females_DET_stat_results$diffexpressed[merged_females_DET_stat_results$pval <= pvalue
+                                  & merged_females_DET_stat_results$qval <= qvalue
+                                  & merged_females_DET_stat_results$log2fc <= log(1)] <- 0
+
+# Filter for female controls up-regulated transcripts (i.e. fold-change > 1) and p/qvalue < 0.05
+merged_females_DET_stat_results$diffexpressed[merged_females_DET_stat_results$pval <= pvalue
+                                  & merged_females_DET_stat_results$qval <= qvalue
+                                  & merged_females_DET_stat_results$log2fc >= log(1)] <- 1
+
+# Set gene_label column for easier/cleaner parsing.
+merged_females_DET_stat_results$gene_label <- NA
+
+# write the gene names of those significantly upregulated/downregulated to a new column
+merged_females_DET_stat_results$gene_label[merged_females_DET_stat_results$diffexpressed != "No"] <- merged_females_DET_stat_results$gene_name[merged_females_DET_stat_results$diffexpressed != "No"]
+
+# create volcano plot
+females_DET_volcano_plot <- create_volcano_plot(
+  merged_females_DET_stat_results,
+  "log2fc",
+  "pval",
+  "qval",
+  "diffexpressed",
+  "gene_label",
+  "Transcript Expression - Females",
+  c("Diff. Expr. - Controls",
+    "Diff. Expr. - Exposed",
+    paste0("p/q-values > ", pvalue)
+    )
+  )
+
+
+# See plot
+females_DET_volcano_plot
+```
+
+#### Save plot
+
+```{r}
+# Save the plot as a PNG
+ggsave("../output/18-differential-gene-expression-ballgown/figures/volcano_plot-DETs-females-CvE.png", females_DET_volcano_plot, width = 10, height = 8, units = "in", dpi = 300, bg = "white")
+```
+
+## Write DETs females control vs. exposed to files
+
+```{r write-DETs-female-OA-to-files}
+write.csv(
+  merged_filtered_stat_results, 
+  file = "../output/18-differential-gene-expression-ballgown/DET_females_controls_vs_exposed_p-0.05_q-0.05.csv", 
+  quote = FALSE, 
+  row.names = FALSE)
+
+
+# Creates a BED file of all DETs and inserts necessary columns to create properly formatted BED file. 
+write.table(
+  (
+    merged_filtered_stat_results %>% 
+    select(chr, start, end, t_name, strand) %>% 
+      add_column(
+        score = "0", # Inserts a "score" column and assigns a value of "0" to all rows.
+        .before = "strand"
+        )
+    ), 
+  file = "../output/18-differential-gene-expression-ballgown/DET_females_controls_vs_exposed_p-0.05_q-0.05.bed",
+  sep = "\t",
+  col.names = FALSE,
+  row.names = FALSE,
+  quote = FALSE
+)
+
+
+# Creates a BED file of female controls DETs and inserts necessary columns to create properly formatted BED file. 
+write.table(
+  (
+    DET_females_controls %>% 
+    select(chr, start, end, t_name, strand) %>% 
+      add_column(
+        score = "0", # Inserts a "score" column and assigns a value of "0" to all rows.
+        .before = "strand"
+        )
+    ), 
+  file = "../output/18-differential-gene-expression-ballgown/DET_females_controls_p-0.05_q-0.05.bed",
+  sep = "\t",
+  col.names = FALSE,
+  row.names = FALSE,
+  quote = FALSE
+)
+
+# Creates a BED file of female exposed DETs and inserts necessary columns to create properly formatted BED file. 
+write.table(
+  (
+    DET_females_exposed %>% 
+    select(chr, start, end, t_name, strand) %>% 
+      add_column(
+        score = "0", # Inserts a "score" column and assigns a value of "0" to all rows.
+        .before = "strand"
+        )
+    ), 
+  file = "../output/18-differential-gene-expression-ballgown/DET_females_exposed_p-0.05_q-0.05.bed",
+  sep = "\t",
+  col.names = FALSE,
+  row.names = FALSE,
+  quote = FALSE
+)
+```
+
+# Identify differentially expressed transcripts (DETs) between `Treatment` within males
+
+Returns FoldChange, too (getFC = TRUE)
+
+NOTE: No DETs identified.
+
+```{r DETs-male-OA}
+# Load phenotype info into Ballgown
+pData(bg_males) <- sample_metadata_subset_male_only
+
+males_DET_stat_results = stattest(bg_males, feature='transcript', meas='FPKM', covariate="Treatment", getFC = TRUE)
+head(males_DET_stat_results)
+
+# Filter DETs based on set p-values and q-values
+filtered_males_DET_stat_results <- filter(males_DET_stat_results, pval <= pvalue & qval <= qvalue)
+head(filtered_males_DET_stat_results)
+
+# Count number of DETs.
+count_filtered_males_DET_stat_results <-  nrow(filtered_males_DET_stat_results)
+
+# Print number of DETs
+cat("Number of male OA DETs with p-values and q-values <= ", pvalue, ":", count_filtered_males_DET_stat_results)
+```
+
+### Volcano plot
+
+```{r}
+
+# Merge without filter
+merged_males_DET_stat_results <- merge(x = males_DET_stat_results, y = whole_tx_table, by.x = "id", by.y = "t_id")
+head(merged_males_DET_stat_results)
+
+# default all genes to "no change"
+# Used for easier/cleaner parsing
+merged_males_DET_stat_results$diffexpressed <- "No"
+
+# Log transform fold change
+merged_males_DET_stat_results$log2fc <- log2(merged_males_DET_stat_results[,"fc"])
+
+# Filter for female controls up-regulated transcripts (i.e. fold-change < 1) and p/qvalue < 0.05
+merged_males_DET_stat_results$diffexpressed[merged_males_DET_stat_results$pval <= pvalue
+                                  & merged_males_DET_stat_results$qval <= qvalue
+                                  & merged_males_DET_stat_results$log2fc <= log(1)] <- 0
+
+# Filter for female controls up-regulated transcripts (i.e. fold-change > 1) and p/qvalue < 0.05
+merged_males_DET_stat_results$diffexpressed[merged_males_DET_stat_results$pval <= pvalue
+                                  & merged_males_DET_stat_results$qval <= qvalue
+                                  & merged_males_DET_stat_results$log2fc >= log(1)] <- 1
+
+# Set gene_label column for easier/cleaner parsing.
+merged_males_DET_stat_results$gene_label <- NA
+
+# write the gene names of those significantly upregulated/downregulated to a new column
+merged_males_DET_stat_results$gene_label[merged_males_DET_stat_results$diffexpressed != "No"] <- merged_males_DET_stat_results$gene_name[merged_males_DET_stat_results$diffexpressed != "No"]
+
+# create volcano plot
+males_DET_volcano_plot <- create_volcano_plot(
+  merged_males_DET_stat_results,
+  "log2fc",
+  "pval",
+  "qval",
+  "diffexpressed",
+  "gene_label",
+  "Transcript Expression - Males",
+  c("Differentially Expressed - Controls",
+    "Differentially Expressed - Exposed",
+    "p/q-values > 0.05"
+    )
+  )
+
+
+# See plot
+males_DET_volcano_plot
+```
+
+#### Save plot
+
+```{r}
+# Save the plot as a PNG
+ggsave("../output/18-differential-gene-expression-ballgown/figures/volcano_plot-DETs-males-CvE.png", males_DET_volcano_plot, width = 10, height = 8, units = "in", dpi = 300, bg = "white")
+```
+
+# Identify differentially expressed genes (DEGs) between Treatment within females.
+
+Returns FoldChange, too (getFC = TRUE)
+
+NOTE: 0 DEGs identified.
+
+```{r DEGs-female-OA}
+# Load phenotype info into Ballgown
+pData(bg_females) <- sample_metadata_subset_female_only
+
+females_DEG_stat_results = stattest(bg_females, feature='gene', meas='FPKM', covariate="TreatmentN", getFC = TRUE)
+head(females_DEG_stat_results)
+
+# Filter DT based on set p-values and q-values
+filtered_females_DEG_stat_results <- filter(females_DEG_stat_results, pval <= pvalue & qval <= qvalue)
+head(filtered_females_DEG_stat_results)
+
+# Count number of DETG.
+count_filtered_females_DEG_stat_results <-  nrow(filtered_females_DEG_stat_results)
+
+# Print number of DEG
+cat("Number of female DEGs with p-values and q-values <= ", pvalue, ":", count_filtered_females_DEG_stat_results)
+```
+
+### Volcano plot
+
+```{r}
+# Merge without filter
+merged_females_DEG_stat_results <- merge(x = females_DEG_stat_results, y = whole_tx_table, by.x = "id", by.y = "gene_id")
+head(merged_females_DEG_stat_results)
+
+# default all genes to "no change"
+# Used for easier/cleaner parsing
+merged_females_DEG_stat_results$diffexpressed <- "No"
+
+# Log transform fold change
+merged_females_DEG_stat_results$log2fc <- log2(merged_females_DEG_stat_results[,"fc"])
+
+# Filter for female controls up-regulated transcripts (i.e. fold-change < 1) and p/qvalue < 0.05
+merged_females_DEG_stat_results$diffexpressed[merged_females_DEG_stat_results$pval <= pvalue
+                                  & merged_females_DEG_stat_results$qval <= qvalue
+                                  & merged_females_DEG_stat_results$log2fc <= log(1)] <- 0
+
+# Filter for female controls up-regulated transcripts (i.e. fold-change > 1) and p/qvalue < 0.05
+merged_females_DEG_stat_results$diffexpressed[merged_females_DEG_stat_results$pval <= pvalue
+                                  & merged_females_DEG_stat_results$qval <= qvalue
+                                  & merged_females_DEG_stat_results$log2fc >= log(1)] <- 1
+
+# Set gene_label column for easier/cleaner parsing.
+merged_females_DEG_stat_results$gene_label <- NA
+
+# write the gene names of those significantly upregulated/downregulated to a new column
+merged_females_DEG_stat_results$gene_label[merged_females_DEG_stat_results$diffexpressed != "No"] <- merged_females_DEG_stat_results$gene_name[merged_females_DEG_stat_results$diffexpressed != "No"]
+
+# create volcano plot
+females_DEG_volcano_plot <- create_volcano_plot(
+  merged_females_DEG_stat_results,
+  "log2fc",
+  "pval",
+  "qval",
+  "diffexpressed",
+  "gene_label",
+  "Gene Expression - Females",
+  c("Differentially Expressed - Controls",
+    "Differentially Expressed - Exposed",
+    "p/q-values > 0.05"
+    )
+  )
+
+
+# See plot
+females_DEG_volcano_plot
+```
+
+#### Save plot
+
+```{r}
+# Save the plot as a PNG
+ggsave("../output/18-differential-gene-expression-ballgown/figures/volcano_plot-DEGs-females-CvE.png", females_DEG_volcano_plot, width = 10, height = 8, units = "in", dpi = 300, bg = "white")
+```
+
+# Identify differentially expressed genes (DEGs) between Treatment within males
+
+Returns FoldChange, too (getFC = TRUE)
+
+NOTE: 0 DEGs identified.
+
+```{r DEGs-male-OA}
+# Load phenotype info into Ballgown
+pData(bg_males) <- sample_metadata_subset_male_only
+
+males_DEG_stat_results = stattest(bg_males, feature='gene', meas='FPKM', covariate="TreatmentN", getFC = TRUE)
+head(males_DEG_stat_results)
+
+# Filter DT based on set p-values and q-values
+filtered_males_DEG_stat_results <- filter(males_DEG_stat_results, pval <= pvalue & qval <= qvalue)
+head(filtered_males_DEG_stat_results)
+
+# Count number of DEGG.
+count_filtered_males_DEG_stat_results <-  nrow(filtered_males_DEG_stat_results)
+
+# Print number of DEG
+cat("Number of male OA DEGs with p-values and q-values <= ", pvalue, ":", count_filtered_males_DEG_stat_results)
+```
+
+### Volcano plot
+
+```{r}
+# Merge without filter
+merged_males_DEG_stat_results <- merge(x = males_DEG_stat_results, y = whole_tx_table, by.x = "id", by.y = "gene_id")
+head(merged_males_DEG_stat_results)
+
+# default all genes to "no change"
+# Used for easier/cleaner parsing
+merged_males_DEG_stat_results$diffexpressed <- "No"
+
+# Log transform fold change
+merged_males_DEG_stat_results$log2fc <- log2(merged_males_DEG_stat_results[,"fc"])
+
+# Filter for female controls up-regulated transcripts (i.e. fold-change < 1) and p/qvalue < 0.05
+merged_males_DEG_stat_results$diffexpressed[merged_males_DEG_stat_results$pval <= pvalue
+                                  & merged_males_DEG_stat_results$qval <= qvalue
+                                  & merged_males_DEG_stat_results$log2fc <= log(1)] <- 0
+
+# Filter for female controls up-regulated transcripts (i.e. fold-change > 1) and p/qvalue < 0.05
+merged_males_DEG_stat_results$diffexpressed[merged_males_DEG_stat_results$pval <= pvalue
+                                  & merged_males_DEG_stat_results$qval <= qvalue
+                                  & merged_males_DEG_stat_results$log2fc >= log(1)] <- 1
+
+# Set gene_label column for easier/cleaner parsing.
+merged_males_DEG_stat_results$gene_label <- NA
+
+# write the gene names of those significantly upregulated/downregulated to a new column
+merged_males_DEG_stat_results$gene_label[merged_males_DEG_stat_results$diffexpressed != "No"] <- merged_males_DEG_stat_results$gene_name[merged_males_DEG_stat_results$diffexpressed != "No"]
+
+# create volcano plot
+males_DEG_volcano_plot <- create_volcano_plot(
+  merged_males_DEG_stat_results,
+  "log2fc",
+  "pval",
+  "qval",
+  "diffexpressed",
+  "gene_label",
+  "Gene Expression - Males",
+  c("Differentially Expressed - Controls",
+    "Differentially Expressed - Exposed",
+    "p/q-values > 0.05"
+    )
+  )
+
+
+# See plot
+males_DEG_volcano_plot
+```
+
+#### Save plot
+
+```{r}
+# Save the plot as a PNG
+ggsave("../output/18-differential-gene-expression-ballgown/figures/volcano_plot-DEGs-males-CvE.png", males_DEG_volcano_plot, width = 10, height = 8, units = "in", dpi = 300, bg = "white")
+```
+
+# Create faceted volcano plots
+
+Utilizes `patchwork` package to govern layout of plots.
+
+```{r}
+faceted_volcanoes <- (females_DET_volcano_plot / females_DEG_volcano_plot) | (males_DET_volcano_plot / males_DEG_volcano_plot)
+
+```
+
+## Save faceted volcano plot
+
+```{r}
+# Save to supplemental-file dir
+ggsave("../supplemental-files/18-faceted-volcano_plots-fmcoe-DETs-DEGs.png", faceted_volcanoes, width = 10, height = 8, units = "in", dpi = 300, bg = "white")
+
+# Save to 18 dir
+ggsave("../output/18-differential-gene-expression-ballgown/figures/faceted-volcano_plots-fmcoe-DETs-DEGs.png", faceted_volcanoes, width = 10, height = 8, units = "in", dpi = 300, bg = "white")
+
+```

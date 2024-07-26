@@ -2,6 +2,112 @@
 title: "20240726-snam-c1q-bs-primer-design"
 author: "Sam White"
 date: "2024-07-25"
-output: html_document
+output: 
+  bookdown::html_document2:
+    theme: cosmo
+    toc: true
+    toc_float: true
+    number_sections: true
+    code_folding: show
+    code_download: true
+  github_document:
+    toc: true
+    number_sections: true
+  html_document:
+    theme: cosmo
+    toc: true
+    toc_float: true
+    number_sections: true
+    code_folding: show
+    code_download: true
+bibliography: references.bib
+link-citations: true
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,         # Display code chunks
+  eval = FALSE,        # Evaluate code chunks
+  warning = FALSE,     # Hide warnings
+  message = FALSE,     # Hide messages
+  comment = ""         # Prevents appending '##' to beginning of lines in code output
+)
+```
+
+# CREATE BASH VARIABLES FILE
+
+This allows usage of Bash variables across R Markdown chunks.
+
+```{r save-bash-variables-to-rvars-file, engine='bash', eval=TRUE}
+{
+echo "#### Assign Variables ####"
+echo ""
+
+echo "# DATA DIRECTORIES"
+
+echo 'export data_dir="../data/S_namaycush/genomes"'
+echo 'export output_top=../output'
+echo ""
+
+echo "# SEQUENCE REGIONS"
+echo 'export left_buffer="3000"'
+echo 'export right_buffer="3000"'
+echo ""
+
+echo "# INPUT FILES"
+echo 'export genome_fasta=""'
+echo 'export genome_gff=""'
+echo 'export ncbi_gff_gz="GCF_016432855.1_SaNama_1.0_genomic.gff.gz"'
+echo 'export ncbi_fasta_gz="GCF_016432855.1_SaNama_1.0_genomic.fna.gz"'
+echo 'export ncbi_md5sums="md5checksums.txt "'
+echo 'export c1q_fasta=""'
+echo "export ncbi_url="https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/016/432/855/GCF_016432855.1_SaNama_1.0"'
+echo ""
+
+echo "# OUTPUT FILES"
+echo ""
+
+echo "# SET CPUS"
+echo 'export threads=40'
+echo ""
+
+echo "# PROGRAMS"
+echo 'export pyfaidx=/home/shared/pyfaidx-0.8.1.1'
+
+
+} > .bashvars
+
+cat .bashvars
+```
+
+# DOWNLOAD NCBI GENOME FILES
+
+
+# TEMPORARILY SAVING TEST CODE
+
+# CREATE SAMTOOLS FAIDX REGION FILE
+awk '$3=="gene"' genomic.gff | grep "LOC120027825" | awk '{print $1":"$4 - 3000"-"$5 + 3000}' > LOC120027825-3000bp.left-3000bp.right.txt
+
+# SET 5'/3' SEQUENCE BUFFER
+~/programs/samtools-1.20/samtools faidx GCF_016432855.1_SaNama_1.0_genomic.fna --region-file LOC120027825-3000bp.left-3000bp.right.txt > C1q-2-LOC120027825.fasta
+
+
+# SKIP FIRST LINE OF EXTRACTED FASTA SEQ
+sequence=$(awk 'NR > 1' C1q-2-LOC120027825-BS.conversion.fasta | tr -d '\n' | tr '[:lower:]' '[:upper:]')
+
+## CONVERT TO UPPER CASE and BISULFITE CONVERT to 't'
+tr '[:lower:]' '[:upper:]' C1q-2-LOC120027825.fasta | sed 's/G/t/g' > C1q-2-LOC120027825-BS.conversion.fasta
+
+## GET SEQUENCE LENGTH
+len=${#sequence}
+
+## SET POSITIONS
+pos1=2999
+pos2=$((len - 2999))
+
+## CONVERT TO UPPER CASE and BISULFITE CONVERT to 'N'
+## ALLOWS SKIPPING Ns with Primer3
+tr '[:lower:]' '[:upper:]' < C1q-2-LOC120027825.fasta | sed 's/G/N/g' > C1q-2-LOC120027825-BS.conversion.fasta
+
+# INSERT BRACKETS INTO SEQUENCE AT DESIRED POSITIONS
+result="${sequence:0:pos1}[${sequence:pos1:pos2-pos1}]${sequence:pos2}"

@@ -44,27 +44,35 @@ echo "#### Assign Variables ####"
 echo ""
 
 echo "# DATA DIRECTORIES"
-
 echo 'export data_dir="../data/S_namaycush/genomes"'
 echo 'export output_top=../output'
 echo ""
 
+echo "# SEQUENCE"
+echo 'export sequence_ID="LOC120027825"'
+echo ""
+
 echo "# SEQUENCE REGIONS"
-echo 'export left_buffer="3000"'
-echo 'export right_buffer="3000"'
+echo 'export left_buffer="3500"'
+echo 'export right_buffer="3500"'
 echo ""
 
 echo "# INPUT FILES"
-echo 'export genome_fasta=""'
-echo 'export genome_gff=""'
+echo 'export genome_fasta="GCF_016432855.1_SaNama_1.0_genomic.fna"'
+echo 'export genome_gff="GCF_016432855.1_SaNama_1.0_genomic.gff"'
 echo 'export ncbi_gff_gz="GCF_016432855.1_SaNama_1.0_genomic.gff.gz"'
 echo 'export ncbi_fasta_gz="GCF_016432855.1_SaNama_1.0_genomic.fna.gz"'
-echo 'export ncbi_md5sums="md5checksums.txt "'
-echo 'export c1q_fasta=""'
-echo "export ncbi_url="https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/016/432/855/GCF_016432855.1_SaNama_1.0"'
+echo 'export ncbi_md5sums="md5checksums.txt"'
+echo 'export ncbi_url="https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/016/432/855/GCF_016432855.1_SaNama_1.0/"'
 echo ""
 
 echo "# OUTPUT FILES"
+echo 'export c1q_fasta="${sequence_ID}.fasta"'
+echo 'export c1q_buffer_fasta="${sequence_ID}-${left_buffer}bp.left-${right_buffer}bp.right.fasta"'
+echo 'export c1q_faidx_region_file="${sequence_ID}"-region.txt'
+echo 'export c1q_buffer_faidx_region_file="${sequence_ID}-${left_buffer}bp.left-${right_buffer}bp.right-region.txt"'
+echo 'export c1q_bisulfite_t_fasta="${sequence_ID}-BS_conversion-t-${left_buffer}bp.left-${right_buffer}bp.right.fasta"'
+echo 'export c1q_bisulfite_N_fasta="${sequence_ID}-BS_conversion-N-${left_buffer}bp.left-${right_buffer}bp.right.fasta"'
 echo ""
 
 echo "# SET CPUS"
@@ -73,6 +81,10 @@ echo ""
 
 echo "# PROGRAMS"
 echo 'export pyfaidx=/home/shared/pyfaidx-0.8.1.1'
+echo 'export primer3_dir="/home/shared/primer3-2.6.1/src"'
+echo 'export primer3="${primer3_dir}/primer3_core"'
+echo 'export primer3_config="${primer3_dir}/primer3_config"'
+echo 'export samtools="/home/shared/samtools-1.12/samtools"'
 
 
 } > .bashvars
@@ -82,32 +94,196 @@ cat .bashvars
 
 # DOWNLOAD NCBI GENOME FILES
 
+## Download the actual files
+```{bash download-ncbi-genome-files, engine='bash', eval=TRUE}
+# Load bash variables into memory
+source .bashvars
 
-# TEMPORARILY SAVING TEST CODE
+for file in ${ncbi_gff_gz} ${ncbi_fasta_gz} ${ncbi_md5sums}
+do
+  wget \
+  --no-check-certificate \
+  --continue \
+  --quiet \
+  --directory-prefix=${data_dir} \
+  ${ncbi_url}${file}
+done
 
-# CREATE SAMTOOLS FAIDX REGION FILE
-awk '$3=="gene"' genomic.gff | grep "LOC120027825" | awk '{print $1":"$4 - 3000"-"$5 + 3000}' > LOC120027825-3000bp.left-3000bp.right.txt
+ls -lh "${data_dir}"
+```
 
-# SET 5'/3' SEQUENCE BUFFER
-~/programs/samtools-1.20/samtools faidx GCF_016432855.1_SaNama_1.0_genomic.fna --region-file LOC120027825-3000bp.left-3000bp.right.txt > C1q-2-LOC120027825.fasta
+## Check MD5 Checkums
+```{bash verify-ncbi-checksums, engine='bash', eval=TRUE}
+# Load bash variables into memory
+source .bashvars
+
+cd "${data_dir}"
+
+for file in *.gz
+do
+  grep "${file}" ${ncbi_md5sums} | md5sum -c -
+done
+
+```
+
+## Decompress NCBI files
+
+```{bash decompress-files, engine='bash', eval=TRUE}
+# Load bash variables into memory
+source .bashvars
+
+cd "${data_dir}"
+
+for file in *.gz
+do
+  gunzip "${file}"
+done
+
+ls -lh
+```
+
+# EXTRACT C1Q GENE SEQUENCE
+
+## Peek at GFF
+
+```{bash peek-at-gff, engine='bash', eval=TRUE}
+# Load bash variables into memory
+source .bashvars
+
+awk '$3=="gene"' "${data_dir}/${genome_gff}" | grep "${sequence_ID}"
+
+```
+
+## Create FastA index
+
+```{bash extract-c1q-region, engine='bash', eval=TRUE}
+# Load bash variables into memory
+source .bashvars
+
+${samtools} faidx "${data_dir}/${genome_fasta}"
+```
+
+## Format region and extract C1q sequence as FastA.
+
+```{bash extract-c1q-region, engine='bash', eval=TRUE}
+# Load bash variables into memory
+source .bashvars
+
+# Format region for use with pyfaidx
+region=$(awk '$3=="gene"' "${data_dir}/${genome_gff}" | grep "${sequence_ID}" | awk '{print $1":"$4"-"$5}')
+
+echo "${region}"
+echo ""
+
+# Extract region
+# Translates to upper case letters - useful for bisulfite conversion later
+${pyfaidx} "${data_dir}/${genome_fasta}" "${region}" | tee "${output_top}/${c1q_fasta}"
+
+echo ""
+
+wc -l "${output_top}/${c1q_fasta}"
+```
+
+# EXTRACT C1Q WITH 5'/3' BUFFERS
+
+```{bash extract-buffered-c1q-fasta, engine='bash', eval=TRUE}
+# Load bash variables into memory
+source .bashvars
+
+# Format region for use with pyfaidx
+# Use awk to add/subtract desired buffer regions
+region=$(awk '$3=="gene"' "${data_dir}/${genome_gff}" | grep "${sequence_ID}" | awk -v left_buffer="$left_buffer" -v right_buffer="$right_buffer" '{print $1":"$4 - left_buffer"-"$5 + right_buffer}')
+
+echo "${region}"
+echo ""
+
+# Extract region
+# Translates to upper case letters - useful for bisulfite conversion later
+${pyfaidx} "${data_dir}/${genome_fasta}" "${region}" | tee "${output_top}/${c1q_buffer_fasta}"
 
 
-# SKIP FIRST LINE OF EXTRACTED FASTA SEQ
-sequence=$(awk 'NR > 1' C1q-2-LOC120027825-BS.conversion.fasta | tr -d '\n' | tr '[:lower:]' '[:upper:]')
+echo ""
 
-## CONVERT TO UPPER CASE and BISULFITE CONVERT to 't'
-tr '[:lower:]' '[:upper:]' C1q-2-LOC120027825.fasta | sed 's/G/t/g' > C1q-2-LOC120027825-BS.conversion.fasta
+wc -l "${output_top}/${c1q_buffer_fasta}"
+```
 
-## GET SEQUENCE LENGTH
-len=${#sequence}
+# PRIMER DESIGN USING [PRIMER3](https://github.com/primer3-org/primer3)
 
-## SET POSITIONS
-pos1=2999
-pos2=$((len - 2999))
+## Bisulfite conversions
 
-## CONVERT TO UPPER CASE and BISULFITE CONVERT to 'N'
-## ALLOWS SKIPPING Ns with Primer3
-tr '[:lower:]' '[:upper:]' < C1q-2-LOC120027825.fasta | sed 's/G/N/g' > C1q-2-LOC120027825-BS.conversion.fasta
+In this step we convert all lowercase to uppercase. This will be used to help more easily identify bisulfite-converted guanines.
 
-# INSERT BRACKETS INTO SEQUENCE AT DESIRED POSITIONS
-result="${sequence:0:pos1}[${sequence:pos1:pos2-pos1}]${sequence:pos2}"
+We create two versions of bisuflte conversions:
+
+- G -> t
+- G -> N
+
+The first conversion is a "realistic" representation of G -> U (t). We use a lowercase `t` to make them stand out.
+
+The second conversion is specifically geared toward using [Primer3](https://github.com/primer3-org/primer3) and setting a maximum number of "Ns" allowed in the primer annealing site, to help avoid primer designs which might cross a methylated CpG site (i.e. a site where bisulfite conversion would _NOT_ take place, due to a methyl group being present).
+
+```{bash bisulfite-conversions, engine='bash', eval=TRUE}
+# Load bash variables into memory
+source .bashvars
+
+tr '[:lower:]' '[:upper:]' < "${output_top}/${c1q_buffer_fasta}" | sed 's/G/t/g' > "${output_top}/${c1q_bisulfite_t_fasta}"
+
+
+tr '[:lower:]' '[:upper:]' < "${output_top}/${c1q_buffer_fasta}" | sed 's/G/N/g' > "${output_top}/${c1q_bisulfite_N_fasta}"
+
+head ${output_top}/*BS_conversion*.fasta
+
+```
+
+## Design primers
+
+
+```{bash primer3, engine='bash', eval=TRUE}
+# Load bash variables into memory
+source .bashvars
+
+c1q_sequence=$(awk 'NR > 1' "${output_top}/${c1q_fasta}" | tr -d '\n')
+
+c1q_length=${#c1q_sequence}
+
+c1q_buffer_sequence=$(awk 'NR > 1' "${output_top}/${c1q_bisulfite_t_fasta}" | tr -d '\n')
+
+c1q_buffer_length=${#c1q_buffer_sequence}
+
+echo "$c1q_buffer_length"
+
+
+c1q_buffer_and_seq_length=$((left_buffer + c1q_length))
+echo "$c1q_buffer_and_seq_length"
+
+echo "$left_buffer"
+
+
+# Use heredoc to create Primer3 parameters file
+cat << EOF > ${output_top}/primer3-t-params.txt
+SEQUENCE_ID=${sequence_ID}
+SEQUENCE_TEMPLATE=${c1q_buffer_sequence}
+PRIMER_TASK=generic
+SEQUENCE_PRIMER_PAIR_OK_REGION_LIST=0,3500,6958,3300
+SEQUENCE_TARGET=${left_buffer},${c1q_length}
+PRIMER_PICK_LEFT_PRIMER=1
+PRIMER_PICK_RIGHT_PRIMER=1
+PRIMER_OPT_SIZE=20
+PRIMER_MIN_SIZE=18
+PRIMER_MAX_SIZE=25
+PRIMER_MAX_NS_ACCEPTED=0
+P3_FILE_FLAG=1
+PRIMER_EXPLAIN_FLAG=1
+PRIMER_THERMODYNAMIC_PARAMETERS_PATH=${primer3_config}
+=
+EOF
+
+
+# Run Primer3
+${primer3} \
+--format_output \
+--output="${output_top}/primer3-t-primers.txt" \
+"${output_top}/primer3-t-params.txt"
+
+cat "${output_top}/primer3-t-primers.txt"
+```

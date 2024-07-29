@@ -3,6 +3,9 @@ title: "20240726-snam-c1q-bs-primer-design"
 author: "Sam White"
 date: "2024-07-25"
 output: 
+  github_document:
+    toc: true
+    number_sections: true
   bookdown::html_document2:
     theme: cosmo
     toc: true
@@ -10,9 +13,6 @@ output:
     number_sections: true
     code_folding: show
     code_download: true
-  github_document:
-    toc: true
-    number_sections: true
   html_document:
     theme: cosmo
     toc: true
@@ -24,7 +24,7 @@ bibliography: references.bib
 link-citations: true
 ---
 
-This notebook describes using [Primer3](10.1093/nar/gks596) [@untergasser2012; @koressaar2007] to reproducibly design primers for sequencing of the [lake trout (*S.namaycush*)](https://en.wikipedia.org/wiki/Lake_trout) (Wikipedia) C1q gene ([`LOC120027825`](https://github.com/RobertsLab/resources/issues/1941#issuecomment-2246548960) (GitHub Issue)), after bisulfite treatment.
+This notebook describes using [Primer3](https://github.com/primer3-org/primer3) [@untergasser2012; @koressaar2007] to reproducibly design primers for sequencing of the [lake trout (*S.namaycush*)](https://en.wikipedia.org/wiki/Lake_trout) (Wikipedia) C1q gene ([`LOC120027825`](https://github.com/RobertsLab/resources/issues/1941#issuecomment-2246548960) (GitHub Issue)), after bisulfite treatment.
 
 This process also utilizes [pyfaidx](https://github.com/mdshw5/pyfaidx) [@shirley2015] and [samtools](https://www.htslib.org/) [@li2009].
 
@@ -88,7 +88,7 @@ echo 'export pyfaidx=/home/shared/pyfaidx-0.8.1.1'
 echo 'export primer3_dir="/home/shared/primer3-2.6.1/src"'
 echo 'export primer3="${primer3_dir}/primer3_core"'
 echo 'export primer3_config="${primer3_dir}/primer3_config"'
-echo 'export samtools="/home/shared/samtools-1.12/samtools"'
+
 
 
 } > .bashvars
@@ -169,13 +169,6 @@ awk '$3=="gene"' "${data_dir}/${genome_gff}" | grep "${sequence_ID}"
 ```
 
 ## Create FastA index
-
-```{bash extract-c1q-region, engine='bash', eval=TRUE}
-# Load bash variables into memory
-source .bashvars
-
-${samtools} faidx "${data_dir}/${genome_fasta}"
-```
 
 ## Format region and extract C1q sequence as FastA.
 
@@ -280,7 +273,7 @@ EOF
 
 [Primer3](https://github.com/primer3-org/primer3) is run with the `--format_output` to make a nice, human-readable output format.
 
-### Bisulfite lowecase `t`
+### Bisulfite lowercase `t`
 
 We'll use the bisulfite-converted sequence with the lowercase `t` to examine potential primers.
 

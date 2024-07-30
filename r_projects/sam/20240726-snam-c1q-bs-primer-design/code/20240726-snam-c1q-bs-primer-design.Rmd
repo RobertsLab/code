@@ -420,7 +420,9 @@ source .bashvars
 
 # Get primer info from Primer3 default format output
 seq_id=$(grep "SEQUENCE_ID=" "${output_top}/primer3-t-primers-default-format.txt" | sed 's/SEQUENCE_ID=//')
+
 left_primer=$(grep "PRIMER_LEFT_0_SEQUENCE=" "${output_top}/primer3-t-primers-default-format.txt" | sed 's/PRIMER_LEFT_0_SEQUENCE=//' | tr '[:lower:]' '[:upper:]')
+
 right_primer=$(grep "PRIMER_RIGHT_6_SEQUENCE=" "${output_top}/primer3-t-primers-default-format.txt" | sed 's/PRIMER_RIGHT_6_SEQUENCE=//' | tr '[:lower:]' '[:upper:]')
 
 # Create EMBOSS primer file
@@ -432,24 +434,57 @@ printf "%s\t%s\t%s\t\n" "${seq_id}" "${left_primer}" "${right_primer}" | tee "${
 # Load bash variables into memory
 source .bashvars
 
-cd /home/sam/analyses/20181129_geoduck_vtg_primers/
+cd ${genome_fasta_splits_dir}
 
-fasta_loc="/home/sam/data/geoduck/transcriptomes/transdecoder_fasta_splits/"
-primers="/home/sam/analyses/20181129_geoduck_vtg_primers/20181129_emboss_primers.txt"
+primers="../../../../output/emboss-primers.txt"
 
 
 time \
-for fasta in ${fasta_loc}*.cds
+for fasta in *.fna
   do
+  # Remove path from FastA filename
   fasta_no_path=$(echo ${fasta##*/})
+  
+  # Remove file extension from FastA filename
   fasta_no_ext=$(echo ${fasta_no_path%%.*})
+  
+  # Convert filename to lowercase
+  # Will be used for output from EMBOSS PrimerSearch
   fasta_no_ext_lower=$(echo ${fasta_no_ext} | tr '[:upper:]' '[:lower:]')
-  ${primersearch} -auto ${fasta} ${primers} 20
+  
+  ###### Run EMBOSS PrimerSearch on all FastA files ########
+  # Allows for a 10%
+  ${primersearch} -auto ${fasta} ${primers} 10
+  ##### END EMBOSS ##########
+  
+  # Find EMBOSS PrimerSearch output files with primer matches
+  # Remove those without a match
   if ! grep --quiet "Amplimer" "${fasta_no_ext_lower}.primersearch"
     then rm ${fasta_no_ext_lower}.primersearch
   fi
 done
 
 ```
+
+```{bash inspect-EMBOSS-primer-matches, engine='bash', eval=TRUE}
+# Load bash variables into memory
+source .bashvars
+
+cd ${genome_fasta_splits_dir}
+
+# Check contents of files with matches
+for file in *.primersearch
+  do
+  echo "FILE: ${file}"
+  echo ""
+  cat ${file}
+  echo "----------------------------------"
+  echo ""
+done
+```
+
+# SUMMARY
+
+EMBOSS PrimerSearch has identified only a single location in the genome where the forward and reverse primers match, as well as in the expected location on chromosome `NC_052339`.
 
 # CITATIONS

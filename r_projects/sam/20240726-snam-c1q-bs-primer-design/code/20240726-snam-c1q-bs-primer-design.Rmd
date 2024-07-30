@@ -50,6 +50,7 @@ echo ""
 echo "# DATA DIRECTORIES"
 echo 'export data_dir="../data/S_namaycush/genomes"'
 echo 'export output_top=../output'
+echo 'export genome_fasta_splits_dir="${data_dir}/fasta_splits"'
 echo ""
 
 echo "# SEQUENCE"
@@ -71,6 +72,7 @@ echo 'export ncbi_url="https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/016/432/855/
 echo ""
 
 echo "# OUTPUT FILES"
+echo 'export bisulfite_genome_fasta="bisulfite.GCF_016432855.1_SaNama_1.0_genomic.fna"'
 echo 'export c1q_fasta="${sequence_ID}.fasta"'
 echo 'export c1q_buffer_fasta="${sequence_ID}-${left_buffer}bp.left-${right_buffer}bp.right.fasta"'
 echo 'export c1q_faidx_region_file="${sequence_ID}"-region.txt'
@@ -88,6 +90,7 @@ echo 'export pyfaidx=/home/shared/pyfaidx-0.8.1.1'
 echo 'export primer3_dir="/home/shared/primer3-2.6.1/src"'
 echo 'export primer3="${primer3_dir}/primer3_core"'
 echo 'export primer3_config="${primer3_dir}/primer3_config"'
+echo 'export primersearch="/home/shared/EMBOSS-6.6.0/emboss/primersearch"'
 
 
 
@@ -168,7 +171,6 @@ awk '$3=="gene"' "${data_dir}/${genome_gff}" | grep "${sequence_ID}"
 
 ```
 
-## Create FastA index
 
 ## Format region and extract C1q sequence as FastA.
 
@@ -334,6 +336,11 @@ ${primer3} \
 --output="${output_top}/primer3-t-primers.txt" \
 "${output_top}/primer3-t-params.txt"
 
+# Run Primer3 with default output for parsable results
+${primer3} \
+--output="${output_top}/primer3-t-primers-default-format.txt" \
+"${output_top}/primer3-t-params.txt"
+
 
 # Pull out any primers falling outside of target
 tail -n 30 "${output_top}/primer3-t-primers.txt" \
@@ -353,5 +360,96 @@ cat "${output_top}/primer3-t-primers.txt"
 ```
 
 Looks like we have two primers we can use for sequencing. Neither overlaps a potential `CpG`, and both are outside of the C1q gene sequence.
+
+Next, we need to test them against the entire bisulfite-converted genome to assess specificity.
+
+# GENOME BISULFITE CONVERSION
+
+```{bash bs-convert-genome, engine='bash', eval=TRUE}
+# Load bash variables into memory
+source .bashvars
+
+tr '[:lower:]' '[:upper:]' < "${data_dir}/${genome_fasta}" | sed '/^>/!s/G/T/g' > "${data_dir}/${bisulfite_genome_fasta}"
+
+head "${data_dir}/${bisulfite_genome_fasta}"
+```
+
+# SPLIT GENOME
+
+
+
+## Split mulit-FastA file in to individual FastA files with PyFaidx
+
+```{bash split-genome-fasta, engine='bash', eval=TRUE}
+# Load bash variables into memory
+source .bashvars
+
+# Make directory if it doesn't exist
+mkdir --parents ${genome_fasta_splits_dir}
+
+cd ${genome_fasta_splits_dir}
+
+# Count sequences in FastA
+echo "-------------------------------------------------------------------"
+echo "NUMBER OF SEQUENCES IN ORIGINAL FASTA"
+grep -c "^>" ../${bisulfite_genome_fasta}
+echo "-------------------------------------------------------------------"
+echo ""
+echo ""
+
+
+
+# Split FastA
+${pyfaidx} \
+--split-files \
+../${bisulfite_genome_fasta}
+
+# Count number of individual FastA files
+echo "-------------------------------------------------------------------"
+echo "NUMBER OF INDIVIDUAL FASTA FILES"
+ls -1 | wc -l
+echo "-------------------------------------------------------------------"
+```
+
+# PRIMER SEARCH WITH [EMOBSS PRIMERSEARCH](https://emboss.sourceforge.net/apps/cvs/emboss/apps/primersearch.html)
+
+## Create EMOBSS PrimerSearch Primers File
+```{bash create-emboss-primers-file, engine='bash', eval=TRUE}
+# Load bash variables into memory
+source .bashvars
+
+# Get primer info from Primer3 default format output
+seq_id=$(grep "SEQUENCE_ID=" "${output_top}/primer3-t-primers-default-format.txt" | sed 's/SEQUENCE_ID=//')
+left_primer=$(grep "PRIMER_LEFT_0_SEQUENCE=" "${output_top}/primer3-t-primers-default-format.txt" | sed 's/PRIMER_LEFT_0_SEQUENCE=//' | tr '[:lower:]' '[:upper:]')
+right_primer=$(grep "PRIMER_RIGHT_6_SEQUENCE=" "${output_top}/primer3-t-primers-default-format.txt" | sed 's/PRIMER_RIGHT_6_SEQUENCE=//' | tr '[:lower:]' '[:upper:]')
+
+# Create EMBOSS primer file
+printf "%s\t%s\t%s\t\n" "${seq_id}" "${left_primer}" "${right_primer}" | tee "${output_top}/emboss-primers.txt"
+```
+
+## Run EMBOSS PrimerSearch
+```{bash emboss-primersearch, engine='bash', eval=TRUE}
+# Load bash variables into memory
+source .bashvars
+
+cd /home/sam/analyses/20181129_geoduck_vtg_primers/
+
+fasta_loc="/home/sam/data/geoduck/transcriptomes/transdecoder_fasta_splits/"
+primers="/home/sam/analyses/20181129_geoduck_vtg_primers/20181129_emboss_primers.txt"
+
+
+time \
+for fasta in ${fasta_loc}*.cds
+  do
+  fasta_no_path=$(echo ${fasta##*/})
+  fasta_no_ext=$(echo ${fasta_no_path%%.*})
+  fasta_no_ext_lower=$(echo ${fasta_no_ext} | tr '[:upper:]' '[:lower:]')
+  ${primersearch} -auto ${fasta} ${primers} 20
+  if ! grep --quiet "Amplimer" "${fasta_no_ext_lower}.primersearch"
+    then rm ${fasta_no_ext_lower}.primersearch
+  fi
+done
+
+```
 
 # CITATIONS

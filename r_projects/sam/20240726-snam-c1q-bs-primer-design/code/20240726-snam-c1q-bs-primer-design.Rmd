@@ -422,11 +422,11 @@ ls -1 | wc -l
 echo "-------------------------------------------------------------------"
 ```
 
-# PRIMER SEARCH WITH [EMOBSS PRIMERSEARCH](https://emboss.sourceforge.net/apps/cvs/emboss/apps/primersearch.html)
+# PRIMER SEARCH WITH [EMBOSS PRIMERSEARCH](https://emboss.sourceforge.net/apps/cvs/emboss/apps/primersearch.html)
 
-This will run [EMOBSS PrimerSearch](https://emboss.sourceforge.net/apps/cvs/emboss/apps/primersearch.html) against the genome to assess primer specificity.
+This will run [EMBOSS PrimerSearch](https://emboss.sourceforge.net/apps/cvs/emboss/apps/primersearch.html) against the genome to assess primer specificity.
 
-## Create EMOBSS PrimerSearch Primers File
+## Create EMBOSS PrimerSearch Primers File
 
 Create a tab-delimited file to use with EMBOSS PrimerSearch.
 

@@ -52,38 +52,29 @@ Stage: build
     python-setuptools \
     net-tools \
     sqlite3 \
-	infernal \
-	liburi-escape-xs-perl \
-	emboss \
-	liburi-perl \
-	ruby \
-	hmmer \
-	libsm6 \
-	libxrender1 \
-	libfontconfig1 \
-	parallel \
-	locales-all \
-	libzmq3-dev \
-	libpango1.0-dev \
-	tree \
+    infernal \
+    liburi-escape-xs-perl \
+    emboss \
+    liburi-perl \
+    ruby \
+    hmmer \
+    libsm6 \
+    libxrender1 \
+    libfontconfig1 \
+    parallel \
+    locales-all \
+    libzmq3-dev \
+    libpango1.0-dev \
+    tree \
     htop \
     python3 \
     libbz2-dev \
     liblzma-dev \
     rsync \
-    coreutils \
-    tree
+    coreutils
 
     # Make programs directory
     mkdir --parents /srlab/programs
-
-NOW=`date`
-    echo "export NOW=\"${NOW}\"" >> $APPTAINER_ENVIRONMENT
-
-%runscript
-    echo "Container was created $NOW"
-    echo "Arguments received: $*"
-    exec echo "$@"
 
 %labels
     Author Sam White

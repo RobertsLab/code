@@ -13,65 +13,65 @@ Stage: build
     apt update && \
     apt install -y --no-install-recommends \
     apt-utils \
-    locales \
-    debconf \
-    libc6 \
-    default-jdk \
-    software-properties-common \
-    build-essential \
-    pkg-config \
-    libncurses-dev \
-    ncurses-dev \
-    libncurses5-dev \
-    libncursesw5-dev \
-    zlib1g-dev \
-    libpng-dev \
-    dialog \
-    sudo \
-    nano \
-    curl \
-    git \
-    man \
-    unzip \
-    bzip2 \
-    wget \
-    automake \
-    gfortran \
-    gcc-multilib \
-    gobjc++ \
     aptitude \
-    xorg-dev \
-    texinfo \
-    libsparsehash-dev \
-    gdebi-core \
-    libapparmor1 \
-    libedit2 \
-    libcurl4-openssl-dev \
-    libssl-dev \
-    psmisc \
-    python-setuptools \
-    net-tools \
-    sqlite3 \
-    infernal \
-    liburi-escape-xs-perl \
+    automake \
+    build-essential \
+    bzip2 \
+    coreutils \
+    curl \
+    debconf \
+    default-jdk \
+    dialog \
     emboss \
-    liburi-perl \
-    ruby \
+    gcc-multilib \
+    gdebi-core \
+    gfortran \
+    git \
+    gobjc++ \
     hmmer \
-    libsm6 \
-    libxrender1 \
-    libfontconfig1 \
-    parallel \
-    locales-all \
-    libzmq3-dev \
-    libpango1.0-dev \
-    tree \
     htop \
-    python3 \
+    infernal \
+    libapparmor1 \
     libbz2-dev \
+    libc6 \
+    libcurl4-openssl-dev \
+    libedit2 \
+    libfontconfig1 \
     liblzma-dev \
+    libncurses5-dev \
+    libncurses-dev \
+    libncursesw5-dev \
+    libpango1.0-dev \
+    libpng-dev \
+    libsm6 \
+    libsparsehash-dev \
+    libssl-dev \
+    liburi-escape-xs-perl \
+    liburi-perl \
+    libxrender1 \
+    libzmq3-dev \
+    locales \
+    locales-all \
+    man \
+    nano \
+    ncurses-dev \
+    net-tools \
+    parallel \
+    pkg-config \
+    psmisc \
+    python3 \
+    python-setuptools \
     rsync \
-    coreutils
+    ruby \
+    software-properties-common \
+    sqlite3 \
+    sudo \
+    texinfo \
+    tree \
+    unzip \
+    wget \
+    xorg-dev \
+    zlib1g-dev
 
     # Make programs directory
     mkdir --parents /srlab/programs

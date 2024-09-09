@@ -10,6 +10,7 @@ Stage: build
     PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/srlab/programs"
 
 %post
+    # Install common/base libraries/dependencies
     apt update && \
     apt install -y --no-install-recommends \
     apt-utils \
@@ -75,11 +76,19 @@ Stage: build
 
     # Make programs directory
     mkdir --parents /srlab/programs
+    cd /srlab/programs
+
+    # Set program versions
+    export bedtools_version="v2.31.0"
+
+    # Install bedtools
+    wget https://github.com/arq5x/bedtools2/releases/download/${bedtools_version}/bedtools.static
+    mv bedtools.static bedtools
+    chmod a+x bedtools
 
 %labels
     Author Sam White
-    Version v0.0.1
+    Version v0.0.2
 
 %help
-    This is a definition file for a base Ubuntu image. Contains all the
-    basic dependencies needed for installing/building other images.
+    This is an Apptainer definition file for an Ubuntu container containing bioinformatics software for the Roberts Lab.

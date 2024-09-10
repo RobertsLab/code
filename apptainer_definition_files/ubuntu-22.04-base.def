@@ -22,7 +22,7 @@ Stage: build
 /bin:\
 ${programs_location}:\
 ${programs_location}/ncbi-blast-${ncbi_blast_version}+/bin:\
-${programs_location}/bowtie2-${bowtie2_version}"
+${programs_location}/bowtie2-${bowtie2_version}-sra-linux-x86_64"
     ######################################################
 
 
@@ -101,7 +101,7 @@ ${programs_location}/bowtie2-${bowtie2_version}"
     ########## Set program versions ##########
 
     bedtools_version="v2.31.0"
-    bowtie2_version="v2.5.4"
+    bowtie2_version="2.5.4"
     gffcomare_version="gffcompare-0.12.6"
     hisat2_version="2.2.1"
     ncbi_blast_version="2.16.0"
@@ -119,12 +119,9 @@ ${programs_location}/bowtie2-${bowtie2_version}"
     chmod a+x bedtools
 
     # Install bowtie2
-    git clone --recursive https://github.com/BenLangmead/bowtie2.git --branch ${bowtie2_version}
-    mv bowtie2 bowtie2-${bowtie2_version}
-    cd bowtie2-${bowtie2_version}
-    make -j ${threads} libsais USE_SAIS_OPENMP=1
-    make -j ${threads} sra-deps && make -j ${threads} USE_SRA=1
-    cd -
+    wget https://github.com/BenLangmead/bowtie2/releases/download/v${bowtie2_version}/bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
+    tar -xzvf  bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
+    rm bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
 
 
     # Install gffcompare

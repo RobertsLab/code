@@ -88,8 +88,8 @@ Stage: build
     gffcomare_version="gffcompare-0.12.6"
     hisat2_version="2.2.1"
     ncbi_blast_version="2.16.0"
-    stringtie_version="stringtie-2.2.1"
-    samtools_version="samtools-1.20"
+    stringtie_version="2.2.1"
+    samtools_version="1.20"
 
     ##########################################
 
@@ -115,16 +115,6 @@ Stage: build
     rm ${gffcomare_version}.Linux_x86_64.tar.gz
     ln --symbolic ${gffcomare_version}.Linux_x86_64/gffcompare gffcompare
 
-    # Install NCBI BLAST
-    wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/${ncbi_blast_version}/ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz \
-	&& tar -zxvpf ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz \
-	&& rm ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz
-
-    # Install StringTie
-    wget http://ccb.jhu.edu/software/stringtie/dl/${stringtie_version}.Linux_x86_64.tar.gz
-    tar -xzvf ${stringtie_version}.Linux_x86_64.tar.gz
-    rm ${stringtie_version}.Linux_x86_64.tar.gz
-    ln --symbolic ${stringtie_version}.Linux_x86_64/stringtie stringtie
 
     # Install HISAT2
     wget https://github.com/DaehwanKimLab/hisat2/archive/refs/tags/v${hisat2_version}.tar.gz
@@ -135,19 +125,32 @@ Stage: build
     rm v${hisat2_version}.tar.gz
     ln --symbolic hisat2-${hisat2_version}/hisat2 hisat2
 
+    # Install NCBI BLAST
+    wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/${ncbi_blast_version}/ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz \
+	&& tar -zxvpf ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz \
+	&& rm ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz
+
     # Install samtools
-    wget https://github.com/samtools/samtools/releases/download/1.17/${samtools_version}.tar.bz2
-    tar -xjvf ${samtools_version}.tar.bz2
-    cd ${samtools_version}
+    wget https://github.com/samtools/samtools/releases/download/${samtools_version}/samtools-${samtools_version}.tar.bz2
+    tar -xjvf samtools-${samtools_version}.tar.bz2
+    cd samtools-${samtools_version}
     ./configure
     make -j ${threads}
     cd -
-    rm ${samtools_version}.tar.bz2
-    ln --symbolic ${samtools_version}/samtools samtools
+    rm samtools-${samtools_version}.tar.bz2
+    ln --symbolic samtools-${samtools_version}/samtools samtools
+
+    # Install StringTie
+    wget http://ccb.jhu.edu/software/stringtie/dl/stringtie-${stringtie_version}.Linux_x86_64.tar.gz
+    tar -xzvf stringtie-${stringtie_version}.Linux_x86_64.tar.gz
+    rm stringtie-${stringtie_version}.Linux_x86_64.tar.gz
+    ln --symbolic stringtie-${stringtie_version}.Linux_x86_64/stringtie stringtie
+
+
 
 %labels
     Author Sam White
-    Version v0.0.3
+    Version v0.0.4
 
 %help
     This is an Apptainer definition file for an Ubuntu container containing bioinformatics software for the Roberts Lab.

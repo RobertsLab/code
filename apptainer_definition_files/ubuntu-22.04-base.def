@@ -130,6 +130,7 @@ Stage: build
     wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/${ncbi_blast_version}/ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz \
 	&& tar -zxvpf ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz \
 	&& rm ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz
+    PATH="$PATH:ncbi-blast-${ncbi_blast_version}+/bin"
 
     # Install samtools
     wget https://github.com/samtools/samtools/releases/download/${samtools_version}/samtools-${samtools_version}.tar.bz2

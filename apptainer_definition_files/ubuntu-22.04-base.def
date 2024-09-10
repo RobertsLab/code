@@ -10,76 +10,126 @@ Stage: build
     PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/srlab/programs"
 
 %post
+    # Install common/base libraries/dependencies
     apt update && \
     apt install -y --no-install-recommends \
     apt-utils \
-    locales \
-    debconf \
-    libc6 \
-    default-jdk \
-    software-properties-common \
-    build-essential \
-    pkg-config \
-    libncurses-dev \
-    ncurses-dev \
-    libncurses5-dev \
-    libncursesw5-dev \
-    zlib1g-dev \
-    libpng-dev \
-    dialog \
-    sudo \
-    nano \
-    curl \
-    git \
-    man \
-    unzip \
-    bzip2 \
-    wget \
-    automake \
-    gfortran \
-    gcc-multilib \
-    gobjc++ \
     aptitude \
-    xorg-dev \
-    texinfo \
-    libsparsehash-dev \
-    gdebi-core \
-    libapparmor1 \
-    libedit2 \
-    libcurl4-openssl-dev \
-    libssl-dev \
-    psmisc \
-    python-setuptools \
-    net-tools \
-    sqlite3 \
-    infernal \
-    liburi-escape-xs-perl \
+    automake \
+    build-essential \
+    bzip2 \
+    coreutils \
+    curl \
+    debconf \
+    default-jdk \
+    dialog \
     emboss \
-    liburi-perl \
-    ruby \
+    gcc-multilib \
+    gdebi-core \
+    gfortran \
+    git \
+    gobjc++ \
     hmmer \
-    libsm6 \
-    libxrender1 \
-    libfontconfig1 \
-    parallel \
-    locales-all \
-    libzmq3-dev \
-    libpango1.0-dev \
-    tree \
     htop \
-    python3 \
+    infernal \
+    libapparmor1 \
     libbz2-dev \
+    libc6 \
+    libcurl4-openssl-dev \
+    libedit2 \
+    libfontconfig1 \
     liblzma-dev \
+    libncurses5-dev \
+    libncurses-dev \
+    libncursesw5-dev \
+    libpango1.0-dev \
+    libpng-dev \
+    libsm6 \
+    libsparsehash-dev \
+    libssl-dev \
+    liburi-escape-xs-perl \
+    liburi-perl \
+    libxrender1 \
+    libzmq3-dev \
+    locales \
+    locales-all \
+    man \
+    nano \
+    ncurses-dev \
+    net-tools \
+    parallel \
+    pkg-config \
+    psmisc \
+    python3 \
+    python-setuptools \
     rsync \
-    coreutils
+    ruby \
+    software-properties-common \
+    sqlite3 \
+    sudo \
+    texinfo \
+    tree \
+    unzip \
+    wget \
+    xorg-dev \
+    zlib1g-dev
 
     # Make programs directory
     mkdir --parents /srlab/programs
+    cd /srlab/programs
+
+    ########## Set program versions ##########
+    
+    bedtools_version="v2.31.0"
+    gffcomare_version="gffcompare-0.12.6"
+    hisat2_version="2.2.1"
+    stringtie_version="stringtie-2.2.1"
+    samtools_version="samtools-1.17"
+
+    ##########################################
+
+    # Change to installation directory
+    cd /srlab/programs
+
+    # Install bedtools
+    wget https://github.com/arq5x/bedtools2/releases/download/${bedtools_version}/bedtools.static
+    mv bedtools.static bedtools
+    chmod a+x bedtools
+
+    # Install gffcompare
+    wget http://ccb.jhu.edu/software/stringtie/dl/${gffcomare_version}.Linux_x86_64.tar.gz
+    tar -xzvf ${gffcomare_version}.Linux_x86_64.tar.gz
+    rm ${gffcomare_version}.Linux_x86_64.tar.gz
+    ln --symbolic ${gffcomare_version}.Linux_x86_64/gffcompare gffcompare
+
+    # Install StringTie
+    wget http://ccb.jhu.edu/software/stringtie/dl/${stringtie_version}.Linux_x86_64.tar.gz
+    tar -xzvf ${stringtie_version}.Linux_x86_64.tar.gz
+    rm ${stringtie_version}.Linux_x86_64.tar.gz
+    ln --symbolic ${stringtie_version}.Linux_x86_64/stringtie stringtie
+
+    # Install HISAT2
+    wget https://github.com/DaehwanKimLab/hisat2/archive/refs/tags/v${hisat2_version}.tar.gz
+    tar -xzvf v${hisat2_version}.tar.gz
+    cd hisat2-${hisat2_version}
+    make -j 40
+    cd -
+    rm v${hisat2_version}.tar.gz
+    ln --symbolic hisat2-${hisat2_version}/hisat2 hisat2
+
+    # Install samtools
+    wget https://github.com/samtools/samtools/releases/download/1.17/${samtools_version}.tar.bz2
+    tar -xjvf ${samtools_version}.tar.bz2
+    cd ${samtools_version}
+    ./configure
+    make -j 40
+    cd -
+    rm ${samtools_version}.tar.bz2
+    ln --symbolic ${samtools_version}/samtools samtools
 
 %labels
     Author Sam White
-    Version v0.0.1
+    Version v0.0.3
 
 %help
-    This is a definition file for a base Ubuntu image. Contains all the
-    basic dependencies needed for installing/building other images.
+    This is an Apptainer definition file for an Ubuntu container containing bioinformatics software for the Roberts Lab.

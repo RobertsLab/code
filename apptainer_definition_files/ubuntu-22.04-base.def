@@ -71,6 +71,7 @@ ${programs_location}/stringtie-${stringtie_version}.Linux_x86_64"
     libncursesw5-dev \
     libpango1.0-dev \
     libpng-dev \
+    libreadline-dev \
     libsm6 \
     libsparsehash-dev \
     libssl-dev \

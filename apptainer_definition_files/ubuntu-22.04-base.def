@@ -9,7 +9,7 @@ Stage: build
     ### Set program locations/versions for system PATH ###
     programs_location="/srlab/programs"
     ncbi_blast_version="2.16.0"
-    bowtie2_version="v2.5.4"
+    bowtie2_version="2.5.4"
     ######################################################
 
     export LC_ALL=C

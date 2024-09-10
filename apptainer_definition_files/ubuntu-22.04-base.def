@@ -87,6 +87,7 @@ Stage: build
     bowtie2_version="v2.5.4"
     gffcomare_version="gffcompare-0.12.6"
     hisat2_version="2.2.1"
+    ncbi_blast_version="2.16.0"
     stringtie_version="stringtie-2.2.1"
     samtools_version="samtools-1.20"
 
@@ -113,6 +114,11 @@ Stage: build
     tar -xzvf ${gffcomare_version}.Linux_x86_64.tar.gz
     rm ${gffcomare_version}.Linux_x86_64.tar.gz
     ln --symbolic ${gffcomare_version}.Linux_x86_64/gffcompare gffcompare
+
+    # Install NCBI BLAST
+    wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/${ncbi_blast_version}/ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz \
+	&& tar -zxvpf ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz \
+	&& rm ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz
 
     # Install StringTie
     wget http://ccb.jhu.edu/software/stringtie/dl/${stringtie_version}.Linux_x86_64.tar.gz

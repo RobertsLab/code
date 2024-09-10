@@ -9,6 +9,7 @@ Stage: build
     ### Set program locations/versions for system PATH ###
     programs_location="/srlab/programs"
     bowtie2_version="2.5.4"
+    fastqc_version="0.12.1"
     gffcompare_version="gffcompare-0.12.6"
     hisat2_version="2.2.1"
     ncbi_blast_version="2.16.0"
@@ -27,6 +28,7 @@ Stage: build
 /bin:\
 ${programs_location}:\
 ${programs_location}/bowtie2-${bowtie2_version}-sra-linux-x86_64:\
+${programs_location}/FastQC-${fastqc_version}:\
 ${programs_location}/${gffcompare_version}:\
 ${programs_location}/hisat2-${hisat2_version}:\
 ${programs_location}/ncbi-blast-${ncbi_blast_version}+/bin:\
@@ -113,6 +115,7 @@ ${programs_location}/stringtie-${stringtie_version}.Linux_x86_64"
 
     bedtools_version="v2.31.0"
     bowtie2_version="2.5.4"
+    fastqc_version="0.12.1"
     gffcompare_version="gffcompare-0.12.6"
     hisat2_version="2.2.1"
     ncbi_blast_version="2.16.0"
@@ -133,6 +136,10 @@ ${programs_location}/stringtie-${stringtie_version}.Linux_x86_64"
     wget https://github.com/BenLangmead/bowtie2/releases/download/v${bowtie2_version}/bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
     unzip bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
     rm bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
+
+    # Install FastQC
+    wget https://github.com/s-andrews/FastQC/archive/refs/tags/v${fastqc_version}.zip
+    unzip v${fastqc_version}.zip
 
 
     # Install gffcompare

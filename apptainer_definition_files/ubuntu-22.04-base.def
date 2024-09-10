@@ -78,13 +78,17 @@ Stage: build
     mkdir --parents /srlab/programs
     cd /srlab/programs
 
+    # Set threads for faster builds
+    threads="40"
+
     ########## Set program versions ##########
-    
+
     bedtools_version="v2.31.0"
+    bowtie2_version="v2.5.4"
     gffcomare_version="gffcompare-0.12.6"
     hisat2_version="2.2.1"
     stringtie_version="stringtie-2.2.1"
-    samtools_version="samtools-1.17"
+    samtools_version="samtools-1.20"
 
     ##########################################
 
@@ -95,6 +99,14 @@ Stage: build
     wget https://github.com/arq5x/bedtools2/releases/download/${bedtools_version}/bedtools.static
     mv bedtools.static bedtools
     chmod a+x bedtools
+
+    # Install bowtie2
+    git clone --recursive https://github.com/BenLangmead/bowtie2.git --branch ${bowtie2_version}
+    cd bowtie2
+    make -j ${threads} sra-deps && make -j ${threads}4 USE_SRA=1
+    make -j ${threads} libsais USE_SAIS_OPENMP=1
+    make -j ${threads} bowtie2-build-s USE_SAIS_OPENMP=1
+
 
     # Install gffcompare
     wget http://ccb.jhu.edu/software/stringtie/dl/${gffcomare_version}.Linux_x86_64.tar.gz
@@ -112,7 +124,7 @@ Stage: build
     wget https://github.com/DaehwanKimLab/hisat2/archive/refs/tags/v${hisat2_version}.tar.gz
     tar -xzvf v${hisat2_version}.tar.gz
     cd hisat2-${hisat2_version}
-    make -j 40
+    make -j ${threads}
     cd -
     rm v${hisat2_version}.tar.gz
     ln --symbolic hisat2-${hisat2_version}/hisat2 hisat2
@@ -122,7 +134,7 @@ Stage: build
     tar -xjvf ${samtools_version}.tar.bz2
     cd ${samtools_version}
     ./configure
-    make -j 40
+    make -j ${threads}
     cd -
     rm ${samtools_version}.tar.bz2
     ln --symbolic ${samtools_version}/samtools samtools

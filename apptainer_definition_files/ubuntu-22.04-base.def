@@ -103,7 +103,7 @@ Stage: build
     # Install bowtie2
     git clone --recursive https://github.com/BenLangmead/bowtie2.git --branch ${bowtie2_version}
     cd bowtie2
-    make -j ${threads} sra-deps && make -j ${threads}4 USE_SRA=1
+    make -j ${threads} sra-deps && make -j ${threads} USE_SRA=1
     make -j ${threads} libsais USE_SAIS_OPENMP=1
     make -j ${threads} bowtie2-build-s USE_SAIS_OPENMP=1
 

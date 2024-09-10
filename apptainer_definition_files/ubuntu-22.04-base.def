@@ -8,6 +8,7 @@ Stage: build
 %environment
     ### Set program locations/versions for system PATH ###
     programs_location="/srlab/programs"
+    bismark_version="0.24.2"
     bowtie2_version="2.5.4"
     fastqc_version="0.12.1"
     gffcompare_version="gffcompare-0.12.6"
@@ -27,6 +28,7 @@ Stage: build
 /sbin:\
 /bin:\
 ${programs_location}:\
+${programs_location}/Bismark-${bismark_version}:\
 ${programs_location}/bowtie2-${bowtie2_version}-sra-linux-x86_64:\
 ${programs_location}/FastQC-${fastqc_version}:\
 ${programs_location}/${gffcompare_version}:\
@@ -114,6 +116,7 @@ ${programs_location}/stringtie-${stringtie_version}.Linux_x86_64"
     ########## Set program versions ##########
 
     bedtools_version="v2.31.0"
+    bismark_version="0.24.2"
     bowtie2_version="2.5.4"
     fastqc_version="0.12.1"
     gffcompare_version="gffcompare-0.12.6"
@@ -132,6 +135,11 @@ ${programs_location}/stringtie-${stringtie_version}.Linux_x86_64"
     mv bedtools.static bedtools
     chmod a+x bedtools
 
+    # Install Bismark
+    wget https://github.com/FelixKrueger/Bismark/archive/refs/tags/v${bismark_version}.zip
+    unzip v${bismark_version}.zip
+    rm v${bismark_version}.zip
+
     # Install bowtie2
     wget https://github.com/BenLangmead/bowtie2/releases/download/v${bowtie2_version}/bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
     unzip bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
@@ -140,6 +148,7 @@ ${programs_location}/stringtie-${stringtie_version}.Linux_x86_64"
     # Install FastQC
     wget https://github.com/s-andrews/FastQC/archive/refs/tags/v${fastqc_version}.zip
     unzip v${fastqc_version}.zip
+    rm v${fastqc_version}.zip
 
 
     # Install gffcompare

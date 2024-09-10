@@ -35,6 +35,7 @@ ${programs_location}/bowtie2-${bowtie2_version}-sra-linux-x86_64"
     automake \
     build-essential \
     bzip2 \
+    cmake \
     coreutils \
     curl \
     debconf \
@@ -120,7 +121,7 @@ ${programs_location}/bowtie2-${bowtie2_version}-sra-linux-x86_64"
 
     # Install bowtie2
     wget https://github.com/BenLangmead/bowtie2/releases/download/v${bowtie2_version}/bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
-    tar -xzvf  bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
+    unzip  bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
     rm bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
 
 

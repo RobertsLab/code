@@ -9,7 +9,7 @@ Stage: build
     ### Set program locations/versions for system PATH ###
     programs_location="/srlab/programs"
     bowtie2_version="2.5.4"
-    gffcomare_version="gffcompare-0.12.6"
+    gffcompare_version="gffcompare-0.12.6"
     hisat2_version="2.2.1"
     ncbi_blast_version="2.16.0"
     samtools_version="1.20"
@@ -27,7 +27,7 @@ Stage: build
 /bin:\
 ${programs_location}:\
 ${programs_location}/bowtie2-${bowtie2_version}-sra-linux-x86_64:\
-${programs_location}/gffcomare_version="gffcompare-0.12.6":\
+${programs_location}/${gffcompare_version}:\
 ${programs_location}/hisat2-${hisat2_version}:\
 ${programs_location}/ncbi-blast-${ncbi_blast_version}+/bin:\
 ${programs_location}/samtools-${samtools_version}:\
@@ -112,7 +112,7 @@ ${programs_location}/stringtie-${stringtie_version}.Linux_x86_64"
 
     bedtools_version="v2.31.0"
     bowtie2_version="2.5.4"
-    gffcomare_version="gffcompare-0.12.6"
+    gffcompare_version="gffcompare-0.12.6"
     hisat2_version="2.2.1"
     ncbi_blast_version="2.16.0"
     stringtie_version="2.2.1"
@@ -135,9 +135,9 @@ ${programs_location}/stringtie-${stringtie_version}.Linux_x86_64"
 
 
     # Install gffcompare
-    wget http://ccb.jhu.edu/software/stringtie/dl/${gffcomare_version}.Linux_x86_64.tar.gz
-    tar -xzvf ${gffcomare_version}.Linux_x86_64.tar.gz
-    rm ${gffcomare_version}.Linux_x86_64.tar.gz
+    wget http://ccb.jhu.edu/software/stringtie/dl/${gffcompare_version}.Linux_x86_64.tar.gz
+    tar -xzvf ${gffcompare_version}.Linux_x86_64.tar.gz
+    rm ${gffcompare_version}.Linux_x86_64.tar.gz
 
 
     # Install HISAT2

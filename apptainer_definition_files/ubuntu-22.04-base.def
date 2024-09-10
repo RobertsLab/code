@@ -8,8 +8,13 @@ Stage: build
 %environment
     ### Set program locations/versions for system PATH ###
     programs_location="/srlab/programs"
-    ncbi_blast_version="2.16.0"
     bowtie2_version="2.5.4"
+    gffcomare_version="gffcompare-0.12.6"
+    hisat2_version="2.2.1"
+    ncbi_blast_version="2.16.0"
+    samtools_version="1.20"
+    stringtie_version="2.2.1"
+
     ######################################################
 
     export LC_ALL=C
@@ -21,8 +26,12 @@ Stage: build
 /sbin:\
 /bin:\
 ${programs_location}:\
+${programs_location}/bowtie2-${bowtie2_version}-sra-linux-x86_64:\
+${programs_location}/gffcomare_version="gffcompare-0.12.6":\
+${programs_location}/hisat2-${hisat2_version}:\
 ${programs_location}/ncbi-blast-${ncbi_blast_version}+/bin:\
-${programs_location}/bowtie2-${bowtie2_version}-sra-linux-x86_64"
+${programs_location}/samtools-${samtools_version}:\
+${programs_location}/stringtie-${stringtie_version}.Linux_x86_64"
     ######################################################
 
 
@@ -129,7 +138,6 @@ ${programs_location}/bowtie2-${bowtie2_version}-sra-linux-x86_64"
     wget http://ccb.jhu.edu/software/stringtie/dl/${gffcomare_version}.Linux_x86_64.tar.gz
     tar -xzvf ${gffcomare_version}.Linux_x86_64.tar.gz
     rm ${gffcomare_version}.Linux_x86_64.tar.gz
-    ln --symbolic ${gffcomare_version}.Linux_x86_64/gffcompare gffcompare
 
 
     # Install HISAT2
@@ -139,7 +147,6 @@ ${programs_location}/bowtie2-${bowtie2_version}-sra-linux-x86_64"
     make -j ${threads}
     cd -
     rm v${hisat2_version}.tar.gz
-    ln --symbolic hisat2-${hisat2_version}/hisat2 hisat2
 
     # Install NCBI BLAST
     wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/${ncbi_blast_version}/ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz \
@@ -154,13 +161,12 @@ ${programs_location}/bowtie2-${bowtie2_version}-sra-linux-x86_64"
     make -j ${threads}
     cd -
     rm samtools-${samtools_version}.tar.bz2
-    ln --symbolic samtools-${samtools_version}/samtools samtools
 
     # Install StringTie
     wget http://ccb.jhu.edu/software/stringtie/dl/stringtie-${stringtie_version}.Linux_x86_64.tar.gz
     tar -xzvf stringtie-${stringtie_version}.Linux_x86_64.tar.gz
     rm stringtie-${stringtie_version}.Linux_x86_64.tar.gz
-    ln --symbolic stringtie-${stringtie_version}.Linux_x86_64/stringtie stringtie
+
 
 
 

@@ -16,13 +16,13 @@ Stage: build
     
     ### Set container system PATH ###
     PATH="/usr/local/sbin:\
-    /usr/local/bin:/usr/sbin:\
-    /usr/bin:\
-    /sbin:\
-    /bin:\
-    ${programs_location}:\
-    ncbi-blast-${ncbi_blast_version}+/bin:\
-    bowtie2-${bowtie2_version}"
+/usr/local/bin:/usr/sbin:\
+/usr/bin:\
+/sbin:\
+/bin:\
+${programs_location}:\
+${programs_location}/ncbi-blast-${ncbi_blast_version}+/bin:\
+${programs_location}/bowtie2-${bowtie2_version}"
     ######################################################
 
 

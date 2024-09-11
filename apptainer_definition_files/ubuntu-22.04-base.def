@@ -91,7 +91,6 @@ ${programs_location}/stringtie-${stringtie_version}.Linux_x86_64"
     net-tools \
     parallel \
     pkg-config \
-    pysam \
     psmisc \
     python3 \
     python-setuptools \

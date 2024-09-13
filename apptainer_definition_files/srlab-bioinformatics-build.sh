@@ -27,17 +27,17 @@ container_basename="${input_definition%%.*}-${build_commit}"
 git pull
 
 # Check to see if build already exists
-if [ -f !${output_dir}/"${container_basename}"-"${build_commit}".sif ]; then
+if [ -f !${output_dir}/"${container_basename}".sif ]; then
   apptainer build \
   --sandbox \
   --fakeroot \
   /tmp/"${container_basename}".sandbox \
   ./"${container_basename}".def \
   && \
-  apptainer build /tmp/"${container_basename}"-"${build_commit}".sif /tmp/"${container_basename}".sandbox \
+  apptainer build /tmp/"${container_basename}".sif /tmp/"${container_basename}".sandbox \
   && \
-  mv /tmp/"${container_basename}"-"${build_commit}".sif ${output_dir}
+  mv /tmp/"${container_basename}".sif ${output_dir}
 else
-  printf "%s\n" "Build ${output_dir}/${container_basename}-${build_commit}.sif already exists." "Exiting script."
+  printf "%s\n" "Build ${output_dir}/${container_basename}.sif already exists." "Exiting script."
   exit 1
 fi

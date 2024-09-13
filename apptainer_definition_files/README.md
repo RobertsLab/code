@@ -18,5 +18,5 @@ This is a repository for all of [the Roberts Lab](https://robertslab.github.io/r
 
   - [`stringtie`](https://ccb.jhu.edu/software/stringtie/)
 
-- [`ubuntu-22.04-base.def`](https://github.com/RobertsLab/code/blob/master/apptainer_definition_files/ubuntu-22.04-base.def): The "base" image upon which all other images are built. Runs Ubuntu 22.04 and contains the necessary programs/libraries needed for the building/installation of other software.
+- [`srlab-bioinformatics-container.def`](https://github.com/RobertsLab/code/blob/master/apptainer_definition_files/srlab-bioinformatics-container.def): Apptainer definition file for the Roberts Lab bioinformatics container. Runs Ubuntu 22.04 and contains the necessary commonly used software used for various types of data analyses. Review the file to see which software is currently being installed.
 

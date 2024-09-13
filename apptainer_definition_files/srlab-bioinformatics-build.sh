@@ -27,7 +27,7 @@ container_basename="${input_definition%%.*}-${build_commit}"
 git pull
 
 # Check to see if build already exists
-if [ -f !${output_dir}/"${container_basename}".sif ]; then
+if [ ! -f ${output_dir}/"${container_basename}".sif ]; then
   apptainer build \
   --sandbox \
   --fakeroot \

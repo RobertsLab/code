@@ -14,7 +14,7 @@ output_dir="/gscratch/srlab/containers"
 
 # Capture most recent commit hash
 build_commit=$(git log --follow --oneline -- "${input_definition}" | awk 'NR == 1 {print $1}')
-if [ -z "$build_commit" ]; then
+if [ -z "${build_commit}" ]; then
   echo "Error: Unable to retrieve git commit hash."
   exit 1
 fi
@@ -42,7 +42,7 @@ fi
 
 # Build the final .sif image and print output to the console in real-time
 echo "Building .sif image for ${container_basename}..."
-apptainer build /tmp/"${container_basename}".sif /tmp/"${container_basename}".sandbox 2>&1 | tee sif_build.log
+apptainer build /tmp/"${container_basename}".sif /tmp/"${container_basename}".sandbox 2>&1 | tee "${container_basename}"-build.log
 if [ "${PIPESTATUS[0]}" -ne 0 ]; then
   echo "Error: .sif image build failed."
   exit 1

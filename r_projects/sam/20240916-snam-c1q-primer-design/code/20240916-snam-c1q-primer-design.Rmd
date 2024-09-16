@@ -24,14 +24,6 @@ bibliography: references.bib
 link-citations: true
 ---
 
-This notebook describes using [Primer3](https://github.com/primer3-org/primer3) [@untergasser2012; @koressaar2007] to reproducibly design primers for sequencing of the [lake trout (*S.namaycush*)](https://en.wikipedia.org/wiki/Lake_trout) (Wikipedia) C1q gene ([`LOC120027825`](https://github.com/RobertsLab/resources/issues/1941#issuecomment-2246548960) (GitHub Issue)). Additionally, this is primarily to confirm that we can successfully amplify the C1q gene, since the [bisulfite PCR was unsuccessful](https://robertslab.github.io/sams-notebook/posts/2024/2024-09-11-Bisulfite-PCR---Second-Primer-Annealing-Gradient-Test-with-Lake-Trout-Bisulfite-treated-DNA/) (Notebook).
-
-This process also utilizes [pyfaidx](https://github.com/mdshw5/pyfaidx) [@shirley2015].
-
-[EMBOSS PrimerSearch](https://emboss.sourceforge.net/apps/cvs/emboss/apps/primersearch.html) [@rice2000] will be utilized to assess primer specificity across the genome.
-
-The notebook entry was rendered directly from the R Markdown file [`20240916-snam-c1q-primer-design.Rmd](https://github.com/RobertsLab/code/blob/master/r_projects/sam/20240916-snam-c1q-primer-design/code/20240916-snam-c1q-primer-design.Rmd) (GitHub).
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   echo = TRUE,         # Display code chunks
@@ -41,6 +33,26 @@ knitr::opts_chunk$set(
   comment = ""         # Prevents appending '##' to beginning of lines in code output
 )
 ```
+
+```{r git-commit, eval=TRUE, echo=FALSE, include=FALSE}
+# Get latest commit
+git_commit <- system2(command = "git" , args =  "log --follow --oneline --format=\"%H %s\" -- 20240916-snam-c1q-primer-design.Rmd | awk \'NR == 1 {print $1}\'", stdout = TRUE)
+
+
+```
+
+
+
+
+This notebook describes using [Primer3](https://github.com/primer3-org/primer3) [@untergasser2012; @koressaar2007] to reproducibly design primers for sequencing of the [lake trout (*S.namaycush*)](https://en.wikipedia.org/wiki/Lake_trout) (Wikipedia) C1q gene ([`LOC120027825`](https://github.com/RobertsLab/resources/issues/1941#issuecomment-2246548960) (GitHub Issue)). Additionally, this is primarily to confirm that we can successfully amplify the C1q gene, since the [bisulfite PCR was unsuccessful](https://robertslab.github.io/sams-notebook/posts/2024/2024-09-11-Bisulfite-PCR---Second-Primer-Annealing-Gradient-Test-with-Lake-Trout-Bisulfite-treated-DNA/) (Notebook).
+
+This process also utilizes [pyfaidx](https://github.com/mdshw5/pyfaidx) [@shirley2015].
+
+[EMBOSS PrimerSearch](https://emboss.sourceforge.net/apps/cvs/emboss/apps/primersearch.html) [@rice2000] will be utilized to assess primer specificity across the genome.
+
+The notebook entry was rendered directly from the R Markdown file, [`20240916-snam-c1q-primer-design.Rmd`](https://github.com/RobertsLab/code/blob/`r git_commit`/r_projects/sam/20240916-snam-c1q-primer-design/code/20240916-snam-c1q-primer-design.Rmd) (GitHub - commit `r git_commit`).
+
+
 
 
 
@@ -501,6 +513,6 @@ done
 
 # SUMMARY
 
-EMBOSS PrimerSearch has identified only a single location in the genome where the forward and reverse primers match, as well as in the expected location on chromosome `NC_052339`.
+EMBOSS PrimerSearch has identified only a single location in the genome where the forward and reverse primers match, as well as in the expected location on chromosome `NC_052339`. This means our primers are specific to our desired target in the genome.
 
 # CITATIONS

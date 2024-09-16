@@ -30,6 +30,8 @@ This process also utilizes [pyfaidx](https://github.com/mdshw5/pyfaidx) [@shirle
 
 [EMBOSS PrimerSearch](https://emboss.sourceforge.net/apps/cvs/emboss/apps/primersearch.html) [@rice2000] will be utilized to assess primer specificity across the genome.
 
+The notebook entry was rendered directly from the R Markdown file [`20240916-snam-c1q-primer-design.Rmd](https://github.com/RobertsLab/code/blob/master/r_projects/sam/20240916-snam-c1q-primer-design/code/20240916-snam-c1q-primer-design.Rmd) (GitHub).
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   echo = TRUE,         # Display code chunks
@@ -39,6 +41,8 @@ knitr::opts_chunk$set(
   comment = ""         # Prevents appending '##' to beginning of lines in code output
 )
 ```
+
+
 
 # CREATE BASH VARIABLES FILE
 
@@ -51,7 +55,7 @@ echo ""
 
 echo "# DATA DIRECTORIES"
 echo 'export data_dir="../data/S_namaycush/genomes"'
-echo 'export output_top=../output'
+echo 'export output_top="../output"'
 echo 'export genome_fasta_splits_dir="${data_dir}/fasta_splits"'
 echo ""
 
@@ -60,8 +64,8 @@ echo 'export sequence_ID="LOC120027825"'
 echo ""
 
 echo "# SEQUENCE REGIONS"
-echo 'export left_buffer="3500"'
-echo 'export right_buffer="3500"'
+echo 'export left_buffer="500"'
+echo 'export right_buffer="500"'
 echo ""
 
 echo "# INPUT FILES"
@@ -74,13 +78,10 @@ echo 'export ncbi_url="https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/016/432/855/
 echo ""
 
 echo "# OUTPUT FILES"
-echo 'export bisulfite_genome_fasta="bisulfite.GCF_016432855.1_SaNama_1.0_genomic.fna"'
 echo 'export c1q_fasta="${sequence_ID}.fasta"'
 echo 'export c1q_buffer_fasta="${sequence_ID}-${left_buffer}bp.left-${right_buffer}bp.right.fasta"'
 echo 'export c1q_faidx_region_file="${sequence_ID}"-region.txt'
 echo 'export c1q_buffer_faidx_region_file="${sequence_ID}-${left_buffer}bp.left-${right_buffer}bp.right-region.txt"'
-echo 'export c1q_bisulfite_t_fasta="${sequence_ID}-BS_conversion-t-${left_buffer}bp.left-${right_buffer}bp.right.fasta"'
-echo 'export c1q_bisulfite_N_fasta="${sequence_ID}-BS_conversion-N-${left_buffer}bp.left-${right_buffer}bp.right.fasta"'
 echo ""
 
 echo "# SET CPUS"
@@ -101,8 +102,8 @@ echo 'export primersearch="/home/shared/EMBOSS-6.6.0/emboss/primersearch"'
 cat .bashvars
 ```
 
-```{r save-bash-vars-to-r-vars, eval=TRUE, echo=FALSE, include=FALSE}
-# Use system to get the value of left_buffer from Bash
+```{r save-buffer-values-to-R-vars, eval=TRUE, echo=FALSE, include=FALSE}
+# Use system to get the value of left_buffer from Bash into an R variable
 left_buffer <- system("bash -c 'source .bashvars && echo $left_buffer'", intern=TRUE)
 
 right_buffer <- system("bash -c 'source .bashvars && echo $right_buffer'", intern=TRUE)
@@ -169,7 +170,7 @@ ls -lh
 # Load bash variables into memory
 source .bashvars
 
-awk '$3=="gene"' "${data_dir}/${genome_gff}" | grep "${sequence_ID}"
+awk '$3=="gene"' "${data_dir}/${genome_gff}" | grep "${sequence_ID}" | column -t
 
 ```
 
@@ -192,7 +193,7 @@ ${pyfaidx} "${data_dir}/${genome_fasta}" "${region}" | tee "${output_top}/${c1q_
 
 # EXTRACT C1Q WITH 5'/3' BUFFER REGIONS
 
-Since we want to sequence the entirety of the C1q gene, we need to add some buffer sequence outside of the 5'/3' ends of the gene. Knowing the difficulties of finding usable primers in bisulfite-converted DNA, I've arbitrarily established large buffer regions:
+Since we want to sequence the entirety of the C1q gene, we need to add some buffer sequence outside of the 5'/3' ends of the gene. I've arbitrarily established large buffer regions:
 
 -   Left buffer: `r left_buffer`bp
 -   Right buffer: `r right_buffer`bp
@@ -217,32 +218,6 @@ ${pyfaidx} "${data_dir}/${genome_fasta}" "${region}" | tee "${output_top}/${c1q_
 
 # PRIMER DESIGN USING [PRIMER3](https://github.com/primer3-org/primer3)
 
-## Bisulfite conversions
-
-In this step we convert all lowercase to uppercase. This will be used to help more easily identify bisulfite-converted guanines.
-
-We create two versions of bisuflte conversions:
-
--   G -\> t
--   G -\> N
-
-The first conversion is a "realistic" representation of G -\> U (t). We use a lowercase `t` to make them stand out.
-
-The second conversion is specifically geared toward using [Primer3](https://github.com/primer3-org/primer3) and setting a maximum number of "Ns" allowed in the primer annealing site, to help avoid primer designs which might cross a methylated CpG site (i.e. a site where bisulfite conversion would *NOT* take place, due to a methyl group being present).
-
-```{bash bisulfite-conversions, engine='bash', eval=TRUE}
-# Load bash variables into memory
-source .bashvars
-
-tr '[:lower:]' '[:upper:]' < "${output_top}/${c1q_buffer_fasta}" | sed 's/G/t/g' > "${output_top}/${c1q_bisulfite_t_fasta}"
-
-
-tr '[:lower:]' '[:upper:]' < "${output_top}/${c1q_buffer_fasta}" | sed 's/G/N/g' > "${output_top}/${c1q_bisulfite_N_fasta}"
-
-head ${output_top}/*BS_conversion*.fasta
-
-```
-
 ## Design primers
 
 Quick explanation: [Primer3](https://github.com/primer3-org/primer3) requires a specially formatted input file. The file must be formatted similarly to this:
@@ -265,22 +240,15 @@ PRIMER_EXPLAIN_FLAG=1
 
 Values after the `=` on each line can be changed to whatever values the user decides. The \${sequence} must be a nucletoide sequence on a single line, with no line breaks.
 
-The code in the chunk below uses a heredoc to write this information to a file. Use of a heredoc allows the variables specified in the Primer3 config to expand to their actual values. Everything *between* the following two lines gets printed (via cat) as shown and then redirected to the indicated file (`primer3-t-params.txt`):
+The code in the chunk below uses a heredoc to write this information to a file. Use of a heredoc allows the variables specified in the Primer3 config to expand to their actual values. Everything *between* the following two lines gets printed (via cat) as shown and then redirected to the indicated file (`primer3-params.txt`):
 
 ``` bash
-cat << EOF > ${output_top}/primer3-t-params.txt
+cat << EOF > ${output_top}/primer3-params.txt
 EOF
 ```
 
 [Primer3](https://github.com/primer3-org/primer3) is run with the `--format_output` to make a nice, human-readable output format.
 
-### Bisulfite lowercase `t`
-
-We'll use the bisulfite-converted sequence with the lowercase `t` to examine potential primers.
-
-This will allow us to quickly identify any potential `CpG` that primers might anneal to (e.g. `Ct`).
-
-Additionally, due to the low complexity of the bisulfite-converted sequence (very few `G`, due to conversion to `U/T`), I've changed the parameters to look for longer primers *and* lower melting temps than the default settings.
 
 I've also set [Primer3](https://github.com/primer3-org/primer3) to look for sequencing primers and have defined the `SEQUENCE_TARGET`.
 
@@ -297,28 +265,28 @@ c1q_length=${#c1q_sequence}
 
 # Get sequence only, by skipping the first record
 # Remove newlines so sequence is on a single line
-c1q_buffer_sequence=$(awk 'NR > 1' "${output_top}/${c1q_bisulfite_t_fasta}" | tr -d '\n')
+c1q_buffer_sequence=$(awk 'NR > 1' "${output_top}/${c1q_buffer_fasta}" | tr -d '\n')
 
 # Determine length of C1q with the 5'/3' buffer sequences included
 c1q_buffer_length=${#c1q_buffer_sequence}
 
-# Calculate combined length of 5'buffer regaion and C1q length
+# Calculate combined length of 5'buffer region and C1q length
 c1q_buffer_and_seq_length=$((left_buffer + c1q_length))
 
 
 # Use heredoc to create Primer3 parameters file
-cat << EOF > ${output_top}/primer3-t-params.txt
+cat << EOF > ${output_top}/primer3-params.txt
 SEQUENCE_ID=${sequence_ID}
 SEQUENCE_TEMPLATE=${c1q_buffer_sequence}
 PRIMER_TASK=pick_sequencing_primers
 SEQUENCE_TARGET=${left_buffer},${c1q_length}
 PRIMER_MIN_TM=50
-PRIMER_OPT_TM=55
+PRIMER_OPT_TM=60
 PRIMER_PICK_LEFT_PRIMER=1
 PRIMER_PICK_RIGHT_PRIMER=1
-PRIMER_OPT_SIZE=30
-PRIMER_MIN_SIZE=25
-PRIMER_MAX_SIZE=36
+PRIMER_OPT_SIZE=20
+PRIMER_MIN_SIZE=18
+PRIMER_MAX_SIZE=25
 PRIMER_MAX_NS_ACCEPTED=0
 P3_FILE_FLAG=1
 PRIMER_EXPLAIN_FLAG=1
@@ -332,17 +300,17 @@ EOF
 # Run Primer3
 ${primer3} \
 --format_output \
---output="${output_top}/primer3-t-primers.txt" \
-"${output_top}/primer3-t-params.txt"
+--output="${output_top}/primer3-primers.txt" \
+"${output_top}/primer3-params.txt"
 
 # Run Primer3 with default output for parsable results
 ${primer3} \
---output="${output_top}/primer3-t-primers-default-format.txt" \
-"${output_top}/primer3-t-params.txt"
+--output="${output_top}/primer3-primers-default-format.txt" \
+"${output_top}/primer3-params.txt"
 
 
 # Pull out any primers falling outside of target
-tail -n 30 "${output_top}/primer3-t-primers.txt" \
+tail -n 30 "${output_top}/primer3-primers.txt" \
 | head -n -12 \
 | awk -v left_buffer="$left_buffer" -v target="$c1q_buffer_and_seq_length" '$3 <= left_buffer || $3 >= target {print $0}'
 
@@ -354,7 +322,7 @@ echo "Primer results file:"
 echo ""
 echo ""
 # Print the full output file
-cat "${output_top}/primer3-t-primers.txt"
+cat "${output_top}/primer3-primers.txt"
 
 echo ""
 echo ""
@@ -365,29 +333,18 @@ echo ""
 echo ""
 
 # Print the full output file
-cat "${output_top}/primer3-t-primers-default-format.txt"
+cat "${output_top}/primer3-primers-default-format.txt"
 ```
 
 Looks like we have two primers we can use for sequencing. Neither overlaps a potential `CpG`, and both are outside of the C1q gene sequence.
 
-Next, we need to test them against the entire bisulfite-converted genome to assess specificity.
-
-# GENOME BISULFITE CONVERSION
-
-```{bash bs-convert-genome, engine='bash', eval=TRUE}
-# Load bash variables into memory
-source .bashvars
-
-tr '[:lower:]' '[:upper:]' < "${data_dir}/${genome_fasta}" | sed '/^>/!s/G/T/g' > "${data_dir}/${bisulfite_genome_fasta}"
-
-head "${data_dir}/${bisulfite_genome_fasta}"
-```
+Next, we need to test them against the entire genome to assess specificity.
 
 # SPLIT GENOME
 
 For some reason, I feel like the EMBOSS PrimerSearch tool will _not_ work on mulit-FastA files (or, it makes the results more difficult to decipher?), but I'm just going off of memory and repeating a process I've done previously.
 
-This will split the bisulfite-converted genome multi-FastA file into separate FastA files.
+This will split the genome multi-FastA file into separate FastA files.
 
 ## Split mulit-FastA file in to individual FastA files with PyFaidx
 
@@ -403,7 +360,7 @@ cd ${genome_fasta_splits_dir}
 # Count sequences in FastA
 echo "-------------------------------------------------------------------"
 echo "NUMBER OF SEQUENCES IN ORIGINAL FASTA"
-grep -c "^>" ../${bisulfite_genome_fasta}
+grep -c "^>" ../${genome_fasta}
 echo "-------------------------------------------------------------------"
 echo ""
 echo ""
@@ -413,7 +370,7 @@ echo ""
 # Split FastA
 ${pyfaidx} \
 --split-files \
-../${bisulfite_genome_fasta}
+../${genome_fasta}
 
 # Count number of individual FastA files
 echo "-------------------------------------------------------------------"
@@ -435,11 +392,11 @@ Create a tab-delimited file to use with EMBOSS PrimerSearch.
 source .bashvars
 
 # Get primer info from Primer3 default format output
-seq_id=$(grep "SEQUENCE_ID=" "${output_top}/primer3-t-primers-default-format.txt" | sed 's/SEQUENCE_ID=//')
+seq_id=$(grep "SEQUENCE_ID=" "${output_top}/primer3-primers-default-format.txt" | sed 's/SEQUENCE_ID=//')
 
-left_primer=$(grep "PRIMER_LEFT_0_SEQUENCE=" "${output_top}/primer3-t-primers-default-format.txt" | sed 's/PRIMER_LEFT_0_SEQUENCE=//' | tr '[:lower:]' '[:upper:]')
+left_primer=$(grep "PRIMER_LEFT_0_SEQUENCE=" "${output_top}/primer3-primers-default-format.txt" | sed 's/PRIMER_LEFT_0_SEQUENCE=//' | tr '[:lower:]' '[:upper:]')
 
-right_primer=$(grep "PRIMER_RIGHT_6_SEQUENCE=" "${output_top}/primer3-t-primers-default-format.txt" | sed 's/PRIMER_RIGHT_6_SEQUENCE=//' | tr '[:lower:]' '[:upper:]')
+right_primer=$(grep "PRIMER_RIGHT_6_SEQUENCE=" "${output_top}/primer3-primers-default-format.txt" | sed 's/PRIMER_RIGHT_6_SEQUENCE=//' | tr '[:lower:]' '[:upper:]')
 
 # Create EMBOSS primer file
 printf "%s\t%s\t%s\t\n" "${seq_id}" "${left_primer}" "${right_primer}" | tee "${output_top}/emboss-primers.txt"

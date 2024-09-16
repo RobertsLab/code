@@ -18,6 +18,7 @@ Stage: build
     ncbi_blast_version="2.16.0"
     samtools_version="1.20"
     stringtie_version="2.2.1"
+    trimmomatic_version="0.39"
 
     mamba_envs_dir="${programs_location}/miniforge3-${miniforge_version}/envs"
 
@@ -41,7 +42,8 @@ ${programs_location}/miniforge3-${miniforge_version}/bin:\
 ${mamba_envs_dir}/multiqc_env/bin:\
 ${programs_location}/ncbi-blast-${ncbi_blast_version}+/bin:\
 ${programs_location}/samtools-${samtools_version}:\
-${programs_location}/stringtie-${stringtie_version}.Linux_x86_64"
+${programs_location}/stringtie-${stringtie_version}.Linux_x86_64:\
+${programs_location}/Trimmomatic-${trimmomatic_version}"
     ######################################################
 
 
@@ -113,8 +115,6 @@ ${programs_location}/stringtie-${stringtie_version}.Linux_x86_64"
     zlib1g-dev
 
 
-    # Set threads for faster builds
-    threads="40"
 
     ########## Set program versions ##########
 
@@ -129,8 +129,14 @@ ${programs_location}/stringtie-${stringtie_version}.Linux_x86_64"
     ncbi_blast_version="2.16.0"
     stringtie_version="2.2.1"
     samtools_version="1.20"
+    trimmomatic_version="0.39"
 
     ##########################################
+    
+
+    
+    # Set threads for faster builds
+    threads="40"
 
     # Make programs directory
     mkdir --parents /srlab/programs
@@ -206,6 +212,15 @@ ${programs_location}/stringtie-${stringtie_version}.Linux_x86_64"
     make -j ${threads}
     cd -
     rm samtools-${samtools_version}.tar.bz2
+
+    # Install trimmomatic
+    wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-${trimmomatic_version}.zip
+    unzip Trimmomatic-${trimmomatic_version}.zip
+    chmod +x -R Trimmomatic-${trimmomatic_version}
+
+    # Clean up
+    rm Trimmomatic-${trimmomatic_version}.zip
+
 
     # Install StringTie
     wget http://ccb.jhu.edu/software/stringtie/dl/stringtie-${stringtie_version}.Linux_x86_64.tar.gz

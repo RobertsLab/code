@@ -314,6 +314,25 @@ tail -n 30 "${output_top}/primer3-primers.txt" \
 | head -n -12 \
 | awk -v left_buffer="$left_buffer" -v target="$c1q_buffer_and_seq_length" '$3 <= left_buffer || $3 >= target {print $0}'
 
+
+### Write the left and right primer start positions to files for later use in R chunk(s).
+# Pull out left primer start position
+left_primer_start=$(tail -n 30 "${output_top}/primer3-primers.txt" \
+| head -n -12 \
+| awk -v left_buffer="$left_buffer" -v target="$c1q_buffer_and_seq_length" '$3 <= left_buffer || $3 >= target {print $0}' \
+| grep "PRIMER" \
+| awk 'NR == 1 {print $3}')
+
+# Pull out right primer start position
+right_primer_start=$(tail -n 30 "${output_top}/primer3-primers.txt" \
+| head -n -12 \
+| awk -v left_buffer="$left_buffer" -v target="$c1q_buffer_and_seq_length" '$3 <= left_buffer || $3 >= target {print $0}' \
+| grep "PRIMER" \
+| awk 'NR == 2 {print $3}')
+
+echo "${left_primer_start}" > "${output_top}/left-primer-start.txt"
+echo "${right_primer_start}" > "${output_top}/right-primer-start.txt"
+
 echo ""
 echo ""
 echo "----------------------------------------------------------------------------------"
@@ -336,7 +355,21 @@ echo ""
 cat "${output_top}/primer3-primers-default-format.txt"
 ```
 
-Looks like we have two primers we can use for sequencing. Neither overlaps a potential `CpG`, and both are outside of the C1q gene sequence.
+Looks like we have one primer pair where both are outside of the C1q gene sequence.
+
+## Amplicon length
+
+```{r amplicon-length, eval=TRUE, echo=FALSE, include=FALSE}
+# Load left and right primer lengths
+left_primer_start <- as.numeric(readLines("../output/left-primer-start.txt"))
+
+right_primer_start <- as.numeric(readLines("../output/right-primer-start.txt"))
+
+# Calculate amplicon length.
+amplicon_length <- right_primer_start - left_primer_start
+```
+
+The primer pair will produced an amplicon length of `r amplicon_length`bp.
 
 Next, we need to test them against the entire genome to assess specificity.
 
@@ -387,6 +420,7 @@ This will run [EMBOSS PrimerSearch](https://emboss.sourceforge.net/apps/cvs/embo
 
 Create a tab-delimited file to use with EMBOSS PrimerSearch.
 
+
 ```{bash create-emboss-primers-file, engine='bash', eval=TRUE}
 # Load bash variables into memory
 source .bashvars
@@ -396,7 +430,7 @@ seq_id=$(grep "SEQUENCE_ID=" "${output_top}/primer3-primers-default-format.txt" 
 
 left_primer=$(grep "PRIMER_LEFT_0_SEQUENCE=" "${output_top}/primer3-primers-default-format.txt" | sed 's/PRIMER_LEFT_0_SEQUENCE=//' | tr '[:lower:]' '[:upper:]')
 
-right_primer=$(grep "PRIMER_RIGHT_6_SEQUENCE=" "${output_top}/primer3-primers-default-format.txt" | sed 's/PRIMER_RIGHT_6_SEQUENCE=//' | tr '[:lower:]' '[:upper:]')
+right_primer=$(grep "PRIMER_RIGHT_7_SEQUENCE=" "${output_top}/primer3-primers-default-format.txt" | sed 's/PRIMER_RIGHT_7_SEQUENCE=//' | tr '[:lower:]' '[:upper:]')
 
 # Create EMBOSS primer file
 printf "%s\t%s\t%s\t\n" "${seq_id}" "${left_primer}" "${right_primer}" | tee "${output_top}/emboss-primers.txt"

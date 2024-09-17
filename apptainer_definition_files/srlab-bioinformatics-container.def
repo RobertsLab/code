@@ -18,6 +18,7 @@ Stage: build
     miniforge_version="24.7.1-0"
     multiqc_version="1.24.1"
     ncbi_blast_version="2.16.0"
+    salmon_version="1.10.0"
     samtools_version="1.20"
     stringtie_version="2.2.1"
     trimmomatic_version="0.39"
@@ -43,6 +44,7 @@ ${programs_location}/hisat2-${hisat2_version}:\
 ${programs_location}/miniforge3-${miniforge_version}/bin:\
 ${mamba_envs_dir}/multiqc_env/bin:\
 ${programs_location}/ncbi-blast-${ncbi_blast_version}+/bin:\
+${programs_location}/salmon-latest_linux_x86_64/bin/:\
 ${programs_location}/samtools-${samtools_version}:\
 ${programs_location}/stringtie-${stringtie_version}.Linux_x86_64:\
 ${programs_location}/Trimmomatic-${trimmomatic_version}"
@@ -131,6 +133,7 @@ ${programs_location}/Trimmomatic-${trimmomatic_version}"
     miniforge_version="24.7.1-0"
     multiqc_version="1.24.1"
     ncbi_blast_version="2.16.0"
+    salmon_version="1.10.0"
     stringtie_version="2.2.1"
     samtools_version="1.20"
     trimmomatic_version="0.39"
@@ -217,6 +220,11 @@ ${programs_location}/Trimmomatic-${trimmomatic_version}"
     wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/${ncbi_blast_version}/ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz \
 	&& tar -zxvpf ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz \
 	&& rm ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz
+
+    # Install salmon
+    wget https://github.com/COMBINE-lab/salmon/releases/download/v${salmon_version}/salmon-${salmon_version}_linux_x86_64.tar.gz
+    tar -xzvf salmon-${salmon_version}_linux_x86_64.tar.gz
+    rm salmon-${salmon_version}_linux_x86_64.tar.gz
 
     # Install samtools
     wget https://github.com/samtools/samtools/releases/download/${samtools_version}/samtools-${samtools_version}.tar.bz2

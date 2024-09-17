@@ -10,6 +10,7 @@ Stage: build
     programs_location="/srlab/programs"
     bismark_version="0.24.2"
     bowtie2_version="2.5.4"
+    diamond_version="2.1.9"
     fastqc_version="0.12.1"
     gffcompare_version="gffcompare-0.12.6"
     hisat2_version="2.2.1"
@@ -121,6 +122,7 @@ ${programs_location}/Trimmomatic-${trimmomatic_version}"
     bedtools_version="v2.31.0"
     bismark_version="0.24.2"
     bowtie2_version="2.5.4"
+    diamond_version="2.1.9"
     fastqc_version="0.12.1"
     gffcompare_version="gffcompare-0.12.6"
     hisat2_version="2.2.1"
@@ -175,6 +177,10 @@ ${programs_location}/Trimmomatic-${trimmomatic_version}"
     wget https://github.com/BenLangmead/bowtie2/releases/download/v${bowtie2_version}/bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
     unzip bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
     rm bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
+
+    # Install DIAMOND BLAST
+    wget https://github.com/bbuchfink/diamond/releases/download/v${diamond_version}/diamond-linux64.tar.gz
+    tar -xzvf diamond-linux64.tar.gz
 
     # Install FastQC
     wget https://github.com/s-andrews/FastQC/archive/refs/tags/v${fastqc_version}.zip

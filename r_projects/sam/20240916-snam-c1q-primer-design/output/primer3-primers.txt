@@ -1,0 +1,271 @@
+PRIMER PICKING RESULTS FOR LOC120027825
+
+No mispriming library specified
+Using 0-based sequence positions
+SEQUENCE SIZE: 4458
+INCLUDED REGION SIZE: 4458
+
+TARGETS (start, len)*: 500,3458
+    0 catgttctgttataatctccacccggcacagccaaaagaggactggccacccctcatagc
+                                                                  
+
+   60 ctggttcctctctaggtttcttcctaggttttggcctttctagggagtttttcctagcca
+                                                                  
+
+  120 ccgtgcttctacacctgcattgcttgctgtttggggttttaggctgggtttctgtacagc
+                                                                  
+
+  180 actttgagatatcagctgatgtaagaagggctatataaatacatttgatttgatttgata
+                                                                  
+
+  240 aggtcACTAGTTACTTATTAAATATGGATATGTCTGAACGACTAACCCTGAGACACATCA
+                                           >>>>>>>>>>>>>>>>>>>>   
+
+  300 GAAAGCTGAGTTCACGTCATAATATTGTGATTATAATCACAATCCCTTCTTACACCACTA
+                                                                  
+
+  360 TAAATGTGTCTCTGTCCTTATCTGAGTCTCTGAATGTAGCCTATGTGTGACCTGAATGTA
+                                                                  
+
+  420 TCTGTTACCTTAATGTAATGTAGCCTACATGTGTTACTTGAAAAATAACCCTAAATTGGT
+                                                                  
+
+  480 TCTTATTCCCAACACAGCTCTGGGATGTGTAATGGTCATATTTATTACCATACCTCTCCA
+                          ****************************************
+
+  540 CTTCTTCCTCTTTCCctttacaatttttattttttttaaataataaagtGATGATTTATT
+      ************************************************************
+
+  600 TATTGGTTAAAGAGGAAAATCCTCACATCACAGAATGGTGCTGTCCTCACACTGGGAAGA
+      **********************************<<<<<<<<<<<<<<<<<<<<******
+
+  660 GCAGGAAGCCACTGAAGGTGTTGTGGTTATCATGGCTATCATGGAGACCCTGGTCTTCAG
+      ************************************************************
+
+  720 GGAGACGAAGGTAGACCACATCCTCCTTCTCCAGCTCTAGTGTCAACGCATTAGATATGT
+      ************************************************************
+
+  780 ACTGCCAACCCCCAACTGTATTTCTTTCTACATTATATAGAACTCTTTGATTATTGTGAA
+      *>>>>>>>>>>>>>>>>>>>>***************************************
+
+  840 ACATCATGATGCCCATGAGTTGTGGGTGGCGGGATGACATGGCCGTGAATCTGAAGAAGT
+      ************************************************************
+
+  900 AGACTCCTTTCACTGATGCTGTGAAGATGCCTGCATCAGAGGAGAAATAGAGTGATATCA
+      ************************************************************
+
+  960 GCACTGTCTGTCTCATGTTGCTGTAGCTGGAATGTTTTtaacaaataaactcagcaaaaa
+      ************************************************************
+
+ 1020 aagaaatgtcccttttcaggaccctgtctttcaaagataattcgtaaaaatccaaataac
+      ************************************************************
+
+ 1080 ttcacagatcttcattttaaagggtttaaacactgtttcccatgcttcttcaatgaacca
+      ************************************************************
+
+ 1140 taaacaattaatgaacatgcacctgtggaacggtcgttaagacactaacagcttacagac
+      *******************<<<<<<<<<<<<<<<<<<<<*********************
+
+ 1200 ggtaggcagttAGGCcaaagttatgaaaacttaggacactaaagaggcctttctactgac
+      ************************************************************
+
+ 1260 actgaaaaacaccaaaagaaagatgtccagggtccctgctcatctgcaggaacgtgcctt
+      *******************************************>>>>>>>>>>>>>>>>>
+
+ 1320 agacatgctgcaaggaggcatgaggactacagatgtggccagggcaataaattgcaatgt
+      >>>*********************************************************
+
+ 1380 ccgtactgtgagacacctaacacagcgctacagggagacaggacggacagctgatcgtcc
+      ************************************************************
+
+ 1440 tcgcagtgacagaccacgtgtaacaacacctgcacaggatcggtacatccgaacatcaca
+      ************************************************************
+
+ 1500 cctgcgggacaggtaccggatggcaacaacaactgcccgagttacaccaggaacgcacaa
+      ************************************************************
+
+ 1560 tccctccatcagtgctcagactgtctgcaataggctaagagaggttggactgagggcttg
+      ************************************************************
+
+ 1620 taggcctgttgtcaGGCAGGTCATCACCGGCAActacgtcgcctatgggcacaaacccac
+      ****************<<<<<<<<<<<<<<<<<<<<************************
+
+ 1680 cgtcactggaccagacagccgcggttttgtctcaccaggggtgatggtcggaattgcgtt
+      ************************************************************
+
+ 1740 tatcgttgaaggaatgagcgttacactgaggcctgtactctggagcgggatcgatttgga
+      **************************************>>>>>>>>>>>>>>>>>>>>**
+
+ 1800 ggtggagggtccgtcatggtctggggcggtgtatcacagcatcatcggactgagcttgtt
+      ************************************************************
+
+ 1860 gtctttgcaggaaatctcaacgctgtgcgttacagggaagacatcctcctccctcatatg
+      ************************************************************
+
+ 1920 gtacccttcctgcaggctcatcctgacatgaccctccagcatgacaatgccaccagccat
+      ************************************************************
+
+ 1980 actgctcatgttgtgcgtgatttcctgcaagacaggaatgtcagtgttctgccatggcca
+      ************************************************************
+
+ 2040 gcgaagagcccagatctcaatcccattgagcacgtctgggaccttttggatcggagggtg
+      ************************************************************
+
+ 2100 agagctagggccattcgccacagaaatgtctgggaacttgcaggtgccttggtggaagag
+      ************************************************************
+
+ 2160 tggggtaacatctcacagcaagaactggcaaatctggtgcagtccatgaggaggagatgc
+      **********<<<<<<<<<<<<<<<<<<<<******************************
+
+ 2220 actgcagtacttaatgcagctggtggccacaccagatactgactgttacttttgattttg
+      ************************************************************
+
+ 2280 accccacctttgttcagggacacattattccatttctgttagtcacatgtctgtggaact
+      **>>>>>>>>>>>>>>>>>>>>**************************************
+
+ 2340 tgttcagtttatgtctcagttgttgaatattgttatgttcatacaaatatttacacatgt
+      ************************************************************
+
+ 2400 taagttgactgaaaataaacgcagttgacagtgagaggacgtttcttttaaCAGTGAGAG
+      ************************************************************
+
+ 2460 GAGTTTAGTATAATTAAGTCAGGGACTAGGTAACACAAATTACCACCAAACACAATAAGT
+      ************************************************************
+
+ 2520 ATCAAACTAAACATTGTTATAACTAAAATAAAATCAGGGTGACAGATTAAGTAACATAAA
+      ************************************************************
+
+ 2580 ATATGTCATTAAAAAAAATGACCGTAgacatacagtactagtcaaaagtttggacatact
+      *********************************************************<<<
+
+ 2640 tagaggtgtgggtttttctttatttttactattttctacattgtagcataatagtgaaga
+      <<<<<<<<<<<<<<<<<<<*****************************************
+
+ 2700 cataaactatgaaataacaaatatggaatcatgtagtaaccaaaatagtatttaaaaaat
+      ************************************************************
+
+ 2760 ctaaatatatttcagatttttcaaagtagccaccctttgcctcgatgacagctttgcact
+      *******************************>>>>>>>>>>>>>>>>>>>>*********
+
+ 2820 ctcttggcattctctcttcacctggaatgcttttccaagagtgtgcaaaactgtcatcaa
+      ************************************************************
+
+ 2880 ggcaaagggtgactactttaaagaatgtcaaatataaaatatattttgatttgttttata
+      ************************************************************
+
+ 2940 ctttttgggttactacatgattccatatgtgttatttaatagttttgaagtcttcactat
+      ************************************************************
+
+ 3000 tattctacaatgtagaaaatagtaaaataaagaatccctggaataagtaggtgtgtccaa
+      ************************************************************
+
+ 3060 acttttgactggtactgtacgtgttTGGTATCATATAGCTAGTAGTTACAAAAGTAAACT
+      ************************************************************
+
+ 3120 CATTTAAAAGCTTGAAACGTAGAATTTGTCCCTCAGAATTATGTCCACTCTGAAAATCTA
+      **************************<<<<<<<<<<<<<<<<<<<<<<<***********
+
+ 3180 GTGTCTTATCATGATTTTCAAAGTAAAATATAAAACAAGTTAGTGAAGTAAAATTATATA
+      ************************************************************
+
+ 3240 CAGAGATTACTGAGAAACATGCAGCAAAATCATCCCAGAAGAATTACATTAAATTGCATT
+      ********************>>>>>>>>>>>>>>>>>>>>>>>>>***************
+
+ 3300 CATAAAAAATTATGATGAGATGACTGACTCAATATTTGGCATTGTTGGATGAATGTTATG
+      ************************************************************
+
+ 3360 CAACATTCAAATGGATTTCCCTCTTGTTAGTTAGTACCTGTAATTGGGTTGTAGGCCTTG
+      ************************************************************
+
+ 3420 CCGATGTTGGTGATGACTCTACTGAAGATCAGTGTAGTAGCAGTACTGAATGGACCTACG
+      ************************************************************
+
+ 3480 TTTCCAGAGTCAGTCAAACCAGCAGAGAAGGCCACAGTTGGTCTGCCTGTGAAAAGAAGT
+      ************************************************************
+
+ 3540 TGATTATTTAAAAGGACAATCTGAGATTGAAATAACAACAAGGCAAATGCTTACTTATCC
+      ************************************************************
+
+ 3600 ACCTGTATCAATccaatttacaaatgcctgatATTTCTGACATGACCTGCTTTCTCTTTC
+      ************************************************************
+
+ 3660 TCCAGCTCTTCCACCTTGCTCTTCTGGAGCTGCAGTTCAGTCTTGGTGACGCTCAGCTCC
+      **<<<<<<<<<<<<<<<<<<<<**************************************
+
+ 3720 TGTCTCTGTTCCACCATCATGTCTCTCAGCTCCTCCAGCTTAGACCAGATGTCAGGGGTC
+      ***********************************************>>>>>>>>>>>>>
+
+ 3780 TTGTGGGCCGTCTCTGTAGCTTCAGCCCATGCCCCAAACAGAGAAAACAGCAGCAGAGCT
+      >>>>>>>*****************************************************
+
+ 3840 ACAGCACCTCTCATTCTGAAACGACACATCTTCTGAAATGATCTAGTCTTTGAGGCTAGA
+      ************************************************************
+
+ 3900 AATTTACAGGATTAAAGTAGGAGCTATATCTGTGTGAAATATATTGTGTCTCTGTGGAAA
+      **********************************************************  
+
+ 3960 AAAGAGGGTTCTTAAATATCAGGGAGTATTATTTGATTAGGATTACTGGTAGGATTCTTT
+                                                                  
+
+ 4020 ATTTGTTTTTACTGGCAATGAGGTGAAGGTTTCTTGCGTCATTCACCAGTTGTTGTTACT
+                                                                  
+
+ 4080 GTATTTCGTCATACTTAATTTTGATAGTCCCCTAGATAGGGAgtgggcgtacacatcaca
+                                                                  
+
+ 4140 gacaaactaaaatggtccacacagacagtgtggtaaagaaggaaggccaaaaagatcatc
+                                  <<<<<<<<<<<<<<<<<<<<<           
+
+ 4200 aaggacaacaaccacccgagccactgcctgttcacactgctatcatccagaaggtgaggt
+                                                                  
+
+ 4260 cagtacaggtacatcaagctgggaccgagagattgagaaacagcttctatctcaaggcca
+                                                                  
+
+ 4320 tcagactgctaaacagcaatcattaACTGAGAGAGTCTGCTGCCCACATTGAGAACCAAT
+                                                                  
+
+ 4380 CAcaggacactttaataaatggatcactagtcactttaaacaatgccactttaaataatg
+                                                                  
+
+ 4440 gcactttaataatgctta
+                        
+
+KEYS (in order of precedence):
+****** target
+>>>>>> left primer
+<<<<<< right primer
+^^^^^^ left primer / right primer overlap
+
+
+                    start  len      tm     gc%  any_th  3'_th hairpin seq
+ 1 LEFT_PRIMER        277   20   58.01   50.00    0.00   0.00    0.00 ACGACTAACCCTGAGACACA
+ 2 LEFT_PRIMER        781   20   59.96   55.00    0.00   0.00    0.00 CTGCCAACCCCCAACTGTAT
+ 3 LEFT_PRIMER       1303   20   60.04   55.00   14.25   0.00   43.28 ctgcaggaacgtgccttaga
+ 4 LEFT_PRIMER       1778   20   59.90   55.00    0.00   0.00   39.00 tctggagcgggatcgatttg
+ 5 LEFT_PRIMER       2282   20   59.82   55.00    0.00   0.00   42.25 cccacctttgttcagggaca
+ 6 LEFT_PRIMER       2791   20   60.04   55.00    0.00   0.00    0.00 accctttgcctcgatgacag
+ 7 LEFT_PRIMER       3260   25   60.63   40.00    0.00   0.00    0.00 GCAGCAAAATCATCCCAGAAGAATT
+ 8 LEFT_PRIMER       3767   20   60.04   60.00    0.00   0.00    0.00 GATGTCAGGGGTCTTGTGGG
+
+                     start  len      tm     gc%  any_th  3'_th hairpin seq
+ 1 RIGHT_PRIMER       653   20   59.96   55.00    0.00   0.00   35.43 CAGTGTGAGGACAGCACCAT
+ 2 RIGHT_PRIMER      1178   20   59.97   55.00   11.27   0.00   41.51 taacgaccgttccacaggtg
+ 3 RIGHT_PRIMER      1655   20   59.75   55.00    1.90   0.00   40.58 tagTTGCCGGTGATGACCTG
+ 4 RIGHT_PRIMER      2189   20   59.53   50.00    0.00   0.00   34.84 tgccagttcttgctgtgaga
+ 5 RIGHT_PRIMER      2658   22   57.21   40.91    0.00   0.00    0.00 agaaaaacccacacctctaagt
+ 6 RIGHT_PRIMER      3168   23   58.90   43.48    0.00   0.00    0.00 AGTGGACATAATTCTGAGGGACA
+ 7 RIGHT_PRIMER      3681   20   59.68   55.00    0.00   0.00   35.36 AGAGCAAGGTGGAAGAGCTG
+ 8 RIGHT_PRIMER      4188   21   59.22   47.62    3.32   0.00    0.00 tggccttccttctttaccaca
+
+Statistics
+         con   too    in    in   not          no    tm    tm   high  high  high        high      
+         sid  many   tar  excl    ok   bad    GC   too   too any_th 3'_th hair-  poly   end      
+        ered    Ns   get   reg   reg   GC% clamp   low  high  compl compl   pin     X  stab    ok
+Left    2518     0     0     0     0   162     0   221   612      0     0   176    10     0     8
+Right   2560     0     0     0     0   108     0   205   530      0     0   221     0     0     8
+Pair Stats:
+considered 0, ok 0
+libprimer3 release 2.6.1
+
+

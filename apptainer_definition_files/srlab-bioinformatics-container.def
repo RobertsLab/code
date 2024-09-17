@@ -15,6 +15,7 @@ Stage: build
     fastqc_version="0.12.1"
     gffcompare_version="gffcompare-0.12.6"
     hisat2_version="2.2.1"
+    kallisto_version="0.51.1"
     miniforge_version="24.7.1-0"
     multiqc_version="1.24.1"
     ncbi_blast_version="2.16.0"
@@ -41,6 +42,7 @@ ${programs_location}/bowtie2-${bowtie2_version}-sra-linux-x86_64:\
 ${programs_location}/FastQC-${fastqc_version}:\
 ${programs_location}/${gffcompare_version}:\
 ${programs_location}/hisat2-${hisat2_version}:\
+${programs_location}/kallisto-${kallisto_version}/build/src:\
 ${programs_location}/miniforge3-${miniforge_version}/bin:\
 ${mamba_envs_dir}/multiqc_env/bin:\
 ${programs_location}/ncbi-blast-${ncbi_blast_version}+/bin:\
@@ -130,6 +132,7 @@ ${programs_location}/Trimmomatic-${trimmomatic_version}"
     fastqc_version="0.12.1"
     gffcompare_version="gffcompare-0.12.6"
     hisat2_version="2.2.1"
+    kallisto_version="0.51.1"
     miniforge_version="24.7.1-0"
     multiqc_version="1.24.1"
     ncbi_blast_version="2.16.0"
@@ -212,6 +215,17 @@ ${programs_location}/Trimmomatic-${trimmomatic_version}"
     make -j ${threads}
     cd -
     rm v${hisat2_version}.tar.gz
+
+    # Install kallisto
+    wget https://github.com/pachterlab/kallisto/archive/refs/tags/v${kallisto}.tar.gz
+    tar -xzvf v${kallisto}.tar.gz
+    cd kallisto-${kallisto_version}
+    mkdir build && cd $_
+    cmake ..
+    make -j ${threads}
+    cd ${programs_location}
+    rm v${kallisto}.tar.gz
+
 
     # Install MultiQC
     mamba create -n multiqc_env multiqc=1.24.1

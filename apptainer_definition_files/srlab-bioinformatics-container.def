@@ -150,7 +150,6 @@ ${programs_location}/Trimmomatic-${trimmomatic_version}"
 
     # Make programs directory
     mkdir --parents /srlab/programs
-    cd /srlab/programs
 
     # Change to installation directory
     cd /srlab/programs
@@ -217,14 +216,15 @@ ${programs_location}/Trimmomatic-${trimmomatic_version}"
     rm v${hisat2_version}.tar.gz
 
     # Install kallisto
-    wget https://github.com/pachterlab/kallisto/archive/refs/tags/v${kallisto}.tar.gz
-    tar -xzvf v${kallisto}.tar.gz
+    wget https://github.com/pachterlab/kallisto/archive/refs/tags/v${kallisto_version}.tar.gz
+    tar -xzvf v${kallisto_version}.tar.gz
     cd kallisto-${kallisto_version}
-    mkdir build && cd $_
+    mkdir build
+    cd build
     cmake ..
-    make -j ${threads}
-    cd ${programs_location}
-    rm v${kallisto}.tar.gz
+    make
+    cd /srlab/programs
+    rm v${kallisto_version}.tar.gz
 
 
     # Install MultiQC

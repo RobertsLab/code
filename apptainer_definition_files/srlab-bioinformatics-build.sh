@@ -12,6 +12,11 @@ input_definition="srlab-bioinformatics-container.def"
 # Set output directory
 output_dir="/gscratch/srlab/containers"
 
+
+# Pull the most recent changes from the repository
+echo "Pulling the latest changes from git repository..."
+git pull || { echo "Error: git pull failed."; exit 1; }
+
 # Capture most recent commit hash
 build_commit=$(git log --follow --oneline -- "${input_definition}" | awk 'NR == 1 {print $1}')
 if [ -z "${build_commit}" ]; then
@@ -22,9 +27,6 @@ fi
 # Container filename
 container_basename="${input_definition%%.*}-${build_commit}"
 
-# Pull the most recent changes from the repository
-echo "Pulling the latest changes from git repository..."
-git pull || { echo "Error: git pull failed."; exit 1; }
 
 # Check if build already exists
 if [ -f "${output_dir}/${container_basename}.sif" ]; then

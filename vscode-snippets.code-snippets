@@ -157,10 +157,14 @@
     // Product links
     "Loading dye": {
         "prefix": "loading dye",
-        "body": "[`6x Orange DNA Loading Dye (Thermo Scientific)`]((https://www.thermofisher.com/order/catalog/product/R0631))$0"
+        "body": "[`6x Orange DNA Loading Dye (Thermo Scientific)`](https://www.thermofisher.com/order/catalog/product/R0631)$0"
     },
     "O'GeneRuler": {
         "prefix": "ladder",
         "body": "[`O'GeneRuler DNA Ladder Mix, Ready-to-Use 100-10,00bp (Thermo Scientific)`](https://www.fishersci.se/shop/products/fermentas-o-generuler-ready-to-use-dna-ladder-mix/11803983)$0"
+    },
+    "Reverse transcriptase": {
+        "prefix": "reverse transcriptase",
+        "body": "[`M-MLV Reverse Transcriptase (Promega)`](https://www.promega.com/products/pcr/rt-pcr/m-mlv-reverse-transcriptase/?catNum=M1701)$0"
     }
 }

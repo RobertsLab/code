@@ -43,6 +43,10 @@
         "prefix": "Eastern oyster",
         "body": "[Eastern oyster (_Crassostrea virginica_)](https://en.wikipedia.org/wiki/Eastern_oyster)$0"
     },
+    "Lake trout": {
+        "prefix": "Lake trout",
+        "body": "[_Salvelinus namaycush_](https://en.wikipedia.org/wiki/Lake_trout)$0"
+    },
     "Mytilus trossulus": {
         "prefix": "Mytilus trossulus",
         "body": "[_Mytilus trossulus_ (bay mussel)](https://en.wikipedia.org/wiki/Mytilus_trossulus)$0"
@@ -70,6 +74,10 @@
     "Panopea generosa": {
         "prefix": "Panopea generosa",
         "body": "[_Panopea generosa_ (Pacific geoduck)](http://en.wikipedia.org/wiki/Geoduck)$0"
+    },
+    "Salvelinus namaycush": {
+        "prefix": "Salvelinus namaycush",
+        "body": "[_Salvelinus namaycush_](https://en.wikipedia.org/wiki/Lake_trout)$0"
     },
     "Tanner crab": {
         "prefix": "Tanner crab",

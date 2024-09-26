@@ -76,7 +76,7 @@ calculate_delta_Cq <- function(df) {
 ## Read in files
 ```{r read-in-files}
 # Set the directory where your CSV files are located
-cqs_directory <- "../2024-03-25-qPCRs---C.gigas-Lifestage-Carryover-cDNA/"
+cqs_directory <- "../data/"
 
 # Get a list of all CSV files in the directory with the naming structure "*Cq_Results.csv"
 cq_file_list <- list() # Initialize list

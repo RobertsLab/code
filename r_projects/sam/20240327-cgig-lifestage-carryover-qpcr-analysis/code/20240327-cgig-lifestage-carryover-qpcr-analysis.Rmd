@@ -20,8 +20,6 @@ output:
     number_sections: true
     code_folding: show
     code_download: true
-bibliography: references.bib
-link-citations: true
 ---
 
 ```{r setup, include=FALSE}

@@ -21,3 +21,22 @@ output:
     code_folding: show
     code_download: true
 ---
+
+
+## Download C.virginica larvae/zygote FastQs and MD5 checksums
+```{r download-sequencing-data, engine='bash', eval=TRUE}
+# Download C.virginica larvae/zygote FastQs and MD5 checksums
+wget \
+--directory-prefix ../data \
+--recursive \
+--no-check-certificate \
+--continue \
+--cut-dirs 2 \
+--no-host-directories \
+--no-parent \
+--quiet \
+--reject "sample_files.txt" \
+--accept "*.fastq.gz,*.txt" https://owl.fish.washington.edu/nightingales/C_virginica/2018OALarvae_DNAm_discovery/
+```
+
+## Verify checksums

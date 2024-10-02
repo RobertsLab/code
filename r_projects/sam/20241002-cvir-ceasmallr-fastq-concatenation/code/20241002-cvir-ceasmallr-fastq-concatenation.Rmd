@@ -1,0 +1,23 @@
+---
+title: "20241002-cvir-ceasmallr-fastq-concatenation"
+author: "Sam White"
+date: "2024-10-02"
+output: 
+  github_document:
+    toc: true
+    number_sections: true
+  bookdown::html_document2:
+    theme: cosmo
+    toc: true
+    toc_float: true
+    number_sections: true
+    code_folding: show
+    code_download: true
+  html_document:
+    theme: cosmo
+    toc: true
+    toc_float: true
+    number_sections: true
+    code_folding: show
+    code_download: true
+---

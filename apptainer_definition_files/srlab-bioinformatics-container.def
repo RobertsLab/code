@@ -1,6 +1,9 @@
 Bootstrap: docker
-From: ubuntu:22.04
-Stage: build
+From: rocker/rstudio:4.4.1
+%files
+    # Load file with R package installation commands in to container at /tmp
+    # Expects file called "r_packages_installs.R" to be in current directory.
+    r_packages_installs.R /tmp/
 
 %setup
 
@@ -95,7 +98,13 @@ ${programs_location}/Trimmomatic-${trimmomatic_version}"
     libssl-dev \
     liburi-escape-xs-perl \
     liburi-perl \
+    libxml2 \
     libxrender1 \
+    libz-dev \
+    libbz2-dev \
+    liblzma-dev \
+    libxt6 \
+    libxtst6 \
     libzmq3-dev \
     locales \
     locales-all \
@@ -120,7 +129,8 @@ ${programs_location}/Trimmomatic-${trimmomatic_version}"
     xorg-dev \
     zlib1g-dev
 
-
+    # Run R package installation script file
+    Rscript /tmp/r_packages_installs.R
 
     ########## Set program versions ##########
 

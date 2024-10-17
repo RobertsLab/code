@@ -12,6 +12,8 @@ input_definition="srlab-bioinformatics-container.def"
 # Set output directory
 output_dir="/gscratch/srlab/containers"
 
+# Copy r packages install file to /tmp
+cp ${output_dir}/r_packages_installs.R /tmp/
 
 # Pull the most recent changes from the repository
 echo "Pulling the latest changes from git repository..."

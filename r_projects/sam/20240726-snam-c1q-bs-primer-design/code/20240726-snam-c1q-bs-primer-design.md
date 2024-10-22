@@ -38,11 +38,11 @@ Sam White
     href="#71-split-mulit-fasta-file-in-to-individual-fasta-files-with-pyfaidx"
     id="toc-71-split-mulit-fasta-file-in-to-individual-fasta-files-with-pyfaidx">7.1
     Split mulit-FastA file in to individual FastA files with PyFaidx</a>
-- <a href="#8-primer-search-with-emobss-primersearch"
-  id="toc-8-primer-search-with-emobss-primersearch">8 PRIMER SEARCH WITH
-  EMOBSS PRIMERSEARCH</a>
-  - <a href="#81-create-emobss-primersearch-primers-file"
-    id="toc-81-create-emobss-primersearch-primers-file">8.1 Create EMOBSS
+- <a href="#8-primer-search-with-emboss-primersearch"
+  id="toc-8-primer-search-with-emboss-primersearch">8 PRIMER SEARCH WITH
+  EMBOSS PRIMERSEARCH</a>
+  - <a href="#81-create-emboss-primersearch-primers-file"
+    id="toc-81-create-emboss-primersearch-primers-file">8.1 Create EMBOSS
     PrimerSearch Primers File</a>
   - <a href="#82-run-emboss-primersearch"
     id="toc-82-run-emboss-primersearch">8.2 Run EMBOSS PrimerSearch</a>
@@ -192,14 +192,8 @@ done
 ls -lh "${data_dir}"
 ```
 
-    total 5.5G
-    -rw-r--r-- 1 sam sam 2.3G Jul 29 21:18 bisulfite.GCF_016432855.1_SaNama_1.0_genomic.fna
-    -rw-r--r-- 1 sam sam 154K Jul 30 06:57 bisulfite.GCF_016432855.1_SaNama_1.0_genomic.fna.fai
-    drwxr-xr-x 2 sam sam 164K Jul 30 10:57 fasta_splits
-    -rw-r--r-- 1 sam sam 2.3G Jan 13  2021 GCF_016432855.1_SaNama_1.0_genomic.fna
-    -rw-r--r-- 1 sam sam 154K Jul 29 16:15 GCF_016432855.1_SaNama_1.0_genomic.fna.fai
+    total 660M
     -rw-r--r-- 1 sam sam 642M Jan 13  2021 GCF_016432855.1_SaNama_1.0_genomic.fna.gz
-    -rw-r--r-- 1 sam sam 373M Sep 28  2022 GCF_016432855.1_SaNama_1.0_genomic.gff
     -rw-r--r-- 1 sam sam  18M Sep 28  2022 GCF_016432855.1_SaNama_1.0_genomic.gff.gz
     -rw-r--r-- 1 sam sam  33K Jul 26 06:11 md5checksums.txt
 
@@ -236,17 +230,9 @@ done
 ls -lh
 ```
 
-    gzip: GCF_016432855.1_SaNama_1.0_genomic.fna already exists;    not overwritten
-    gzip: GCF_016432855.1_SaNama_1.0_genomic.gff already exists;    not overwritten
-    total 5.5G
-    -rw-r--r-- 1 sam sam 2.3G Jul 29 21:18 bisulfite.GCF_016432855.1_SaNama_1.0_genomic.fna
-    -rw-r--r-- 1 sam sam 154K Jul 30 06:57 bisulfite.GCF_016432855.1_SaNama_1.0_genomic.fna.fai
-    drwxr-xr-x 2 sam sam 164K Jul 30 10:57 fasta_splits
+    total 2.6G
     -rw-r--r-- 1 sam sam 2.3G Jan 13  2021 GCF_016432855.1_SaNama_1.0_genomic.fna
-    -rw-r--r-- 1 sam sam 154K Jul 29 16:15 GCF_016432855.1_SaNama_1.0_genomic.fna.fai
-    -rw-r--r-- 1 sam sam 642M Jan 13  2021 GCF_016432855.1_SaNama_1.0_genomic.fna.gz
     -rw-r--r-- 1 sam sam 373M Sep 28  2022 GCF_016432855.1_SaNama_1.0_genomic.gff
-    -rw-r--r-- 1 sam sam  18M Sep 28  2022 GCF_016432855.1_SaNama_1.0_genomic.gff.gz
     -rw-r--r-- 1 sam sam  33K Jul 26 06:11 md5checksums.txt
 
 # 3 EXTRACT C1Q GENE SEQUENCE
@@ -1516,16 +1502,16 @@ echo "-------------------------------------------------------------------"
 
     -------------------------------------------------------------------
     NUMBER OF INDIVIDUAL FASTA FILES
-    4122
+    4121
     -------------------------------------------------------------------
 
-# 8 PRIMER SEARCH WITH [EMOBSS PRIMERSEARCH](https://emboss.sourceforge.net/apps/cvs/emboss/apps/primersearch.html)
+# 8 PRIMER SEARCH WITH [EMBOSS PRIMERSEARCH](https://emboss.sourceforge.net/apps/cvs/emboss/apps/primersearch.html)
 
-This will run [EMOBSS
+This will run [EMBOSS
 PrimerSearch](https://emboss.sourceforge.net/apps/cvs/emboss/apps/primersearch.html)
 against the genome to assess primer specificity.
 
-## 8.1 Create EMOBSS PrimerSearch Primers File
+## 8.1 Create EMBOSS PrimerSearch Primers File
 
 Create a tab-delimited file to use with EMBOSS PrimerSearch.
 
@@ -1592,9 +1578,9 @@ for fasta in *.fna
 done
 ```
 
-    real    5m28.385s
-    user    4m32.584s
-    sys 1m14.440s
+    real    5m31.589s
+    user    4m35.689s
+    sys 1m14.992s
 
 ## 8.3 Check primer matches
 

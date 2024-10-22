@@ -1,0 +1,40 @@
+#### Assign Variables ####
+
+# DATA DIRECTORIES
+export data_dir="../data/S_namaycush/genomes"
+export output_top=../output
+export genome_fasta_splits_dir="${data_dir}/fasta_splits"
+
+# SEQUENCE
+export sequence_ID="LOC120027825"
+
+# SEQUENCE REGIONS
+export left_buffer="3500"
+export right_buffer="3500"
+
+# INPUT FILES
+export genome_fasta="GCF_016432855.1_SaNama_1.0_genomic.fna"
+export genome_gff="GCF_016432855.1_SaNama_1.0_genomic.gff"
+export ncbi_gff_gz="GCF_016432855.1_SaNama_1.0_genomic.gff.gz"
+export ncbi_fasta_gz="GCF_016432855.1_SaNama_1.0_genomic.fna.gz"
+export ncbi_md5sums="md5checksums.txt"
+export ncbi_url="https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/016/432/855/GCF_016432855.1_SaNama_1.0/"
+
+# OUTPUT FILES
+export bisulfite_genome_fasta="bisulfite.GCF_016432855.1_SaNama_1.0_genomic.fna"
+export c1q_fasta="${sequence_ID}.fasta"
+export c1q_buffer_fasta="${sequence_ID}-${left_buffer}bp.left-${right_buffer}bp.right.fasta"
+export c1q_faidx_region_file="${sequence_ID}"-region.txt
+export c1q_buffer_faidx_region_file="${sequence_ID}-${left_buffer}bp.left-${right_buffer}bp.right-region.txt"
+export c1q_bisulfite_t_fasta="${sequence_ID}-BS_conversion-t-${left_buffer}bp.left-${right_buffer}bp.right.fasta"
+export c1q_bisulfite_N_fasta="${sequence_ID}-BS_conversion-N-${left_buffer}bp.left-${right_buffer}bp.right.fasta"
+
+# SET CPUS
+export threads=40
+
+# PROGRAMS
+export pyfaidx=/home/shared/pyfaidx-0.8.1.1
+export primer3_dir="/home/shared/primer3-2.6.1/src"
+export primer3="${primer3_dir}/primer3_core"
+export primer3_config="${primer3_dir}/primer3_config"
+export primersearch="/home/shared/EMBOSS-6.6.0/emboss/primersearch"

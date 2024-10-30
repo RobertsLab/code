@@ -42,6 +42,27 @@ knitr::opts_chunk$set(
 
 ```
 
+# Variables
+```{r download-generic-goslim-obo, eval=TRUE}
+goslims_obo <- "goslim_generic.obo"
+goslims_url <- "http://current.geneontology.org/ontology/subsets/goslim_generic.obo"
+```
+
+# Set GSEAbase location and download `goslim_generic.obo`
+```{r download-generic-goslim-obo, eval=TRUE}
+# Find GSEAbase installation location
+gseabase_location <- find.package("GSEABase")
+
+# Load path to GOslim OBO file
+goslim_obo_destintation <- file.path(gseabase_location, "extdata", goslims_obo, fsep = "/")
+
+# Download the GOslim OBO file
+download.file(url = goslims_url, destfile = goslim_obo_destintation)
+
+# Loads package files
+gseabase_files <- system.file("extdata", goslims_obo, package="GSEABase")
+```
+
 # Read in gene/GO file
 ```{r read-in-gene-file, eval=TRUE}
 full.gene.df <- read.csv(file = "https://raw.githubusercontent.com/grace-ac/paper-pycno-sswd-2021-2022/d1cdf13c36085868df4ef4b75d2b7de03ef08d1c/analyses/25-compare-2021-2022/DEGlist_same_2021-2022_forGOslim.tab", header = TRUE, sep = "\t")
@@ -66,4 +87,64 @@ flat.gene.GO.df <- gene.GO.df %>% separate_rows(Gene.Ontology.IDs, sep = "; ")
 
 str(flat.gene.GO.df)
 ```
+
+# Group
+```{r, group-by-GO}
+grouped.gene.GO.df <-flat.gene.GO.df %>% 
+  group_by(Gene.Ontology.IDs) %>%
+  summarise(gene_id = paste(gene_id, collapse = ","))
+
+str(grouped.gene.GO.df)
+```
+
+# Map GO IDs to GOslims
+
+The mapping steps were derived from this [bioconductor forum response](https://support.bioconductor.org/p/128407/#128408)
+```{r}
+# Vector of GO IDs
+go_ids <- pgen_GO_gene_mappings_table_cleaned_separated_grouped_df$all_GO_ids
+
+# Create GSEAbase GOCollection using `go_ids`
+myCollection <- GOCollection(go_ids)
+
+# Retrieve GOslims from GO OBO file set
+slim <- getOBOCollection(gseabase_files)
+
+# Retrieve Biological Process (BP) GOslims
+slimdf <- goSlim(myCollection, slim, "BP", verbose)
+
+# List of GOslims and all GO IDs from `go_ids`
+gomap <- as.list(GOBPOFFSPRING[rownames(slimdf)])
+
+# Maps `go_ids` to matching GOslims
+mapped <- lapply(gomap, intersect, ids(myCollection))
+
+# Append all mapped GO IDs to `slimdf`
+# `sapply` needed to apply paste() to create semi-colon delimited values
+slimdf$ids <- sapply(lapply(gomap, intersect, ids(myCollection)), paste, collapse=";")
+
+# Remove "character(0) string from "ids" column
+slimdf$ids[slimdf$ids == "character(0)"] <- ""
+
+# Add self-matching GOIDs to "ids" column, if not present
+for (go_id in go_ids) {
+  # Check if the go_id is present in the row names
+  if (go_id %in% rownames(slimdf)) {
+    # Check if the go_id is not present in the ids column
+    # Also removes white space "trimws()" and converts all to upper case to handle
+    # any weird, "invisible" formatting issues.
+    if (!go_id %in% trimws(toupper(strsplit(slimdf[go_id, "ids"], ";")[[1]]))) {
+      # Append the go_id to the ids column with a semi-colon separator
+      if (length(slimdf$ids) > 0 && nchar(slimdf$ids[nrow(slimdf)]) > 0) {
+        slimdf[go_id, "ids"] <- paste0(slimdf[go_id, "ids"], "; ", go_id)
+      } else {
+        slimdf[go_id, "ids"] <- go_id
+      }
+    }
+  }
+}
+
+str(slimdf)
+```
+
 

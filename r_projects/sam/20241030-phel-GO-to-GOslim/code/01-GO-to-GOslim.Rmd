@@ -45,6 +45,8 @@ knitr::opts_chunk$set(
 # Read in gene/GO file
 ```{r read-in-gene-file, eval=TRUE}
 full.gene.df <- read.csv(file = "https://raw.githubusercontent.com/grace-ac/paper-pycno-sswd-2021-2022/d1cdf13c36085868df4ef4b75d2b7de03ef08d1c/analyses/25-compare-2021-2022/DEGlist_same_2021-2022_forGOslim.tab", header = TRUE, sep = "\t")
+
+str(full.gene.df)
 ```
 
 # Remove rows with NA and remove UniProt IDs
@@ -55,5 +57,13 @@ gene.GO.df <- full.gene.df %>%
   filter(!is.na(gene_id) & !is.na(uniprot_accession) & !is.na(Gene.Ontology.IDs) & Gene.Ontology.IDs != "") %>%
   select(gene_id, Gene.Ontology.IDs)
 
+str(gene.GO.df)
+```
+
+# "Flatten" gene and GO IDs
+```{r flatten-gene-and-GO-IDs, eval=TRUE}
+flat.gene.GO.df <- gene.GO.df %>% separate_rows(Gene.Ontology.IDs, sep = "; ")
+
+str(flat.gene.GO.df)
 ```
 

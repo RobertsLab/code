@@ -3,6 +3,9 @@ title: "01-GO-to-GOslim"
 author: "Sam White"
 date: "2024-10-30"
 output: 
+  github_document:
+    toc: true
+    number_sections: true
   bookdown::html_document2:
     theme: cosmo
     toc: true
@@ -10,9 +13,6 @@ output:
     number_sections: true
     code_folding: show
     code_download: true
-  github_document:
-    toc: true
-    number_sections: true
   html_document:
     theme: cosmo
     toc: true
@@ -23,7 +23,33 @@ output:
 bibliography: references.bib
 ---
 
-```{r setup, include=FALSE}
+# INTRO
+
+This notebook is to [take GO IDs and categorize them into their corresponding GOslims](https://github.com/RobertsLab/resources/issues/1989) (GitHub Issue). Specifically, it will use the following tab-delimited input file:
+
+-   [DEGlist_same_2021-2022_forGOslim.tab](https://raw.githubusercontent.com/grace-ac/paper-pycno-sswd-2021-2022/d1cdf13c36085868df4ef4b75d2b7de03ef08d1c/analyses/25-compare-2021-2022/DEGlist_same_2021-2022_forGOslim.tab) (commit: `d1cdf13`)
+
+[Desired output](https://github.com/RobertsLab/resources/issues/1989#issuecomment-2448757444) (GitHub Issue comment) is:
+
+```         
+GOslim      Count
+GO:0048856  1137
+GO:0023052  600
+GO:0030154  533
+GO:0002376  331
+```
+
+This was performed using R, with the following packages:
+
+-   GSEABase [@martinmorgan2017]
+-   GO.db [@carlson2017]
+-   tidyverse [@wickham2019]
+
+It also relied on gene ontology (GO) information from the [Gene Ontology Consortium](https://geneontology.org/) [@ashburner2000; @thegene2023].
+
+## CODE
+
+```{r setup, include=TRUE}
 library(GSEABase)
 library(GO.db)
 library(knitr)
@@ -37,14 +63,24 @@ knitr::opts_chunk$set(
 )
 ```
 
+### Variables
 
-# Variables
-```{r download-generic-goslim-obo, eval=TRUE}
+```{r set-variables, eval=TRUE}
+# Column names corresponding to gene name/ID and GO IDs
+GO.ID.column <- "Gene.Ontology.IDs"
+gene.ID.column <- "gene_id"
+
+# Relative path or URL to input file
+input.file <- "https://raw.githubusercontent.com/grace-ac/paper-pycno-sswd-2021-2022/d1cdf13c36085868df4ef4b75d2b7de03ef08d1c/analyses/25-compare-2021-2022/DEGlist_same_2021-2022_forGOslim.tab"
+
+
+##### Official GO info - no need to change #####
 goslims_obo <- "goslim_generic.obo"
 goslims_url <- "http://current.geneontology.org/ontology/subsets/goslim_generic.obo"
 ```
 
-# Set GSEAbase location and download `goslim_generic.obo`
+### Set GSEAbase location and download `goslim_generic.obo`
+
 ```{r download-generic-goslim-obo, eval=TRUE}
 # Find GSEAbase installation location
 gseabase_location <- find.package("GSEABase")
@@ -59,46 +95,58 @@ download.file(url = goslims_url, destfile = goslim_obo_destintation)
 gseabase_files <- system.file("extdata", goslims_obo, package="GSEABase")
 ```
 
-# Read in gene/GO file
+### Read in gene/GO file
+
 ```{r read-in-gene-file, eval=TRUE}
-full.gene.df <- read.csv(file = "https://raw.githubusercontent.com/grace-ac/paper-pycno-sswd-2021-2022/d1cdf13c36085868df4ef4b75d2b7de03ef08d1c/analyses/25-compare-2021-2022/DEGlist_same_2021-2022_forGOslim.tab", header = TRUE, sep = "\t")
+full.gene.df <- read.csv(file = input.file, header = TRUE, sep = "\t")
 
 str(full.gene.df)
 ```
 
-# Remove rows with NA and remove UniProt IDs
-```{r remove-NA-and-uniprotIDs}
+### Remove rows with NA and remove UniProt IDs
 
-# Filter out rows with NA or empty values in Gene.Ontology.IDs and select specific columns
+```{r remove-NA-and-uniprotIDs, eval=TRUE}
+
+# Clean whitespace, filter NA/empty rows, select columns, and split GO terms using column name variables
 gene.GO.df <- full.gene.df %>%
-  filter(!is.na(gene_id) & !is.na(uniprot_accession) & !is.na(Gene.Ontology.IDs) & Gene.Ontology.IDs != "") %>%
-  select(gene_id, Gene.Ontology.IDs)
+  mutate(!!GO.ID.column := str_replace_all(.data[[GO.ID.column]], "\\s*;\\s*", ";")) %>% # Clean up spaces around ";"
+  filter(!is.na(.data[[gene.ID.column]]) & !is.na(.data[[GO.ID.column]]) & .data[[GO.ID.column]] != "") %>% 
+  select(all_of(c(gene.ID.column, GO.ID.column)))
+
 
 str(gene.GO.df)
 ```
 
-# "Flatten" gene and GO IDs
+### "Flatten" gene and GO IDs
+
 ```{r flatten-gene-and-GO-IDs, eval=TRUE}
-flat.gene.GO.df <- gene.GO.df %>% separate_rows(Gene.Ontology.IDs, sep = "; ")
+flat.gene.GO.df <- gene.GO.df %>% separate_rows(!!sym(GO.ID.column), sep = ";")
 
 str(flat.gene.GO.df)
 ```
 
-# Group
-```{r, group-by-GO}
-grouped.gene.GO.df <-flat.gene.GO.df %>% 
-  group_by(Gene.Ontology.IDs) %>%
-  summarise(gene_id = paste(gene_id, collapse = ","))
+### Group
+
+```{r group-by-GO, eval=TRUE}
+grouped.gene.GO.df <- flat.gene.GO.df %>%
+  group_by(!!sym(GO.ID.column)) %>%
+  summarise(!!gene.ID.column := paste(.data[[gene.ID.column]], collapse = ","))
 
 str(grouped.gene.GO.df)
 ```
 
-# Map GO IDs to GOslims
+### Map GO IDs to GOslims
 
 The mapping steps were derived from this [bioconductor forum response](https://support.bioconductor.org/p/128407/#128408)
-```{r map-GO-to-GOlims}
+
+```{r map-GO-to-GOlims, eval=TRUE}
 # Vector of GO IDs
-go_ids <- grouped.gene.GO.df$Gene.Ontology.IDs
+go_ids <- grouped.gene.GO.df[[GO.ID.column]]
+
+str(go_ids)
+```
+
+```{r extract-GOslims-from-OBO, eval=TRUE}
 
 # Create GSEAbase GOCollection using `go_ids`
 myCollection <- GOCollection(go_ids)
@@ -106,9 +154,16 @@ myCollection <- GOCollection(go_ids)
 # Retrieve GOslims from GO OBO file set
 slim <- getOBOCollection(gseabase_files)
 
+str(slim)
+```
+
+```{r retrieve-BP-GOslims, eval=TRUE}
 # Retrieve Biological Process (BP) GOslims
 slimdf <- goSlim(myCollection, slim, "BP", verbose)
+str(slimdf)
+```
 
+```{r map-GO-to-GOslims, eval=TRUE}
 # List of GOslims and all GO IDs from `go_ids`
 gomap <- as.list(GOBPOFFSPRING[rownames(slimdf)])
 
@@ -143,18 +198,18 @@ for (go_id in go_ids) {
 str(slimdf)
 ```
 
-
 # Flatten GOslims
+
 ```{r flatten-GOslims-file, eval=TRUE}
 # "Flatten" file so each row is single GO ID with corresponding GOslim
 # rownames_to_column needed to retain row name info
-slimdf_separated <- as.data.frame(slimdf %>% 
-  rownames_to_column('GOslim') %>% 
+slimdf_separated <- as.data.frame(slimdf %>%
+  rownames_to_column('GOslim') %>%
   separate_rows(GO.IDs, sep = ";"))
 
 # Group by unique GO ID
 grouped_slimdf <- slimdf_separated %>%
-  filter(!is.na(ids) & GO.IDs != "") %>%
+  filter(!is.na(GO.IDs) & GO.IDs != "") %>%
   group_by(GO.IDs) %>%
   summarize(GOslim = paste(GOslim, collapse = ";"),
             Term = paste(Term, collapse = ";"))
@@ -164,7 +219,10 @@ str(grouped_slimdf)
 ```
 
 # Write slimdf to file
-```{r write-slimd-to-file, eval=TRUE}
+
+## Sort and select slmidf
+
+```{r sort-and-select-slimdf-counts, eval=TRUE}
 
 slimdf.sorted <- slimdf %>% arrange(desc(Count))
 
@@ -172,6 +230,11 @@ slim.count.df <- slimdf.sorted %>%
   select(Term, Count)
 
 str(slim.count.df)
+```
+
+## Write formatted slim.count.df to file
+
+```{r write-GOslim-term-count-to-file, eval=FALSE}
 
 write_tsv(slim.count.df, file = "../output/01-GO-to-GOslim/counts.GOID-per-GOslim_term.tab")
 ```
@@ -194,4 +257,8 @@ total_unique_ids <- length(unique_go_ids)
 total_unique_ids
 ```
 
+Total starting BP GO IDs:   `r total_go_ids`
 
+Total unique BP GO IDs:     `r total_unique_ids`
+
+# REFERENCES

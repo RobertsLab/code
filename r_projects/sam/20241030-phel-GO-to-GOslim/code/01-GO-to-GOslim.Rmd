@@ -173,6 +173,6 @@ slim.count.df <- slimdf.sorted %>% mutate(GOslim = rownames(.)) %>%
 
 str(slim.count.df)
 
-write.csv(slim.count.df, file = "../output/01-GO-to-GOslim/counts.GOID-per-GOslim.tab", quote = FALSE, sep = "\t", row.names = FALSE)
+write_tsv(slim.count.df, file = "../output/01-GO-to-GOslim/counts.GOID-per-GOslim.tab")
 ```
 

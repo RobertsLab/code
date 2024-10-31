@@ -37,10 +37,6 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Functions
-```{r functions, eval=TRUE}
-
-```
 
 # Variables
 ```{r download-generic-goslim-obo, eval=TRUE}
@@ -166,3 +162,17 @@ grouped_slimdf <- slimdf_separated %>%
 
 str(grouped_slimdf)
 ```
+
+# Write slimdf to file
+```{r write-slimd-to-file, eval=TRUE}
+
+slimdf.sorted <- slimdf %>% arrange(desc(Count))
+
+slim.count.df <- slimdf.sorted %>% mutate(GOslim = rownames(.)) %>%
+  select(GOslim, Count)
+
+str(slim.count.df)
+
+write.csv(slim.count.df, file = "../output/01-GO-to-GOslim/counts.GOID-per-GOslim.tab", quote = FALSE, sep = "\t", row.names = FALSE)
+```
+

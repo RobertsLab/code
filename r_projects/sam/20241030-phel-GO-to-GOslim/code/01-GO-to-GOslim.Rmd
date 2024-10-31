@@ -176,3 +176,22 @@ str(slim.count.df)
 write_tsv(slim.count.df, file = "../output/01-GO-to-GOslim/counts.GOID-per-GOslim_term.tab")
 ```
 
+# Count unique Biological Process GO IDs
+
+```{r count-unique-BP-GOIDs, eval=TRUE}
+
+# Flatten the list and count total GO IDs
+total_go_ids <- length(unlist(gomap))
+
+# Display the total count
+total_go_ids
+
+# Unlist to extract all GO IDs, then find unique ones and count them
+unique_go_ids <- unique(unlist(gomap))
+total_unique_ids <- length(unique_go_ids)
+
+# Display the total count of unique GO IDs
+total_unique_ids
+```
+
+

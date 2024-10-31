@@ -25,18 +25,20 @@ bibliography: references.bib
 
 # INTRO
 
-This notebook is to [take GO IDs and categorize them into their corresponding GOslims](https://github.com/RobertsLab/resources/issues/1989) (GitHub Issue). Specifically, it will use the following tab-delimited input file:
+This notebook is setup to [take GO IDs and categorize them into their corresponding GOslims](https://github.com/RobertsLab/resources/issues/1989) (GitHub Issue). Specifically, it will use the following tab-delimited input file:
 
 -   [DEGlist_same_2021-2022_forGOslim.tab](https://raw.githubusercontent.com/grace-ac/paper-pycno-sswd-2021-2022/d1cdf13c36085868df4ef4b75d2b7de03ef08d1c/analyses/25-compare-2021-2022/DEGlist_same_2021-2022_forGOslim.tab) (commit: `d1cdf13`)
 
-[Desired output](https://github.com/RobertsLab/resources/issues/1989#issuecomment-2448757444) (GitHub Issue comment) is:
+[Desired output format](https://github.com/RobertsLab/resources/issues/1989#issuecomment-2448757444) (GitHub Issue comment) is:
 
 ```         
-GOslim      Count
-GO:0048856  1137
-GO:0023052  600
-GO:0030154  533
-GO:0002376  331
+Term                                                    Count
+anatomical structure development                        1137
+signaling                                               600
+cell differentiation                                    533
+immune system process                                   331
+lipid metabolic process                                 212
+
 ```
 
 This was performed using R, with the following packages:
@@ -103,7 +105,7 @@ full.gene.df <- read.csv(file = input.file, header = TRUE, sep = "\t")
 str(full.gene.df)
 ```
 
-### Remove rows with NA and remove UniProt IDs
+### Remove rows with NA, remove whitespace in GO IDs column and keep just gene/GO IDs columns
 
 ```{r remove-NA-and-uniprotIDs, eval=TRUE}
 
@@ -119,6 +121,9 @@ str(gene.GO.df)
 
 ### "Flatten" gene and GO IDs
 
+This flattens the file so all of the GO IDs per gene
+are separated into one GO ID per gene per row.
+
 ```{r flatten-gene-and-GO-IDs, eval=TRUE}
 flat.gene.GO.df <- gene.GO.df %>% separate_rows(!!sym(GO.ID.column), sep = ";")
 
@@ -126,6 +131,8 @@ str(flat.gene.GO.df)
 ```
 
 ### Group
+
+Groups the genes by GO ID (i.e. lists all genes associated with each unique GO ID)
 
 ```{r group-by-GO, eval=TRUE}
 grouped.gene.GO.df <- flat.gene.GO.df %>%
@@ -139,13 +146,16 @@ str(grouped.gene.GO.df)
 
 The mapping steps were derived from this [bioconductor forum response](https://support.bioconductor.org/p/128407/#128408)
 
-```{r map-GO-to-GOlims, eval=TRUE}
+```{r vectorize-GOIDs, eval=TRUE}
 # Vector of GO IDs
 go_ids <- grouped.gene.GO.df[[GO.ID.column]]
 
 str(go_ids)
 ```
 
+### Extract GOslims from OBO
+
+Creates new OBO Collection object of just GOslims, based on provided GO IDs.
 ```{r extract-GOslims-from-OBO, eval=TRUE}
 
 # Create GSEAbase GOCollection using `go_ids`
@@ -157,12 +167,25 @@ slim <- getOBOCollection(gseabase_files)
 str(slim)
 ```
 
+### Get Biological Process (BP) GOslims associated with provided GO IDs.
 ```{r retrieve-BP-GOslims, eval=TRUE}
 # Retrieve Biological Process (BP) GOslims
 slimdf <- goSlim(myCollection, slim, "BP", verbose)
 str(slimdf)
 ```
 
+
+### Map GO to GOslims
+
+Performs mapping of of GOIDs to GOslims
+
+Returns:
+
+- GOslim IDs (as rownames)
+- GOslim terms
+- Counts of GO IDs matching to corresponding GOslim
+- Percentage of GO IDs matching to corresponding GOslim
+- GOIDs mapped to corresponding GOslim, in a semi-colon delimited format
 ```{r map-GO-to-GOslims, eval=TRUE}
 # List of GOslims and all GO IDs from `go_ids`
 gomap <- as.list(GOBPOFFSPRING[rownames(slimdf)])
@@ -198,7 +221,7 @@ for (go_id in go_ids) {
 str(slimdf)
 ```
 
-# Flatten GOslims
+### Flatten GOslims
 
 ```{r flatten-GOslims-file, eval=TRUE}
 # "Flatten" file so each row is single GO ID with corresponding GOslim
@@ -218,9 +241,12 @@ grouped_slimdf <- slimdf_separated %>%
 str(grouped_slimdf)
 ```
 
-# Write slimdf to file
+## Write slimdf to file
 
-## Sort and select slmidf
+### Sort and select slmidf
+
+Sorts GOslims by `Count`, in descending order and then
+selects just the `Term` and `Count` columns.
 
 ```{r sort-and-select-slimdf-counts, eval=TRUE}
 
@@ -232,14 +258,14 @@ slim.count.df <- slimdf.sorted %>%
 str(slim.count.df)
 ```
 
-## Write formatted slim.count.df to file
+### Write formatted slim.count.df to file
 
 ```{r write-GOslim-term-count-to-file, eval=FALSE}
 
 write_tsv(slim.count.df, file = "../output/01-GO-to-GOslim/counts.GOID-per-GOslim_term.tab")
 ```
 
-# Count unique Biological Process GO IDs
+## Count unique Biological Process GO IDs
 
 ```{r count-unique-BP-GOIDs, eval=TRUE}
 

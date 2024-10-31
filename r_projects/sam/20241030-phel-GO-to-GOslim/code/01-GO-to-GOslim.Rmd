@@ -150,12 +150,12 @@ str(slimdf)
 # rownames_to_column needed to retain row name info
 slimdf_separated <- as.data.frame(slimdf %>% 
   rownames_to_column('GOslim') %>% 
-  separate_rows(ids, sep = ";"))
+  separate_rows(GO.IDs, sep = ";"))
 
 # Group by unique GO ID
 grouped_slimdf <- slimdf_separated %>%
-  filter(!is.na(ids) & ids != "") %>%
-  group_by(ids) %>%
+  filter(!is.na(ids) & GO.IDs != "") %>%
+  group_by(GO.IDs) %>%
   summarize(GOslim = paste(GOslim, collapse = ";"),
             Term = paste(Term, collapse = ";"))
 
@@ -168,11 +168,11 @@ str(grouped_slimdf)
 
 slimdf.sorted <- slimdf %>% arrange(desc(Count))
 
-slim.count.df <- slimdf.sorted %>% mutate(GOslim = rownames(.)) %>%
-  select(GOslim, Count)
+slim.count.df <- slimdf.sorted %>% 
+  select(Term, Count)
 
 str(slim.count.df)
 
-write_tsv(slim.count.df, file = "../output/01-GO-to-GOslim/counts.GOID-per-GOslim.tab")
+write_tsv(slim.count.df, file = "../output/01-GO-to-GOslim/counts.GOID-per-GOslim_term.tab")
 ```
 

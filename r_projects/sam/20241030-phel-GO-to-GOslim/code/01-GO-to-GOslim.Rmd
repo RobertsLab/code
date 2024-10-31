@@ -100,9 +100,9 @@ str(grouped.gene.GO.df)
 # Map GO IDs to GOslims
 
 The mapping steps were derived from this [bioconductor forum response](https://support.bioconductor.org/p/128407/#128408)
-```{r}
+```{r map-GO-to-GOlims}
 # Vector of GO IDs
-go_ids <- pgen_GO_gene_mappings_table_cleaned_separated_grouped_df$all_GO_ids
+go_ids <- grouped.gene.GO.df$Gene.Ontology.IDs
 
 # Create GSEAbase GOCollection using `go_ids`
 myCollection <- GOCollection(go_ids)
@@ -121,24 +121,24 @@ mapped <- lapply(gomap, intersect, ids(myCollection))
 
 # Append all mapped GO IDs to `slimdf`
 # `sapply` needed to apply paste() to create semi-colon delimited values
-slimdf$ids <- sapply(lapply(gomap, intersect, ids(myCollection)), paste, collapse=";")
+slimdf$GO.IDs <- sapply(lapply(gomap, intersect, ids(myCollection)), paste, collapse=";")
 
-# Remove "character(0) string from "ids" column
-slimdf$ids[slimdf$ids == "character(0)"] <- ""
+# Remove "character(0) string from "GO.IDs" column
+slimdf$GO.IDs[slimdf$GO.IDs == "character(0)"] <- ""
 
-# Add self-matching GOIDs to "ids" column, if not present
+# Add self-matching GOIDs to "GO.IDs" column, if not present
 for (go_id in go_ids) {
   # Check if the go_id is present in the row names
   if (go_id %in% rownames(slimdf)) {
-    # Check if the go_id is not present in the ids column
+    # Check if the go_id is not present in the GO.IDs column
     # Also removes white space "trimws()" and converts all to upper case to handle
     # any weird, "invisible" formatting issues.
-    if (!go_id %in% trimws(toupper(strsplit(slimdf[go_id, "ids"], ";")[[1]]))) {
-      # Append the go_id to the ids column with a semi-colon separator
-      if (length(slimdf$ids) > 0 && nchar(slimdf$ids[nrow(slimdf)]) > 0) {
-        slimdf[go_id, "ids"] <- paste0(slimdf[go_id, "ids"], "; ", go_id)
+    if (!go_id %in% trimws(toupper(strsplit(slimdf[go_id, "GO.IDs"], ";")[[1]]))) {
+      # Append the go_id to the GO.IDs column with a semi-colon separator
+      if (length(slimdf$GO.IDs) > 0 && nchar(slimdf$GO.IDs[nrow(slimdf)]) > 0) {
+        slimdf[go_id, "GO.IDs"] <- paste0(slimdf[go_id, "GO.IDs"], "; ", go_id)
       } else {
-        slimdf[go_id, "ids"] <- go_id
+        slimdf[go_id, "GO.IDs"] <- go_id
       }
     }
   }
@@ -148,3 +148,21 @@ str(slimdf)
 ```
 
 
+# Flatten GOslims
+```{r flatten-GOslims-file, eval=TRUE}
+# "Flatten" file so each row is single GO ID with corresponding GOslim
+# rownames_to_column needed to retain row name info
+slimdf_separated <- as.data.frame(slimdf %>% 
+  rownames_to_column('GOslim') %>% 
+  separate_rows(ids, sep = ";"))
+
+# Group by unique GO ID
+grouped_slimdf <- slimdf_separated %>%
+  filter(!is.na(ids) & ids != "") %>%
+  group_by(ids) %>%
+  summarize(GOslim = paste(GOslim, collapse = ";"),
+            Term = paste(Term, collapse = ";"))
+
+
+str(grouped_slimdf)
+```

@@ -22,6 +22,7 @@ From: rocker/rstudio:4.4.1
     miniforge_version="24.7.1-0"
     multiqc_version="1.24.1"
     ncbi_blast_version="2.16.0"
+    ncbi_datasets_version="13.34.0"
     salmon_version="1.10.0"
     samtools_version="1.20"
     stringtie_version="2.2.1"
@@ -35,24 +36,25 @@ From: rocker/rstudio:4.4.1
     
     ### Set container system PATH ###
     PATH="/usr/local/sbin:\
-/usr/local/bin:/usr/sbin:\
-/usr/bin:\
-/sbin:\
-/bin:\
-${programs_location}:\
-${programs_location}/Bismark-${bismark_version}:\
-${programs_location}/bowtie2-${bowtie2_version}-sra-linux-x86_64:\
-${programs_location}/FastQC-${fastqc_version}:\
-${programs_location}/${gffcompare_version}:\
-${programs_location}/hisat2-${hisat2_version}:\
-${programs_location}/kallisto-${kallisto_version}/build/src:\
-${programs_location}/miniforge3-${miniforge_version}/bin:\
-${mamba_envs_dir}/multiqc_env/bin:\
-${programs_location}/ncbi-blast-${ncbi_blast_version}+/bin:\
-${programs_location}/salmon-latest_linux_x86_64/bin/:\
-${programs_location}/samtools-${samtools_version}:\
-${programs_location}/stringtie-${stringtie_version}.Linux_x86_64:\
-${programs_location}/Trimmomatic-${trimmomatic_version}"
+    /usr/local/bin:/usr/sbin:\
+    /usr/bin:\
+    /sbin:\
+    /bin:\
+    ${programs_location}:\
+    ${programs_location}/Bismark-${bismark_version}:\
+    ${programs_location}/bowtie2-${bowtie2_version}-sra-linux-x86_64:\
+    ${programs_location}/FastQC-${fastqc_version}:\
+    ${programs_location}/${gffcompare_version}:\
+    ${programs_location}/hisat2-${hisat2_version}:\
+    ${programs_location}/kallisto-${kallisto_version}/build/src:\
+    ${programs_location}/miniforge3-${miniforge_version}/bin:\
+    ${mamba_envs_dir}/multiqc_env/bin:\
+    ${programs_location}/ncbi-blast-${ncbi_blast_version}+/bin:\
+    ${programs_location}/ncbi-datasets-v${ncbi_datasets_version}/:\
+    ${programs_location}/salmon-latest_linux_x86_64/bin/:\
+    ${programs_location}/samtools-${samtools_version}:\
+    ${programs_location}/stringtie-${stringtie_version}.Linux_x86_64:\
+    ${programs_location}/Trimmomatic-${trimmomatic_version}"
     ######################################################
 
 
@@ -146,6 +148,7 @@ ${programs_location}/Trimmomatic-${trimmomatic_version}"
     miniforge_version="24.7.1-0"
     multiqc_version="1.24.1"
     ncbi_blast_version="2.16.0"
+    ncbi_datasets_version="16.34.0"
     salmon_version="1.10.0"
     stringtie_version="2.2.1"
     samtools_version="1.20"
@@ -240,6 +243,17 @@ ${programs_location}/Trimmomatic-${trimmomatic_version}"
     # Install MultiQC
     mamba create -n multiqc_env multiqc=1.24.1
 
+    # Install NCBI datasets
+    mkdir --parents ncbi-datasets-v${ncbi_datasets_version}
+
+    cd ncbi-datasets-v${ncbi_datasets_version}
+    
+    wget https://github.com/ncbi/datasets/releases/download/v16.34.0/linux-amd64.cli.package.zip \
+    && unzip linux-amd64.cli.package.zip \
+    && rm linux-amd64.cli.package.zip
+
+    cd /srlab/programs
+
     # Install NCBI BLAST
     wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/${ncbi_blast_version}/ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz \
 	&& tar -zxvpf ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz \
@@ -278,7 +292,7 @@ ${programs_location}/Trimmomatic-${trimmomatic_version}"
 
 %labels
     Author Sam White
-    Version v0.0.4
+    Version v0.0.5
 
 %help
     This is an Apptainer definition file for an Ubuntu container containing bioinformatics software for the Roberts Lab.

@@ -12,9 +12,6 @@ input_definition="srlab-bioinformatics-container.def"
 # Set output directory
 output_dir="/gscratch/srlab/containers"
 
-# Copy r packages install file to /tmp
-cp ${output_dir}/r_packages_installs.R /tmp/
-
 # Pull the most recent changes from the repository
 echo "Pulling the latest changes from git repository..."
 git pull || { echo "Error: git pull failed."; exit 1; }
@@ -25,6 +22,9 @@ if [ -z "${build_commit}" ]; then
   echo "Error: Unable to retrieve git commit hash."
   exit 1
 fi
+
+# Copy r packages install file to /tmp
+cp ${output_dir}/r_packages_installs.R /tmp/
 
 # Container filename
 container_basename="${input_definition%%.*}-${build_commit}"

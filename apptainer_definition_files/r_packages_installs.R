@@ -4,7 +4,7 @@ update.packages(ask = FALSE)
 # Install BioConductor package manager
 if (!requireNamespace("BiocManager", quietly = TRUE, ask = FALSE))
 install.packages("BiocManager")
-BiocManager::install(version = "3.20", ask = FALSE)
+BiocManager::install(version = "3.19", ask = FALSE)
 
 # Install tidyverse
 install.packages("tidyverse")

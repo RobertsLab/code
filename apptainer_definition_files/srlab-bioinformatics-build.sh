@@ -24,7 +24,7 @@ if [ -z "${build_commit}" ]; then
 fi
 
 # Copy r packages install file to /tmp
-cp ${output_dir}/r_packages_installs.R /tmp/
+cp r_packages_installs.R /tmp/
 
 # Container filename
 container_basename="${input_definition%%.*}-${build_commit}"

@@ -114,6 +114,7 @@ From: rocker/rstudio:4.4.1
     nano \
     ncurses-dev \
     net-tools \
+    openssh-client \
     parallel \
     pkg-config \
     psmisc \

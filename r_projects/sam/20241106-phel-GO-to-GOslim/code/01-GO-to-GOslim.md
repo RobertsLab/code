@@ -450,29 +450,28 @@ write_tsv(slim.count.df, file = "../output/01-GO-to-GOslim/counts.GOID-per-GOsli
 ## 1.3 Count unique Biological Process GO IDs
 
 ``` r
-# Flatten the list and count total GO IDs
-total_go_ids <- length(unlist(gomap))
+# Count total GO IDs
+total_go_ids <- nrow(slimdf_separated)
 
 # Display the total count
 total_go_ids
 ```
 
-    [1] 26534
+    [1] 10042
 
 ``` r
-# Unlist to extract all GO IDs, then find unique ones and count them
-unique_go_ids <- unique(unlist(gomap))
-total_unique_ids <- length(unique_go_ids)
+# Count the number of unique entries in slimdf_separated$GO.IDs
+total_unique_ids <- n_distinct(slimdf_separated$GO.IDs)
 
 # Display the total count of unique GO IDs
 total_unique_ids
 ```
 
-    [1] 17913
+    [1] 6904
 
-Total starting BP GO IDs: 26534
+Total starting BP GO IDs: 10042
 
-Total unique BP GO IDs: 17913
+Total unique BP GO IDs: 6904
 
 # 2 REFERENCES
 

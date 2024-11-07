@@ -36,25 +36,25 @@ From: rocker/rstudio:4.4.1
     
     ### Set container system PATH ###
     PATH="/usr/local/sbin:\
-    /usr/local/bin:/usr/sbin:\
-    /usr/bin:\
-    /sbin:\
-    /bin:\
-    ${programs_location}:\
-    ${programs_location}/Bismark-${bismark_version}:\
-    ${programs_location}/bowtie2-${bowtie2_version}-sra-linux-x86_64:\
-    ${programs_location}/FastQC-${fastqc_version}:\
-    ${programs_location}/${gffcompare_version}:\
-    ${programs_location}/hisat2-${hisat2_version}:\
-    ${programs_location}/kallisto-${kallisto_version}/build/src:\
-    ${programs_location}/miniforge3-${miniforge_version}/bin:\
-    ${mamba_envs_dir}/multiqc_env/bin:\
-    ${programs_location}/ncbi-blast-${ncbi_blast_version}+/bin:\
-    ${programs_location}/ncbi-datasets-${ncbi_datasets_version}:\
-    ${programs_location}/salmon-latest_linux_x86_64/bin:\
-    ${programs_location}/samtools-${samtools_version}:\
-    ${programs_location}/stringtie-${stringtie_version}.Linux_x86_64:\
-    ${programs_location}/Trimmomatic-${trimmomatic_version}"
+/usr/local/bin:/usr/sbin:\
+/usr/bin:\
+/sbin:\
+/bin:\
+${programs_location}:\
+${programs_location}/Bismark-${bismark_version}:\
+${programs_location}/bowtie2-${bowtie2_version}-sra-linux-x86_64:\
+${programs_location}/FastQC-${fastqc_version}:\
+${programs_location}/${gffcompare_version}:\
+${programs_location}/hisat2-${hisat2_version}:\
+${programs_location}/kallisto-${kallisto_version}/build/src:\
+${programs_location}/miniforge3-${miniforge_version}/bin:\
+${mamba_envs_dir}/multiqc_env/bin:\
+${programs_location}/ncbi-blast-${ncbi_blast_version}+/bin:\
+${programs_location}/ncbi-datasets-${ncbi_datasets_version}:\
+${programs_location}/salmon-latest_linux_x86_64/bin:\
+${programs_location}/samtools-${samtools_version}:\
+${programs_location}/stringtie-${stringtie_version}.Linux_x86_64:\
+${programs_location}/Trimmomatic-${trimmomatic_version}"
     ######################################################
 
 

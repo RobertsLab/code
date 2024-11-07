@@ -211,9 +211,9 @@ ${programs_location}/Trimmomatic-${trimmomatic_version}"
 
     # Install FastQC
     wget https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v${fastqc_version}.zip
-    unzip v${fastqc_version}.zip
+    unzip fastqc_v${fastqc_version}.zip
     mv FastQC fastqc-${fastqc_version}
-    rm v${fastqc_version}.zip
+    rm fastqc_v${fastqc_version}.zip
 
 
     # Install gffcompare

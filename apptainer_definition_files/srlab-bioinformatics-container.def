@@ -43,7 +43,7 @@ From: rocker/rstudio:4.4.1
 ${programs_location}:\
 ${programs_location}/Bismark-${bismark_version}:\
 ${programs_location}/bowtie2-${bowtie2_version}-sra-linux-x86_64:\
-${programs_location}/FastQC-${fastqc_version}:\
+${programs_location}/fastqc-${fastqc_version}:\
 ${programs_location}/${gffcompare_version}:\
 ${programs_location}/hisat2-${hisat2_version}:\
 ${programs_location}/kallisto-${kallisto_version}/build/src:\

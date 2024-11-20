@@ -23,6 +23,7 @@ From: rocker/rstudio:4.4.1
     multiqc_version="1.24.1"
     ncbi_blast_version="2.16.0"
     ncbi_datasets_version="13.34.0"
+    rmblast_version="2.14.1"
     salmon_version="1.10.0"
     samtools_version="1.20"
     stringtie_version="2.2.1"
@@ -36,7 +37,8 @@ From: rocker/rstudio:4.4.1
     
     ### Set container system PATH ###
     PATH="/usr/local/sbin:\
-/usr/local/bin:/usr/sbin:\
+/usr/local/bin:\
+/usr/sbin:\
 /usr/bin:\
 /sbin:\
 /bin:\
@@ -51,10 +53,12 @@ ${programs_location}/miniforge3-${miniforge_version}/bin:\
 ${mamba_envs_dir}/multiqc_env/bin:\
 ${programs_location}/ncbi-blast-${ncbi_blast_version}+/bin:\
 ${programs_location}/ncbi-datasets-${ncbi_datasets_version}:\
+${programs_location}/rmblast-${rmblast_version}/bin:\
 ${programs_location}/salmon-latest_linux_x86_64/bin:\
 ${programs_location}/samtools-${samtools_version}:\
 ${programs_location}/stringtie-${stringtie_version}.Linux_x86_64:\
-${programs_location}/Trimmomatic-${trimmomatic_version}"
+${programs_location}/Trimmomatic-${trimmomatic_version}:\
+${programs_location}/trf409.linux64"
     ######################################################
 
 
@@ -261,6 +265,14 @@ ${programs_location}/Trimmomatic-${trimmomatic_version}"
 	&& tar -zxvpf ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz \
 	&& rm ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz
 
+    # RepeatMasker conda environment with Python3 and h5py using mamba
+    mamba create -n repeatmasker-env python=3.8 h5py -y
+
+    # Install RMBLAST
+    wget https://www.repeatmasker.org/rmblast/rmblast-2.14.1+-x64-linux.tar.gz
+    tar -xzvf rmblast-${rmblast_version}+-x64-linux.tar.gz
+    rm rmblast-${rmblast_version}+-x64-linux.tar.gz
+
     # Install salmon
     wget https://github.com/COMBINE-lab/salmon/releases/download/v${salmon_version}/salmon-${salmon_version}_linux_x86_64.tar.gz
     tar -xzvf salmon-${salmon_version}_linux_x86_64.tar.gz
@@ -279,8 +291,6 @@ ${programs_location}/Trimmomatic-${trimmomatic_version}"
     wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-${trimmomatic_version}.zip
     unzip Trimmomatic-${trimmomatic_version}.zip
     chmod +x -R Trimmomatic-${trimmomatic_version}
-
-    # Clean up
     rm Trimmomatic-${trimmomatic_version}.zip
 
 
@@ -288,6 +298,12 @@ ${programs_location}/Trimmomatic-${trimmomatic_version}"
     wget http://ccb.jhu.edu/software/stringtie/dl/stringtie-${stringtie_version}.Linux_x86_64.tar.gz
     tar -xzvf stringtie-${stringtie_version}.Linux_x86_64.tar.gz
     rm stringtie-${stringtie_version}.Linux_x86_64.tar.gz
+
+
+
+    # Install TRF
+    wget https://github.com/Benson-Genomics-Lab/TRF/releases/download/v4.09.1/trf409.linux64
+    chmod +x trf409.linux64
 
 
 

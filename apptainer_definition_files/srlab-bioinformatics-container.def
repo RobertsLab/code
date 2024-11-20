@@ -154,6 +154,7 @@ ${programs_location}/trf409.linux64"
     multiqc_version="1.24.1"
     ncbi_blast_version="2.16.0"
     ncbi_datasets_version="16.34.0"
+    rmblast_version="2.14.1"
     salmon_version="1.10.0"
     stringtie_version="2.2.1"
     samtools_version="1.20"
@@ -269,7 +270,7 @@ ${programs_location}/trf409.linux64"
     mamba create -n repeatmasker-env python=3.8 h5py -y
 
     # Install RMBLAST
-    wget https://www.repeatmasker.org/rmblast/rmblast-2.14.1+-x64-linux.tar.gz
+    wget https://www.repeatmasker.org/rmblast/rmblast-${rmblast_version}+-x64-linux.tar.gz
     tar -xzvf rmblast-${rmblast_version}+-x64-linux.tar.gz
     rm rmblast-${rmblast_version}+-x64-linux.tar.gz
 

@@ -182,6 +182,8 @@ ${programs_location}/trf409.linux64"
     mamba init
     . ./miniforge3-${miniforge_version}/etc/profile.d/conda.sh
 
+    rm bash Miniforge3-${miniforge_version}-Linux-x86_64.sh
+
 
     ## Configure conda channels
     conda config --add channels defaults

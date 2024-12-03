@@ -1,3 +1,15 @@
+# NOTE:
+# To use RepeatMasker with this container, RepeatMasker must be installed on the local computer in the following location:
+#
+# /gscratch/srlab/programs/RepeatMasker
+# 
+# RepeatMasker must be configured on the local computer prior to running via this container.
+# The container expects the following files:
+#
+# /gscratch/srlab/programs/RepeatMasker/Libraries/famdb/dfam38_full.0.h5
+# /gscratch/srlab/programs/RepeatMasker/Libraries/famdb/rmlib.config
+
+
 Bootstrap: docker
 From: rocker/rstudio:4.4.1
 %files

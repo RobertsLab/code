@@ -36,6 +36,11 @@ if [ -f "${output_dir}/${container_basename}.sif" ]; then
   exit 1
 fi
 
+# Check if the "module" command exists and load apptainer/1.1.5 if it does
+if command -v module &> /dev/null; then
+  module load apptainer/1.1.5
+fi
+
 # Build the sandbox and print output to the console in real-time
 echo "Building sandbox for ${container_basename}..."
 apptainer build --sandbox --fakeroot /tmp/"${container_basename}".sandbox "./${input_definition}" 2>&1 | tee sandbox_build.log

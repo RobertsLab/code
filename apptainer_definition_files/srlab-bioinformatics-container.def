@@ -23,6 +23,7 @@ From: rocker/rstudio:4.4.1
     multiqc_version="1.24.1"
     ncbi_blast_version="2.16.0"
     ncbi_datasets_version="13.34.0"
+    repeatmasker_version="4.1.7-p1"
     rmblast_version="2.14.1"
     salmon_version="1.10.0"
     samtools_version="1.20"
@@ -53,6 +54,7 @@ ${programs_location}/miniforge3-${miniforge_version}/bin:\
 ${mamba_envs_dir}/multiqc_env/bin:\
 ${programs_location}/ncbi-blast-${ncbi_blast_version}+/bin:\
 ${programs_location}/ncbi-datasets-${ncbi_datasets_version}:\
+${programs_location}/RepeatMasker:\
 ${programs_location}/rmblast-${rmblast_version}/bin:\
 ${programs_location}/salmon-latest_linux_x86_64/bin:\
 ${programs_location}/samtools-${samtools_version}:\
@@ -154,6 +156,7 @@ ${programs_location}/trf409.linux64"
     multiqc_version="1.24.1"
     ncbi_blast_version="2.16.0"
     ncbi_datasets_version="16.34.0"
+    repeatmasker_version="4.1.7-p1"
     rmblast_version="2.14.1"
     salmon_version="1.10.0"
     stringtie_version="2.2.1"
@@ -271,6 +274,18 @@ ${programs_location}/trf409.linux64"
     # RepeatMasker conda environment with Python3 and h5py using mamba
     mamba create -n repeatmasker-env python=3.8 h5py -y
 
+    # Install RepeatMasker
+    wget https://www.repeatmasker.org/RepeatMasker/RepeatMasker-${repeatmasker_version}.tar.gz
+    tar -xzvf RepeatMasker-${repeatmasker_version}.tar.gz
+    rm RepeatMasker-${repeatmasker_version}.tar.gz
+
+    ## Remove default RepeatMasker DB
+    rm /srlab/programs/RepeatMasker/Libraries/famdb/*
+
+    # Set up symlinks to RepeatMasker files on Klone
+    ln -s /gscratch/srlab/programs/RepeatMasker/Libraries/famdb/dfam38_full.0.h5 /srlab/programs/RepeatMasker/Libraries/famdb/dfam38_full.0.h5
+    ln -s /gscratch/srlab/programs/RepeatMasker/Libraries/famdb/rmlib.config /srlab/programs/RepeatMasker/Libraries/famdb/rmlib.config
+
     # Install RMBLAST
     wget https://www.repeatmasker.org/rmblast/rmblast-${rmblast_version}+-x64-linux.tar.gz
     tar -xzvf rmblast-${rmblast_version}+-x64-linux.tar.gz
@@ -314,6 +329,7 @@ ${programs_location}/trf409.linux64"
 %labels
     Author Sam White
     Version v0.0.5
+    
 
 %help
     This is an Apptainer definition file for an Ubuntu container containing bioinformatics software for the Roberts Lab.

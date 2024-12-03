@@ -1,0 +1,217 @@
+Bootstrap: docker
+From: rocker/rstudio:4.4.1
+%files
+
+
+%setup
+
+%environment
+    ### Set program locations/versions for system PATH ###
+    programs_location="/srlab/programs"
+    bismark_version="0.24.2"
+    bowtie2_version="2.5.4"
+    diamond_version="2.1.9"
+    fastp_version="0.23.4"
+    fastqc_version="0.12.1"
+    gffcompare_version="gffcompare-0.12.6"
+    hisat2_version="2.2.1"
+    kallisto_version="0.51.1"
+    miniforge_version="24.7.1-0"
+    multiqc_version="1.24.1"
+    ncbi_blast_version="2.16.0"
+    ncbi_datasets_version="13.34.0"
+    rmblast_version="2.14.1"
+    salmon_version="1.10.0"
+    samtools_version="1.20"
+    stringtie_version="2.2.1"
+    trimmomatic_version="0.39"
+
+    mamba_envs_dir="${programs_location}/miniforge3-${miniforge_version}/envs"
+
+    ######################################################
+
+    export LC_ALL=C
+    
+    ### Set container system PATH ###
+    PATH="/usr/local/sbin:\
+/usr/local/bin:/usr/sbin:\
+/usr/bin:\
+/sbin:\
+/bin:\
+${programs_location}:\
+${programs_location}/Bismark-${bismark_version}:\
+${programs_location}/bowtie2-${bowtie2_version}-sra-linux-x86_64:\
+${programs_location}/fastqc-${fastqc_version}:\
+${programs_location}/${gffcompare_version}:\
+${programs_location}/hisat2-${hisat2_version}:\
+${programs_location}/kallisto-${kallisto_version}/build/src:\
+${programs_location}/miniforge3-${miniforge_version}/bin:\
+${mamba_envs_dir}/multiqc_env/bin:\
+${programs_location}/ncbi-blast-${ncbi_blast_version}+/bin:\
+${programs_location}/ncbi-datasets-${ncbi_datasets_version}:\
+${programs_location}/RepeatMasker:\
+${programs_location}/rmblast-${rmblast_version}/bin:\
+${programs_location}/salmon-latest_linux_x86_64/bin:\
+${programs_location}/samtools-${samtools_version}:\
+${programs_location}/stringtie-${stringtie_version}.Linux_x86_64:\
+${programs_location}/Trimmomatic-${trimmomatic_version}:\
+${programs_location}/trf409.linux64"
+    ######################################################
+
+
+%post
+    # Install common/base libraries/dependencies
+    apt update && \
+    apt install -y --no-install-recommends \
+    apt-utils \
+    aptitude \
+    automake \
+    build-essential \
+    bzip2 \
+    cmake \
+    coreutils \
+    curl \
+    debconf \
+    default-jdk \
+    dialog \
+    emboss \
+    gcc-multilib \
+    gdebi-core \
+    gfortran \
+    git \
+    gobjc++ \
+    hmmer \
+    htop \
+    infernal \
+    libapparmor1 \
+    libbz2-dev \
+    libc6 \
+    libcurl4-openssl-dev \
+    libedit2 \
+    libfontconfig1 \
+    liblzma-dev \
+    libncurses5-dev \
+    libncurses-dev \
+    libncursesw5-dev \
+    libpango1.0-dev \
+    libpng-dev \
+    libreadline-dev \
+    libsm6 \
+    libsparsehash-dev \
+    libssl-dev \
+    liburi-escape-xs-perl \
+    liburi-perl \
+    libxml2 \
+    libxrender1 \
+    libz-dev \
+    libbz2-dev \
+    liblzma-dev \
+    libxt6 \
+    libxtst6 \
+    libzmq3-dev \
+    locales \
+    locales-all \
+    man \
+    nano \
+    ncurses-dev \
+    net-tools \
+    openssh-client \
+    parallel \
+    pkg-config \
+    psmisc \
+    python3 \
+    python-setuptools \
+    rsync \
+    ruby \
+    software-properties-common \
+    sqlite3 \
+    sudo \
+    texinfo \
+    tree \
+    unzip \
+    wget \
+    xorg-dev \
+    zlib1g-dev
+
+    ########## Set program versions ##########
+
+    bedtools_version="v2.31.0"
+    bismark_version="0.24.2"
+    bowtie2_version="2.5.4"
+    diamond_version="2.1.9"
+    fastp_version="0.23.4"
+    fastqc_version="0.12.1"
+    gffcompare_version="gffcompare-0.12.6"
+    hisat2_version="2.2.1"
+    kallisto_version="0.51.1"
+    miniforge_version="24.7.1-0"
+    multiqc_version="1.24.1"
+    ncbi_blast_version="2.16.0"
+    ncbi_datasets_version="16.34.0"
+    rmblast_version="2.14.1"
+    salmon_version="1.10.0"
+    stringtie_version="2.2.1"
+    samtools_version="1.20"
+    trimmomatic_version="0.39"
+
+    ##########################################
+    
+    
+    # Set threads for faster builds
+    threads="40"
+
+    # Make programs directory
+    mkdir --parents /srlab/programs
+
+    # Change to installation directory
+    cd /srlab/programs
+
+    #Install Miniforge (Conda/Mamba)
+    wget https://github.com/conda-forge/miniforge/releases/download/${miniforge_version}/Miniforge3-${miniforge_version}-Linux-x86_64.sh
+    bash Miniforge3-${miniforge_version}-Linux-x86_64.sh -b -p ./miniforge3-${miniforge_version}
+    rm Miniforge3-${miniforge_version}-Linux-x86_64.sh
+
+    export PATH="$PATH:/srlab/programs/miniforge3-${miniforge_version}/bin"
+
+    mamba init
+    . ./miniforge3-${miniforge_version}/etc/profile.d/conda.sh
+
+
+    ## Configure conda channels
+    conda config --add channels defaults
+    conda config --add channels bioconda
+    conda config --add channels conda-forge
+    conda config --set channel_priority strict
+
+    # Create a conda environment with Python3 and h5py using mamba
+    mamba create -n repeatmasker-env python=3.8 h5py -y
+
+    # Install RepeatMasker
+    wget https://www.repeatmasker.org/RepeatMasker/RepeatMasker-4.1.7-p1.tar.gz
+    tar -xzvf RepeatMasker-4.1.7-p1.tar.gz
+    rm RepeatMasker-4.1.7-p1.tar.gz
+
+    # Install RMBLAST
+    wget https://www.repeatmasker.org/rmblast/rmblast-2.14.1+-x64-linux.tar.gz
+    tar -xzvf rmblast-${rmblast_version}+-x64-linux.tar.gz
+    rm rmblast-${rmblast_version}+-x64-linux.tar.gz
+
+    # Removes 
+    rm /srlab/programs/RepeatMasker/Libraries/famdb/*
+
+    ln -s /gscratch/srlab/programs/RepeatMasker/Libraries/famdb/dfam38_full.0.h5 /srlab/programs/RepeatMasker/Libraries/famdb/dfam38_full.0.h5
+    ln -s /gscratch/srlab/programs/RepeatMasker/Libraries/famdb/rmlib.config /srlab/programs/RepeatMasker/Libraries/famdb/rmlib.config
+
+    # Install TRF
+    wget https://github.com/Benson-Genomics-Lab/TRF/releases/download/v4.09.1/trf409.linux64
+    chmod +x trf409.linux64
+
+
+
+
+%labels
+    Author Sam White
+    Version v0.0.5
+
+%help
+    This is an Apptainer definition file for an Ubuntu container containing bioinformatics software for the Roberts Lab.

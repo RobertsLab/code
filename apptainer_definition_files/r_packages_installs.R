@@ -4,7 +4,26 @@ update.packages(ask = FALSE)
 # Install BioConductor package manager
 if (!requireNamespace("BiocManager", quietly = TRUE, ask = FALSE))
 install.packages("BiocManager")
-BiocManager::install(version = "3.19", ask = FALSE)
+BiocManager::install(version = "3.20", ask = FALSE)
+
+
+# Install energy
+install.packages("energy")
+
+# Install gridExtra
+install.packages("gridExtra")
+
+# Install igraph
+install.packages("igraph")
+
+# Install pheatmap
+install.packages("pheatmap")
+
+# Install reshape2
+install.packages("reshape2")
+
+# Install tidygraph
+install.packages("tidygraph")
 
 # Install tidyverse
 install.packages("tidyverse")
@@ -14,6 +33,9 @@ install.packages("https://cran.rstudio.com/src/contrib/matrixStats_0.61.0.tar.gz
 
 # Install remotes package (allows for package installs from GitHub)
 BiocManager::install("remotes")
+
+# Install genefilter
+BiocManager::install("genefilter")
 
 # Install GSEABase (a dependency for numerous gene ontology/enrichment analysis)
 BiocManager::install("Bioconductor/GSEABase")

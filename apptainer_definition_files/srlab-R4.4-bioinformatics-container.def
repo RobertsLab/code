@@ -1,0 +1,348 @@
+# NOTE:
+# To use RepeatMasker with this container, RepeatMasker must be installed on the local computer in the following location:
+#
+# /gscratch/srlab/programs/RepeatMasker
+# 
+# RepeatMasker must be configured on the local computer prior to running via this container.
+# The container expects the following files:
+#
+# /gscratch/srlab/programs/RepeatMasker/Libraries/famdb/dfam38_full.0.h5
+# /gscratch/srlab/programs/RepeatMasker/Libraries/famdb/rmlib.config
+
+
+Bootstrap: docker
+From: rocker/rstudio:4.4
+%files
+    # Load file with R package installation commands in to container at /tmp
+    # Expects file called "r_packages_installs.R" to be in current directory.
+    r_packages_installs.R /tmp/
+
+%setup
+
+
+%environment
+    ### Set program locations/versions for system PATH ###
+    programs_location="/srlab/programs"
+    bismark_version="0.24.2"
+    bowtie2_version="2.5.4"
+    diamond_version="2.1.9"
+    fastp_version="0.23.4"
+    fastqc_version="0.12.1"
+    gffcompare_version="gffcompare-0.12.6"
+    hisat2_version="2.2.1"
+    kallisto_version="0.51.1"
+    miniforge_version="24.7.1-0"
+    multiqc_version="1.24.1"
+    ncbi_blast_version="2.16.0"
+    ncbi_datasets_version="13.34.0"
+    repeatmasker_version="4.1.7-p1"
+    rmblast_version="2.14.1"
+    salmon_version="1.10.0"
+    samtools_version="1.20"
+    stringtie_version="2.2.1"
+    trimmomatic_version="0.39"
+
+    mamba_envs_dir="${programs_location}/miniforge3-${miniforge_version}/envs"
+
+    ######################################################
+
+    export LC_ALL=C
+    
+    ### Set container system PATH ###
+    PATH="/usr/local/sbin:\
+/usr/local/bin:\
+/usr/sbin:\
+/usr/bin:\
+/sbin:\
+/bin:\
+${programs_location}:\
+${programs_location}/Bismark-${bismark_version}:\
+${programs_location}/bowtie2-${bowtie2_version}-sra-linux-x86_64:\
+${programs_location}/fastqc-${fastqc_version}:\
+${programs_location}/${gffcompare_version}:\
+${programs_location}/hisat2-${hisat2_version}:\
+${programs_location}/kallisto-${kallisto_version}/build/src:\
+${programs_location}/miniforge3-${miniforge_version}/bin:\
+${mamba_envs_dir}/multiqc_env/bin:\
+${programs_location}/ncbi-blast-${ncbi_blast_version}+/bin:\
+${programs_location}/ncbi-datasets-${ncbi_datasets_version}:\
+${programs_location}/RepeatMasker:\
+${programs_location}/rmblast-${rmblast_version}/bin:\
+${programs_location}/salmon-latest_linux_x86_64/bin:\
+${programs_location}/samtools-${samtools_version}:\
+${programs_location}/stringtie-${stringtie_version}.Linux_x86_64:\
+${programs_location}/Trimmomatic-${trimmomatic_version}:\
+${programs_location}/trf409.linux64"
+    ######################################################
+
+
+%post
+    # Install common/base libraries/dependencies
+    apt update && \
+    apt install -y --no-install-recommends \
+    apt-utils \
+    aptitude \
+    automake \
+    build-essential \
+    bzip2 \
+    cmake \
+    coreutils \
+    curl \
+    debconf \
+    default-jdk \
+    dialog \
+    emboss \
+    gcc-multilib \
+    gdebi-core \
+    gfortran \
+    git \
+    gobjc++ \
+    hmmer \
+    htop \
+    infernal \
+    libapparmor1 \
+    libbz2-dev \
+    libc6 \
+    libcurl4-openssl-dev \
+    libedit2 \
+    libfontconfig1 \
+    libgsl-dev \
+    liblzma-dev \
+    libncurses5-dev \
+    libncurses-dev \
+    libncursesw5-dev \
+    libpango1.0-dev \
+    libpng-dev \
+    libreadline-dev \
+    libsm6 \
+    libsparsehash-dev \
+    libssl-dev \
+    liburi-escape-xs-perl \
+    liburi-perl \
+    libxml2 \
+    libxrender1 \
+    libz-dev \
+    libbz2-dev \
+    liblzma-dev \
+    libxt6 \
+    libxtst6 \
+    libzmq3-dev \
+    locales \
+    locales-all \
+    man \
+    nano \
+    ncurses-dev \
+    net-tools \
+    openssh-client \
+    parallel \
+    pkg-config \
+    psmisc \
+    python3 \
+    python-setuptools \
+    rsync \
+    ruby \
+    software-properties-common \
+    sqlite3 \
+    sudo \
+    texinfo \
+    tree \
+    unzip \
+    wget \
+    xorg-dev \
+    zlib1g-dev
+
+    # Run R package installation script file
+    Rscript /tmp/r_packages_installs.R
+
+    ########## Set program versions ##########
+
+    bedtools_version="v2.31.0"
+    bismark_version="0.24.2"
+    bowtie2_version="2.5.4"
+    diamond_version="2.1.9"
+    fastp_version="0.23.4"
+    fastqc_version="0.12.1"
+    gffcompare_version="gffcompare-0.12.6"
+    hisat2_version="2.2.1"
+    kallisto_version="0.51.1"
+    miniforge_version="24.7.1-0"
+    multiqc_version="1.24.1"
+    ncbi_blast_version="2.16.0"
+    ncbi_datasets_version="16.34.0"
+    repeatmasker_version="4.1.7-p1"
+    rmblast_version="2.14.1"
+    salmon_version="1.10.0"
+    stringtie_version="2.2.1"
+    samtools_version="1.20"
+    trimmomatic_version="0.39"
+
+    ##########################################
+    
+
+    
+    # Set threads for faster builds
+    threads="40"
+
+    # Make programs directory
+    mkdir --parents /srlab/programs
+
+    # Change to installation directory
+    cd /srlab/programs
+
+    #Install Miniforge (Conda/Mamba)
+    wget https://github.com/conda-forge/miniforge/releases/download/${miniforge_version}/Miniforge3-${miniforge_version}-Linux-x86_64.sh
+    bash Miniforge3-${miniforge_version}-Linux-x86_64.sh -b -p ./miniforge3-${miniforge_version}
+
+    export PATH="$PATH:/srlab/programs/miniforge3-${miniforge_version}/bin"
+
+    mamba init
+    . ./miniforge3-${miniforge_version}/etc/profile.d/conda.sh
+
+    rm Miniforge3-${miniforge_version}-Linux-x86_64.sh
+
+
+    ## Configure conda channels
+    conda config --add channels defaults
+    conda config --add channels bioconda
+    conda config --add channels conda-forge
+    conda config --set channel_priority strict
+
+    # Install bedtools
+    wget https://github.com/arq5x/bedtools2/releases/download/${bedtools_version}/bedtools.static
+    mv bedtools.static bedtools
+    chmod a+x bedtools
+
+    # Install Bismark
+    wget https://github.com/FelixKrueger/Bismark/archive/refs/tags/v${bismark_version}.zip
+    unzip v${bismark_version}.zip
+    rm v${bismark_version}.zip
+
+    # Install bowtie2
+    wget https://github.com/BenLangmead/bowtie2/releases/download/v${bowtie2_version}/bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
+    unzip bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
+    rm bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
+
+    # Install DIAMOND BLAST
+    wget https://github.com/bbuchfink/diamond/releases/download/v${diamond_version}/diamond-linux64.tar.gz
+    tar -xzvf diamond-linux64.tar.gz
+    rm diamond-linux64.tar.gz
+
+    # Install fastp
+    wget http://opengene.org/fastp/fastp.${fastp_version}
+    mv fastp.${fastp_version} fastp
+    chmod a+x ./fastp
+
+    # Install FastQC
+    wget https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v${fastqc_version}.zip
+    unzip fastqc_v${fastqc_version}.zip
+    mv FastQC fastqc-${fastqc_version}
+    rm fastqc_v${fastqc_version}.zip
+
+
+    # Install gffcompare
+    wget http://ccb.jhu.edu/software/stringtie/dl/${gffcompare_version}.Linux_x86_64.tar.gz
+    tar -xzvf ${gffcompare_version}.Linux_x86_64.tar.gz
+    rm ${gffcompare_version}.Linux_x86_64.tar.gz
+
+
+    # Install HISAT2
+    wget https://github.com/DaehwanKimLab/hisat2/archive/refs/tags/v${hisat2_version}.tar.gz
+    tar -xzvf v${hisat2_version}.tar.gz
+    cd hisat2-${hisat2_version}
+    make -j ${threads}
+    cd -
+    rm v${hisat2_version}.tar.gz
+
+    # Install kallisto
+    wget https://github.com/pachterlab/kallisto/archive/refs/tags/v${kallisto_version}.tar.gz
+    tar -xzvf v${kallisto_version}.tar.gz
+    cd kallisto-${kallisto_version}
+    mkdir build
+    cd build
+    cmake ..
+    make
+    cd /srlab/programs
+    rm v${kallisto_version}.tar.gz
+
+
+    # Install MultiQC
+    mamba create -n multiqc_env multiqc=1.24.1
+
+    # Install NCBI datasets
+    mkdir --parents ncbi-datasets-v${ncbi_datasets_version}
+
+    cd ncbi-datasets-v${ncbi_datasets_version}
+    
+    wget https://github.com/ncbi/datasets/releases/download/v16.34.0/linux-amd64.cli.package.zip \
+    && unzip linux-amd64.cli.package.zip \
+    && rm linux-amd64.cli.package.zip
+
+    cd /srlab/programs
+
+    # Install NCBI BLAST
+    wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/${ncbi_blast_version}/ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz \
+	&& tar -zxvpf ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz \
+	&& rm ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz
+
+    # RepeatMasker conda environment with Python3 and h5py using mamba
+    mamba create -n repeatmasker-env python=3.8 h5py -y
+
+    # Install RepeatMasker
+    wget https://www.repeatmasker.org/RepeatMasker/RepeatMasker-${repeatmasker_version}.tar.gz
+    tar -xzvf RepeatMasker-${repeatmasker_version}.tar.gz
+    rm RepeatMasker-${repeatmasker_version}.tar.gz
+
+    ## Remove default RepeatMasker DB
+    rm /srlab/programs/RepeatMasker/Libraries/famdb/*
+
+    # Set up symlinks to RepeatMasker files on Klone
+    ln -s /gscratch/srlab/programs/RepeatMasker/Libraries/famdb/dfam38_full.0.h5 /srlab/programs/RepeatMasker/Libraries/famdb/dfam38_full.0.h5
+    ln -s /gscratch/srlab/programs/RepeatMasker/Libraries/famdb/rmlib.config /srlab/programs/RepeatMasker/Libraries/famdb/rmlib.config
+
+    # Install RMBLAST
+    wget https://www.repeatmasker.org/rmblast/rmblast-${rmblast_version}+-x64-linux.tar.gz
+    tar -xzvf rmblast-${rmblast_version}+-x64-linux.tar.gz
+    rm rmblast-${rmblast_version}+-x64-linux.tar.gz
+
+    # Install salmon
+    wget https://github.com/COMBINE-lab/salmon/releases/download/v${salmon_version}/salmon-${salmon_version}_linux_x86_64.tar.gz
+    tar -xzvf salmon-${salmon_version}_linux_x86_64.tar.gz
+    rm salmon-${salmon_version}_linux_x86_64.tar.gz
+
+    # Install samtools
+    wget https://github.com/samtools/samtools/releases/download/${samtools_version}/samtools-${samtools_version}.tar.bz2
+    tar -xjvf samtools-${samtools_version}.tar.bz2
+    cd samtools-${samtools_version}
+    ./configure
+    make -j ${threads}
+    cd -
+    rm samtools-${samtools_version}.tar.bz2
+
+    # Install trimmomatic
+    wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-${trimmomatic_version}.zip
+    unzip Trimmomatic-${trimmomatic_version}.zip
+    chmod +x -R Trimmomatic-${trimmomatic_version}
+    rm Trimmomatic-${trimmomatic_version}.zip
+
+
+    # Install StringTie
+    wget http://ccb.jhu.edu/software/stringtie/dl/stringtie-${stringtie_version}.Linux_x86_64.tar.gz
+    tar -xzvf stringtie-${stringtie_version}.Linux_x86_64.tar.gz
+    rm stringtie-${stringtie_version}.Linux_x86_64.tar.gz
+
+
+
+    # Install TRF
+    wget https://github.com/Benson-Genomics-Lab/TRF/releases/download/v4.09.1/trf409.linux64
+    chmod +x trf409.linux64
+
+
+
+
+%labels
+    Author Sam White
+    Version v0.0.5
+    
+
+%help
+    This is an Apptainer definition file for an Ubuntu container containing bioinformatics software for the Roberts Lab.

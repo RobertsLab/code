@@ -185,13 +185,11 @@ ls -lh
 
 # RETRIEVE GENE SEQUENCES
 
-```{bash retrieve-gene-fastas, engine='bash', eval=TRUE}
-# Load bash variables into memory
-source .bashvars
+::: {.callout-note}
+The below would _not_ execute in Rstudio/Rstudio Server. I tried on two different computers
+and the chunk would just "run" indefinitly. Code executes without issue in a terminal.
+:::
 
-/home/sam/edirect/esearch -db nuccore -query "NM_001305360.1"
-```
-| ${efetch} -format fasta > "${data_dir}"/NM_001305360.1.fasta
 ```
 for ID in "${sequence_IDs[@]}"
 do
@@ -230,6 +228,9 @@ The code in the chunk below uses a heredoc to write this information to a file. 
 
 ``` bash
 cat << EOF > ${output_top}/primer3-params.txt
+This text will end up in the file.
+So will this.
+And this.
 EOF
 ```
 
@@ -237,37 +238,29 @@ EOF
 
 I've also set [Primer3](https://github.com/primer3-org/primer3) to look for sequencing primers and have defined the `SEQUENCE_TARGET`.
 
-```{bash primer3-with-t, engine='bash', eval=TRUE}
+
+### NM_001305360.1
+```{bash NM_001305360.1, engine='bash', eval=TRUE}
 # Load bash variables into memory
 source .bashvars
 
 # Get sequence only, by skipping the first record
 # Remove newlines so sequence is on a single line
-c1q_sequence=$(awk 'NR > 1' "${output_top}/${c1q_fasta}" | tr -d '\n')
+sequence=$(awk 'NR > 1' "${output_top}/${NM_001305360_fasta}" | tr -d '\n')
 
-# Determine length of C1q
-c1q_length=${#c1q_sequence}
-
-# Get sequence only, by skipping the first record
-# Remove newlines so sequence is on a single line
-c1q_buffer_sequence=$(awk 'NR > 1' "${output_top}/${c1q_buffer_fasta}" | tr -d '\n')
-
-# Determine length of C1q with the 5'/3' buffer sequences included
-c1q_buffer_length=${#c1q_buffer_sequence}
-
-# Calculate combined length of 5'buffer region and C1q length
-c1q_buffer_and_seq_length=$((left_buffer + c1q_length))
+sequence_ID="NM_001305360.1"
 
 
 # Use heredoc to create Primer3 parameters file
+# PRIMER_TASK=generic is used with PRIMER_PICK settings to be PCR primers.
 cat << EOF > ${output_top}/primer3-params.txt
 SEQUENCE_ID=${sequence_ID}
-SEQUENCE_TEMPLATE=${c1q_buffer_sequence}
-PRIMER_TASK=pick_sequencing_primers
-SEQUENCE_TARGET=${left_buffer},${c1q_length}
+SEQUENCE_TEMPLATE=${sequence}
+PRIMER_TASK=generic
 PRIMER_MIN_TM=50
 PRIMER_OPT_TM=60
 PRIMER_PICK_LEFT_PRIMER=1
+PRIMER_PICK_INTERNAL_OLIGO=0
 PRIMER_PICK_RIGHT_PRIMER=1
 PRIMER_OPT_SIZE=20
 PRIMER_MIN_SIZE=18
@@ -276,7 +269,7 @@ PRIMER_MAX_NS_ACCEPTED=0
 P3_FILE_FLAG=1
 PRIMER_EXPLAIN_FLAG=1
 PRIMER_THERMODYNAMIC_PARAMETERS_PATH=${primer3_config}
-PRIMER_NUM_RETURN=10
+PRIMER_NUM_RETURN=5
 PRIMER_PAIR_EXPLAIN=considered 0, ok 0
 =
 EOF
@@ -292,12 +285,6 @@ ${primer3} \
 ${primer3} \
 --output="${output_top}/primer3-primers-default-format.txt" \
 "${output_top}/primer3-params.txt"
-
-
-# Pull out any primers falling outside of target
-tail -n 30 "${output_top}/primer3-primers.txt" \
-| head -n -12 \
-| awk -v left_buffer="$left_buffer" -v target="$c1q_buffer_and_seq_length" '$3 <= left_buffer || $3 >= target {print $0}'
 
 
 ### Write the left and right primer start positions to files for later use in R chunk(s).

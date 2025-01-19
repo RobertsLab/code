@@ -246,7 +246,7 @@ source .bashvars
 
 # Get sequence only, by skipping the first record
 # Remove newlines so sequence is on a single line
-sequence=$(awk 'NR > 1' "${output_top}/${NM_001305360_fasta}" | tr -d '\n')
+sequence=$(awk 'NR > 1' "${data_dir}/${NM_001305360_fasta}" | tr -d '\n')
 
 sequence_ID="NM_001305360.1"
 
@@ -265,6 +265,7 @@ PRIMER_PICK_RIGHT_PRIMER=1
 PRIMER_OPT_SIZE=20
 PRIMER_MIN_SIZE=18
 PRIMER_MAX_SIZE=25
+PRIMER_PRODUCT_SIZE_RANGE=100-300
 PRIMER_MAX_NS_ACCEPTED=0
 P3_FILE_FLAG=1
 PRIMER_EXPLAIN_FLAG=1
@@ -278,13 +279,31 @@ EOF
 # Run Primer3
 ${primer3} \
 --format_output \
---output="${output_top}/primer3-primers.txt" \
+--output="${output_top}/NM_001305360.1-primer3-primers.txt" \
 "${output_top}/primer3-params.txt"
 
 # Run Primer3 with default output for parsable results
 ${primer3} \
---output="${output_top}/primer3-primers-default-format.txt" \
+--output="${output_top}/NM_001305360.1-primer3-primers-default-format.txt" \
 "${output_top}/primer3-params.txt"
+```
+
+### Review primers
+```{r review-NM_001305360.1-primers, engine='bash', eval=TRUE}
+source .bashvars
+
+cat "${output_top}/NM_001305360.1-primer3-primers.txt"
+```
+
+
+Primer set #3 looks to be the best option.
+
+
+```{r extract-NM_001305360.1-primers, engine='bash', eval=TRUE}
+source .bashvars
+
+grep -A 3 "3 LEFT PRIMER" "${output_top}/NM_001305360.1-primer3-primers.txt"
+```
 
 
 ### Write the left and right primer start positions to files for later use in R chunk(s).

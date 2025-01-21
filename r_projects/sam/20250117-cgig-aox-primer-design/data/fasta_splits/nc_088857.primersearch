@@ -3,30 +3,6 @@ Primer name NM_001305360.1
 Amplimer 1
 	Sequence: NC_088857.1  
 	
-	AGATGGTTGTCGAAGCTGCA hits forward strand at 40311604 with 0 mismatches
-	TTACACTCTTTGCGCCGACT hits reverse strand at [16962881] with 0 mismatches
-	Amplimer length: 443 bp
-
-Primer name XM_034462847.2
-Amplimer 1
-	Sequence: NC_088857.1  
-	
-	AGATGGTTGTCGAAGCTGCA hits forward strand at 40311604 with 0 mismatches
-	TTACACTCTTTGCGCCGACT hits reverse strand at [16962881] with 0 mismatches
-	Amplimer length: 443 bp
-
-Primer name XM_066083499.1
-Amplimer 1
-	Sequence: NC_088857.1  
-	
-	AGATGGTTGTCGAAGCTGCA hits forward strand at 40311604 with 0 mismatches
-	TTACACTCTTTGCGCCGACT hits reverse strand at [16962881] with 0 mismatches
-	Amplimer length: 443 bp
-
-Primer name NM_001305360.1
-Amplimer 1
-	Sequence: NC_088857.1  
-	
 	TGGACATTCATCTCTACTGCT hits forward strand at 40310307 with 0 mismatches
 	TCTCACTGTGGAAATGCACA hits reverse strand at [16964538] with 0 mismatches
 	Amplimer length: 83 bp

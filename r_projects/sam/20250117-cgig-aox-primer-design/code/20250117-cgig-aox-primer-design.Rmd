@@ -239,6 +239,11 @@ EOF
 I've also set [Primer3](https://github.com/primer3-org/primer3) to look for sequencing primers and have defined the `SEQUENCE_TARGET`.
 
 
+#### NCBI BLASTn alignments
+
+Each sequence was BLASTn'd against _C.gigas_ nucleotides to identify unique regions in each of the three variants to improve our ability to detect each variant's expression level.
+
+
 
 
 
@@ -443,7 +448,7 @@ cat "${output_top}/XM_066083499.1-primer3-primers-default-format.txt"
 
 
 
-Next, we need to test them against the entire genome to assess specificity.
+Next, we'll test them against the entire genome to assess specificity.
 
 
 # SPLIT GENOME FASTA
@@ -531,7 +536,7 @@ source .bashvars
 
 cd ${genome_fasta_splits_dir}
 
-primers="../../../../output/emboss-primers.txt"
+primers="../../output/emboss-primers.txt"
 
 
 time \
@@ -584,6 +589,6 @@ done
 
 # SUMMARY
 
-EMBOSS PrimerSearch has identified only a single location in the genome where the forward and reverse primers match, as well as in the expected location on chromosome `NC_052339`. This means our primers are specific to our desired target in the genome.
+EMBOSS PrimerSearch has identified multiple potential amplicons on chromosome `NC_088857.1 `. This is to be expected, due the fact that we're amplifying transcript variants; ince these variants aren't reflected in the genome sequence (due to various transcriptional processing).
 
 # CITATIONS

@@ -62,7 +62,17 @@ BLASTx returned three matches:
 
 ## Input files
 
+- Target FastA sequences
+
+- Genome FastA
+
 ## Output files
+
+- `emboss-primers.txt`: Output from EMBOSS PrimerSearch containing primer pair matches within the genome.
+
+- `*primer3-primers-default-format.txt`: The default output format containing Primer3 primer identification info. Machine-readable format.
+
+- `*primer3-primers.txt`: Primer3 output file containing primer identification info. An easy-to-read format.
 
 ## Required software
 
@@ -244,7 +254,18 @@ I've also set [Primer3](https://github.com/primer3-org/primer3) to look for sequ
 Each sequence was BLASTn'd against _C.gigas_ nucleotides to identify unique regions in each of the three variants to improve our ability to detect each variant's expression level.
 
 
+##### NM_001305360.1
 
+![NM_001305360.1 BLASTn alignment](../data/NM_001305360.1-NCBI-BLASTn-alignment.png)
+
+##### XM_034462847.2
+
+![XM_034462847.2 BLASTn alignment](../data/XM_034462847.2-NCBI-BLASTn-alignment.png)
+
+
+##### XM_066083499.1
+
+![XM_066083499.1 BLASTn alignment](../data/XM_066083499.1-NCBI-BLASTn-alignment.png)
 
 
 ### NM_001305360.1
@@ -297,16 +318,16 @@ ${primer3} \
 "${output_top}/NM_001305360.1-primer3-params.txt"
 ```
 
-### Review primers
+#### Review primers
 
-#### Easy-to-read
+##### Easy-to-read
 ```{r review-NM_001305360.1-primers, engine='bash', eval=TRUE}
 source .bashvars
 
 cat "${output_top}/NM_001305360.1-primer3-primers.txt"
 ```
 
-#### Print the full output file
+##### Print the full output file
 ```{r engine='bash', eval=TRUE}
 source .bashvars
 
@@ -364,16 +385,16 @@ ${primer3} \
 "${output_top}/XM_034462847.2-primer3-params.txt"
 ```
 
-### Review primers
+#### Review primers
 
-#### Easy-to-read
+##### Easy-to-read
 ```{r review-XM_034462847.2-primers, engine='bash', eval=TRUE}
 source .bashvars
 
 cat "${output_top}/XM_034462847.2-primer3-primers.txt"
 ```
 
-#### Print the full output file
+##### Print the full output file
 ```{r engine='bash', eval=TRUE}
 source .bashvars
 
@@ -430,16 +451,16 @@ ${primer3} \
 "${output_top}/XM_066083499.1-primer3-params.txt"
 ```
 
-### Review primers
+#### Review primers
 
-#### Easy-to-read
+##### Easy-to-read
 ```{r review-NM_001305360.1-primers, engine='bash', eval=TRUE}
 source .bashvars
 
 cat "${output_top}/XM_066083499.1-primer3-primers.txt"
 ```
 
-#### Print the full output file
+##### Print the full output file
 ```{r engine='bash', eval=TRUE}
 source .bashvars
 
@@ -457,7 +478,7 @@ For some reason, I feel like the EMBOSS PrimerSearch tool will *not* work on mul
 
 This will split the genome multi-FastA file into separate FastA files.
 
-### Split mulit-FastA file in to individual FastA files with PyFaidx
+## Split mulit-FastA file in to individual FastA files with PyFaidx
 
 ```{bash split-genome-fasta, engine='bash', eval=TRUE}
 # Load bash variables into memory
@@ -490,11 +511,11 @@ ls -1 | wc -l
 echo "-------------------------------------------------------------------"
 ```
 
-## PRIMER SEARCH WITH [EMBOSS PRIMERSEARCH](https://emboss.sourceforge.net/apps/cvs/emboss/apps/primersearch.html)
+# PRIMER SEARCH WITH [EMBOSS PRIMERSEARCH](https://emboss.sourceforge.net/apps/cvs/emboss/apps/primersearch.html)
 
 This will run [EMBOSS PrimerSearch](https://emboss.sourceforge.net/apps/cvs/emboss/apps/primersearch.html) against the genome to assess primer specificity.
 
-### Create EMBOSS PrimerSearch Primers File
+## Create EMBOSS PrimerSearch Primers File
 
 Create a tab-delimited file to use with EMBOSS PrimerSearch.
 

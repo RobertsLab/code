@@ -239,6 +239,9 @@ EOF
 I've also set [Primer3](https://github.com/primer3-org/primer3) to look for sequencing primers and have defined the `SEQUENCE_TARGET`.
 
 
+
+
+
 ### NM_001305360.1
 ```{bash NM_001305360.1, engine='bash', eval=TRUE}
 # Load bash variables into memory
@@ -253,7 +256,7 @@ sequence_ID="NM_001305360.1"
 
 # Use heredoc to create Primer3 parameters file
 # PRIMER_TASK=generic is used with PRIMER_PICK settings to be PCR primers.
-cat << EOF > ${output_top}/primer3-params.txt
+cat << EOF > ${output_top}/NM_001305360.1-primer3-params.txt
 SEQUENCE_ID=${sequence_ID}
 SEQUENCE_TEMPLATE=${sequence}
 PRIMER_TASK=generic
@@ -265,12 +268,12 @@ PRIMER_PICK_RIGHT_PRIMER=1
 PRIMER_OPT_SIZE=20
 PRIMER_MIN_SIZE=18
 PRIMER_MAX_SIZE=25
-PRIMER_PRODUCT_SIZE_RANGE=100-300
+PRIMER_PRODUCT_SIZE_RANGE=75-150
 PRIMER_MAX_NS_ACCEPTED=0
 P3_FILE_FLAG=1
 PRIMER_EXPLAIN_FLAG=1
 PRIMER_THERMODYNAMIC_PARAMETERS_PATH=${primer3_config}
-PRIMER_NUM_RETURN=5
+PRIMER_NUM_RETURN=3
 PRIMER_PAIR_EXPLAIN=considered 0, ok 0
 =
 EOF
@@ -280,97 +283,174 @@ EOF
 ${primer3} \
 --format_output \
 --output="${output_top}/NM_001305360.1-primer3-primers.txt" \
-"${output_top}/primer3-params.txt"
+"${output_top}/NM_001305360.1-primer3-params.txt"
 
 # Run Primer3 with default output for parsable results
 ${primer3} \
 --output="${output_top}/NM_001305360.1-primer3-primers-default-format.txt" \
-"${output_top}/primer3-params.txt"
+"${output_top}/NM_001305360.1-primer3-params.txt"
 ```
 
 ### Review primers
+
+#### Easy-to-read
 ```{r review-NM_001305360.1-primers, engine='bash', eval=TRUE}
 source .bashvars
 
 cat "${output_top}/NM_001305360.1-primer3-primers.txt"
 ```
 
-
-Primer set #3 looks to be the best option.
-
-
-```{r extract-NM_001305360.1-primers, engine='bash', eval=TRUE}
+#### Print the full output file
+```{r engine='bash', eval=TRUE}
 source .bashvars
 
-grep -A 3 "3 LEFT PRIMER" "${output_top}/NM_001305360.1-primer3-primers.txt"
+cat "${output_top}/NM_001305360.1-primer3-primers-default-format.txt"
 ```
 
 
-### Write the left and right primer start positions to files for later use in R chunk(s).
-# Pull out left primer start position
-left_primer_start=$(tail -n 30 "${output_top}/primer3-primers.txt" \
-| head -n -12 \
-| awk -v left_buffer="$left_buffer" -v target="$c1q_buffer_and_seq_length" '$3 <= left_buffer || $3 >= target {print $0}' \
-| grep "PRIMER" \
-| awk 'NR == 1 {print $3}')
+### XM_034462847.2
+```{bash XM_034462847.2, engine='bash', eval=TRUE}
+# Load bash variables into memory
+source .bashvars
 
-# Pull out right primer start position
-right_primer_start=$(tail -n 30 "${output_top}/primer3-primers.txt" \
-| head -n -12 \
-| awk -v left_buffer="$left_buffer" -v target="$c1q_buffer_and_seq_length" '$3 <= left_buffer || $3 >= target {print $0}' \
-| grep "PRIMER" \
-| awk 'NR == 2 {print $3}')
+# Get sequence only, by skipping the first record
+# Remove newlines so sequence is on a single line
+sequence=$(awk 'NR > 1' "${data_dir}/${XM_034462847_fasta}" | tr -d '\n')
 
-echo "${left_primer_start}" > "${output_top}/left-primer-start.txt"
-echo "${right_primer_start}" > "${output_top}/right-primer-start.txt"
+sequence_ID="XM_034462847.2"
 
-echo ""
-echo ""
-echo "----------------------------------------------------------------------------------"
-echo ""
-echo "Primer results file:"
-echo ""
-echo ""
-# Print the full output file
-cat "${output_top}/primer3-primers.txt"
 
-echo ""
-echo ""
-echo "----------------------------------------------------------------------------------"
-echo ""
-echo "Primer default (i.e. computer-friendly) results file:"
-echo ""
-echo ""
+# Use heredoc to create Primer3 parameters file
+# PRIMER_TASK=generic is used with PRIMER_PICK settings to be PCR primers.
+cat << EOF > ${output_top}/XM_034462847.2-primer3-params.txt
+SEQUENCE_ID=${sequence_ID}
+SEQUENCE_TEMPLATE=${sequence}
+PRIMER_TASK=generic
+PRIMER_MIN_TM=50
+PRIMER_OPT_TM=60
+PRIMER_PICK_LEFT_PRIMER=1
+PRIMER_PICK_INTERNAL_OLIGO=0
+PRIMER_PICK_RIGHT_PRIMER=1
+PRIMER_OPT_SIZE=20
+PRIMER_MIN_SIZE=18
+PRIMER_MAX_SIZE=25
+PRIMER_PRODUCT_SIZE_RANGE=75-150
+PRIMER_MAX_NS_ACCEPTED=0
+P3_FILE_FLAG=1
+PRIMER_EXPLAIN_FLAG=1
+PRIMER_THERMODYNAMIC_PARAMETERS_PATH=${primer3_config}
+PRIMER_NUM_RETURN=3
+PRIMER_PAIR_EXPLAIN=considered 0, ok 0
+=
+EOF
 
-# Print the full output file
-cat "${output_top}/primer3-primers-default-format.txt"
+
+# Run Primer3
+${primer3} \
+--format_output \
+--output="${output_top}/XM_034462847.2-primer3-primers.txt" \
+"${output_top}/XM_034462847.2-primer3-params.txt"
+
+# Run Primer3 with default output for parsable results
+${primer3} \
+--output="${output_top}/XM_034462847.2-primer3-primers-default-format.txt" \
+"${output_top}/XM_034462847.2-primer3-params.txt"
 ```
 
-Looks like we have one primer pair where both are outside of the C1q gene sequence.
+### Review primers
 
-## Amplicon length
+#### Easy-to-read
+```{r review-XM_034462847.2-primers, engine='bash', eval=TRUE}
+source .bashvars
 
-```{r amplicon-length, eval=TRUE, echo=FALSE, include=FALSE}
-# Load left and right primer lengths
-left_primer_start <- as.numeric(readLines("../output/left-primer-start.txt"))
-
-right_primer_start <- as.numeric(readLines("../output/right-primer-start.txt"))
-
-# Calculate amplicon length.
-amplicon_length <- right_primer_start - left_primer_start
+cat "${output_top}/XM_034462847.2-primer3-primers.txt"
 ```
 
-The primer pair will produced an amplicon length of `r amplicon_length`bp.
+#### Print the full output file
+```{r engine='bash', eval=TRUE}
+source .bashvars
+
+cat "${output_top}/XM_034462847.2-primer3-primers-default-format.txt"
+```
+
+### XM_066083499.1
+```{bash NM_001305360.1, engine='bash', eval=TRUE}
+# Load bash variables into memory
+source .bashvars
+
+# Get sequence only, by skipping the first record
+# Remove newlines so sequence is on a single line
+sequence=$(awk 'NR > 1' "${data_dir}/${XM_066083499_fasta}" | tr -d '\n')
+
+sequence_ID="XM_066083499.1"
+
+
+# Use heredoc to create Primer3 parameters file
+# PRIMER_TASK=generic is used with PRIMER_PICK settings to be PCR primers.
+cat << EOF > ${output_top}/XM_066083499.1-primer3-params.txt
+SEQUENCE_ID=${sequence_ID}
+SEQUENCE_TEMPLATE=${sequence}
+PRIMER_TASK=generic
+PRIMER_MIN_TM=50
+PRIMER_OPT_TM=60
+PRIMER_PICK_LEFT_PRIMER=1
+PRIMER_PICK_INTERNAL_OLIGO=0
+PRIMER_PICK_RIGHT_PRIMER=1
+PRIMER_OPT_SIZE=20
+PRIMER_MIN_SIZE=18
+PRIMER_MAX_SIZE=25
+PRIMER_PRODUCT_SIZE_RANGE=75-150
+PRIMER_MAX_NS_ACCEPTED=0
+P3_FILE_FLAG=1
+PRIMER_EXPLAIN_FLAG=1
+PRIMER_THERMODYNAMIC_PARAMETERS_PATH=${primer3_config}
+PRIMER_NUM_RETURN=3
+PRIMER_PAIR_EXPLAIN=considered 0, ok 0
+=
+EOF
+
+
+# Run Primer3
+${primer3} \
+--format_output \
+--output="${output_top}/XM_066083499.1-primer3-primers.txt" \
+"${output_top}/XM_066083499.1-primer3-params.txt"
+
+# Run Primer3 with default output for parsable results
+${primer3} \
+--output="${output_top}/XM_066083499.1-primer3-primers-default-format.txt" \
+"${output_top}/XM_066083499.1-primer3-params.txt"
+```
+
+### Review primers
+
+#### Easy-to-read
+```{r review-NM_001305360.1-primers, engine='bash', eval=TRUE}
+source .bashvars
+
+cat "${output_top}/XM_066083499.1-primer3-primers.txt"
+```
+
+#### Print the full output file
+```{r engine='bash', eval=TRUE}
+source .bashvars
+
+cat "${output_top}/XM_066083499.1-primer3-primers-default-format.txt"
+```
+
+
 
 Next, we need to test them against the entire genome to assess specificity.
 
-# SPLIT GENOME
+# Primer Specificity
+
+## SPLIT GENOME
 
 For some reason, I feel like the EMBOSS PrimerSearch tool will *not* work on mulit-FastA files (or, it makes the results more difficult to decipher?), but I'm just going off of memory and repeating a process I've done previously.
 
 This will split the genome multi-FastA file into separate FastA files.
 
-## Split mulit-FastA file in to individual FastA files with PyFaidx
+### Split mulit-FastA file in to individual FastA files with PyFaidx
 
 ```{bash split-genome-fasta, engine='bash', eval=TRUE}
 # Load bash variables into memory

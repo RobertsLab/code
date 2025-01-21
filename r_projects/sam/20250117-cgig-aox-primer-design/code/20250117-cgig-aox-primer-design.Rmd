@@ -262,6 +262,7 @@ SEQUENCE_TEMPLATE=${sequence}
 PRIMER_TASK=generic
 PRIMER_MIN_TM=50
 PRIMER_OPT_TM=60
+SEQUENCE_PRIMER_PAIR_OK_REGION_LIST=1109,50,,
 PRIMER_PICK_LEFT_PRIMER=1
 PRIMER_PICK_INTERNAL_OLIGO=0
 PRIMER_PICK_RIGHT_PRIMER=1
@@ -328,6 +329,7 @@ SEQUENCE_TEMPLATE=${sequence}
 PRIMER_TASK=generic
 PRIMER_MIN_TM=50
 PRIMER_OPT_TM=60
+SEQUENCE_PRIMER_PAIR_OK_REGION_LIST=90,25,,
 PRIMER_PICK_LEFT_PRIMER=1
 PRIMER_PICK_INTERNAL_OLIGO=0
 PRIMER_PICK_RIGHT_PRIMER=1
@@ -393,6 +395,7 @@ SEQUENCE_TEMPLATE=${sequence}
 PRIMER_TASK=generic
 PRIMER_MIN_TM=50
 PRIMER_OPT_TM=60
+SEQUENCE_PRIMER_PAIR_OK_REGION_LIST=,,1100,50
 PRIMER_PICK_LEFT_PRIMER=1
 PRIMER_PICK_INTERNAL_OLIGO=0
 PRIMER_PICK_RIGHT_PRIMER=1
@@ -442,9 +445,8 @@ cat "${output_top}/XM_066083499.1-primer3-primers-default-format.txt"
 
 Next, we need to test them against the entire genome to assess specificity.
 
-# Primer Specificity
 
-## SPLIT GENOME
+# SPLIT GENOME FASTA
 
 For some reason, I feel like the EMBOSS PrimerSearch tool will *not* work on mulit-FastA files (or, it makes the results more difficult to decipher?), but I'm just going off of memory and repeating a process I've done previously.
 
@@ -483,11 +485,11 @@ ls -1 | wc -l
 echo "-------------------------------------------------------------------"
 ```
 
-# PRIMER SEARCH WITH [EMBOSS PRIMERSEARCH](https://emboss.sourceforge.net/apps/cvs/emboss/apps/primersearch.html)
+## PRIMER SEARCH WITH [EMBOSS PRIMERSEARCH](https://emboss.sourceforge.net/apps/cvs/emboss/apps/primersearch.html)
 
 This will run [EMBOSS PrimerSearch](https://emboss.sourceforge.net/apps/cvs/emboss/apps/primersearch.html) against the genome to assess primer specificity.
 
-## Create EMBOSS PrimerSearch Primers File
+### Create EMBOSS PrimerSearch Primers File
 
 Create a tab-delimited file to use with EMBOSS PrimerSearch.
 
@@ -495,15 +497,26 @@ Create a tab-delimited file to use with EMBOSS PrimerSearch.
 # Load bash variables into memory
 source .bashvars
 
-# Get primer info from Primer3 default format output
-seq_id=$(grep "SEQUENCE_ID=" "${output_top}/primer3-primers-default-format.txt" | sed 's/SEQUENCE_ID=//')
+for primer_file in ${output_top}/*primer3-primers-default-format.txt
+do
+  seq_id=$(grep "SEQUENCE_ID=" "${primer_file}" \
+  | sed 's/SEQUENCE_ID=//')
+  
+  left_primer=$(grep "PRIMER_LEFT_0_SEQUENCE=" "${primer_file}" \
+  | sed 's/PRIMER_LEFT_0_SEQUENCE=//' \
+  | tr '[:lower:]' '[:upper:]')
 
-left_primer=$(grep "PRIMER_LEFT_0_SEQUENCE=" "${output_top}/primer3-primers-default-format.txt" | sed 's/PRIMER_LEFT_0_SEQUENCE=//' | tr '[:lower:]' '[:upper:]')
+  right_primer=$(grep "PRIMER_RIGHT_0_SEQUENCE=" "${primer_file}" \
+  | sed 's/PRIMER_RIGHT_0_SEQUENCE=//' \
+  | tr '[:lower:]' '[:upper:]')
+  
+  # Create EMBOSS primer file
+  printf "%s\t%s\t%s\t\n" "${seq_id}" "${left_primer}" "${right_primer}" \
+  | tee --append "${output_top}/emboss-primers.txt"
+  
+done
 
-right_primer=$(grep "PRIMER_RIGHT_7_SEQUENCE=" "${output_top}/primer3-primers-default-format.txt" | sed 's/PRIMER_RIGHT_7_SEQUENCE=//' | tr '[:lower:]' '[:upper:]')
 
-# Create EMBOSS primer file
-printf "%s\t%s\t%s\t\n" "${seq_id}" "${left_primer}" "${right_primer}" | tee "${output_top}/emboss-primers.txt"
 ```
 
 ## Run EMBOSS PrimerSearch

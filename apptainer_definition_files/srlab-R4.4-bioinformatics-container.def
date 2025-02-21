@@ -237,6 +237,7 @@ ${programs_location}/trf409.linux64"
     gzip -dc libsvm-3.18.tar.gz | tar xf -
     cd libsvm-3.18
     make clean && make
+    cd /srlab/programs
 
     # Install DIAMOND BLAST
     wget https://github.com/bbuchfink/diamond/releases/download/v${diamond_version}/diamond-linux64.tar.gz

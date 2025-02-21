@@ -211,7 +211,9 @@ ${programs_location}/trf409.linux64"
     conda config --set channel_priority strict
 
     # Install Biopython
+    ## Dependencies for CPC2
     pip install biopython
+    pip install six
 
     # Install bedtools
     wget https://github.com/arq5x/bedtools2/releases/download/${bedtools_version}/bedtools.static

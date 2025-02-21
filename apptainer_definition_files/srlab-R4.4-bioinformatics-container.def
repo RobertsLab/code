@@ -25,6 +25,7 @@ From: rocker/rstudio:4.4
     programs_location="/srlab/programs"
     bismark_version="0.24.2"
     bowtie2_version="2.5.4"
+    cpc2_version="1.0.1"
     diamond_version="2.1.9"
     fastp_version="0.23.4"
     fastqc_version="0.12.1"
@@ -58,6 +59,7 @@ From: rocker/rstudio:4.4
 ${programs_location}:\
 ${programs_location}/Bismark-${bismark_version}:\
 ${programs_location}/bowtie2-${bowtie2_version}-sra-linux-x86_64:\
+${programs_location}/:CPC2_standalone-${cpc2_version}/bin:\
 ${programs_location}/fastqc-${fastqc_version}:\
 ${programs_location}/${gffcompare_version}.Linux_x86_64:\
 ${programs_location}/hisat2-${hisat2_version}:\
@@ -159,6 +161,7 @@ ${programs_location}/trf409.linux64"
     bedtools_version="v2.31.0"
     bismark_version="0.24.2"
     bowtie2_version="2.5.4"
+    cpc2_version="1.0.1"
     diamond_version="2.1.9"
     fastp_version="0.23.4"
     fastqc_version="0.12.1"
@@ -207,6 +210,9 @@ ${programs_location}/trf409.linux64"
     conda config --add channels conda-forge
     conda config --set channel_priority strict
 
+    # Install Biopython
+    pip install biopython
+
     # Install bedtools
     wget https://github.com/arq5x/bedtools2/releases/download/${bedtools_version}/bedtools.static
     mv bedtools.static bedtools
@@ -221,6 +227,16 @@ ${programs_location}/trf409.linux64"
     wget https://github.com/BenLangmead/bowtie2/releases/download/v${bowtie2_version}/bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
     unzip bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
     rm bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
+
+    # Install CPC2
+    wget https://github.com/gao-lab/CPC2_standalone/archive/refs/tags/v${cpc2_version}.tar.gz
+    tar -xzvf v${cpc2_version}.tar.gz
+    cd CPC2_standalone-${cpc2_version}
+    export CPC_HOME="$PWD"
+    cd libs/libsvm
+    gzip -dc libsvm-3.18.tar.gz | tar xf -
+    cd libsvm-3.18
+    make clean && make
 
     # Install DIAMOND BLAST
     wget https://github.com/bbuchfink/diamond/releases/download/v${diamond_version}/diamond-linux64.tar.gz

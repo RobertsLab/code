@@ -25,7 +25,6 @@ From: rocker/rstudio:4.4
     programs_location="/srlab/programs"
     bismark_version="0.24.2"
     bowtie2_version="2.5.4"
-    cpc2_version="1.0.1"
     diamond_version="2.1.9"
     fastp_version="0.23.4"
     fastqc_version="0.12.1"
@@ -45,9 +44,14 @@ From: rocker/rstudio:4.4
 
     mamba_envs_dir="${programs_location}/miniforge3-${miniforge_version}/envs"
 
+    # Set Nextflow home directory
+    export NXF_HOME='/gscratch/srlab/programs/nextflow'
+
+    # Set locale to C
+    export LC_ALL=C
+
     ######################################################
 
-    export LC_ALL=C
     
     ### Set container system PATH ###
     PATH="/usr/local/sbin:\
@@ -59,9 +63,8 @@ From: rocker/rstudio:4.4
 ${programs_location}:\
 ${programs_location}/Bismark-${bismark_version}:\
 ${programs_location}/bowtie2-${bowtie2_version}-sra-linux-x86_64:\
-${programs_location}/:CPC2_standalone-${cpc2_version}/bin:\
 ${programs_location}/fastqc-${fastqc_version}:\
-${programs_location}/${gffcompare_version}.Linux_x86_64:\
+${programs_location}/${gffcompare_version}:\
 ${programs_location}/hisat2-${hisat2_version}:\
 ${programs_location}/kallisto-${kallisto_version}/build/src:\
 ${programs_location}/miniforge3-${miniforge_version}/bin:\
@@ -94,6 +97,7 @@ ${programs_location}/trf409.linux64"
     default-jdk \
     dialog \
     emboss \
+    fakeroot \
     gcc-multilib \
     gdebi-core \
     gfortran \
@@ -108,7 +112,6 @@ ${programs_location}/trf409.linux64"
     libcurl4-openssl-dev \
     libedit2 \
     libfontconfig1 \
-    libgsl-dev \
     liblzma-dev \
     libncurses5-dev \
     libncurses-dev \
@@ -126,6 +129,7 @@ ${programs_location}/trf409.linux64"
     libz-dev \
     libbz2-dev \
     liblzma-dev \
+    libfuse3-3 \
     libxt6 \
     libxtst6 \
     libzmq3-dev \
@@ -140,7 +144,7 @@ ${programs_location}/trf409.linux64"
     pkg-config \
     psmisc \
     python3 \
-    python3-setuptools \
+    python-setuptools \
     rsync \
     ruby \
     software-properties-common \
@@ -148,6 +152,7 @@ ${programs_location}/trf409.linux64"
     sudo \
     texinfo \
     tree \
+    uidmap \
     unzip \
     wget \
     xorg-dev \
@@ -161,7 +166,6 @@ ${programs_location}/trf409.linux64"
     bedtools_version="v2.31.0"
     bismark_version="0.24.2"
     bowtie2_version="2.5.4"
-    cpc2_version="1.0.1"
     diamond_version="2.1.9"
     fastp_version="0.23.4"
     fastqc_version="0.12.1"
@@ -210,10 +214,11 @@ ${programs_location}/trf409.linux64"
     conda config --add channels conda-forge
     conda config --set channel_priority strict
 
-    # Install Biopython
-    ## Dependencies for CPC2
-    pip install biopython
-    pip install six
+    # Install Apptainer/Singularity for Nextflow/nf-core
+    wget https://github.com/apptainer/apptainer/releases/download/v1.4.0/apptainer_1.4.0_amd64.deb
+    dpkg --install apptainer_1.4.0_amd64.deb
+    rm apptainer_1.4.0_amd64.deb
+
 
     # Install bedtools
     wget https://github.com/arq5x/bedtools2/releases/download/${bedtools_version}/bedtools.static
@@ -229,17 +234,6 @@ ${programs_location}/trf409.linux64"
     wget https://github.com/BenLangmead/bowtie2/releases/download/v${bowtie2_version}/bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
     unzip bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
     rm bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
-
-    # Install CPC2
-    wget https://github.com/gao-lab/CPC2_standalone/archive/refs/tags/v${cpc2_version}.tar.gz
-    tar -xzvf v${cpc2_version}.tar.gz
-    cd CPC2_standalone-${cpc2_version}
-    export CPC_HOME="$PWD"
-    cd libs/libsvm
-    gzip -dc libsvm-3.18.tar.gz | tar xf -
-    cd libsvm-3.18
-    make clean && make
-    cd /srlab/programs
 
     # Install DIAMOND BLAST
     wget https://github.com/bbuchfink/diamond/releases/download/v${diamond_version}/diamond-linux64.tar.gz
@@ -286,6 +280,10 @@ ${programs_location}/trf409.linux64"
 
     # Install MultiQC
     mamba create -n multiqc_env multiqc=1.24.1
+
+    # Install Nextflow
+    curl -s https://get.nextflow.io | bash  # Download Nextflow
+    chmod +x nextflow
 
     # Install NCBI datasets
     mkdir --parents ncbi-datasets-v${ncbi_datasets_version}
@@ -360,7 +358,7 @@ ${programs_location}/trf409.linux64"
 
 %labels
     Author Sam White
-    Version v0.0.5
+    Version v0.1.0
     
 
 %help

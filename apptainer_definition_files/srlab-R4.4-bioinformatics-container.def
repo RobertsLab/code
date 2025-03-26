@@ -144,7 +144,7 @@ ${programs_location}/trf409.linux64"
     pkg-config \
     psmisc \
     python3 \
-    python-setuptools \
+    python3-setuptools \
     rsync \
     ruby \
     software-properties-common \

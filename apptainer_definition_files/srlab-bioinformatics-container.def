@@ -76,6 +76,7 @@ ${programs_location}/miniforge3-${miniforge_version}/bin:\
 ${mamba_envs_dir}/multiqc_env/bin:\
 ${programs_location}/ncbi-blast-${ncbi_blast_version}+/bin:\
 ${programs_location}/ncbi-datasets-${ncbi_datasets_version}:\
+${programs_location}/nextflow:\
 ${programs_location}/RepeatMasker:\
 ${programs_location}/rmblast-${rmblast_version}/bin:\
 ${programs_location}/salmon-latest_linux_x86_64/bin:\
@@ -99,6 +100,7 @@ ${programs_location}/trf409.linux64"
     coreutils \
     curl \
     debconf \
+    debianutils \
     default-jdk \
     dialog \
     emboss \
@@ -111,6 +113,7 @@ ${programs_location}/trf409.linux64"
     hmmer \
     htop \
     infernal \
+    less \
     libapparmor1 \
     libbz2-dev \
     libc6 \

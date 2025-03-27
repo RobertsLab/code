@@ -50,6 +50,7 @@ From: rocker/rstudio:4.4.1
     # Set Nextflow cache and temp directories
     export NXF_APPTAINER_CACHEDIR='/gscratch/scrubbed/samwhite/nextflow-cache'
     export NXF_TEMP='/gscratch/scrubbed/samwhite/nextflow-tmp'
+    export NXF_SINGULARITY_CACHEDIR='/gscratch/scrubbed/samwhite/singularity-cache'
 
     # Set locale to C
     export LC_ALL=C
@@ -179,7 +180,7 @@ ${programs_location}/trf409.linux64"
     miniforge_version="24.7.1-0"
     multiqc_version="1.24.1"
     ncbi_blast_version="2.16.0"
-    ncbi_datasets_version="16.34.0"
+    ncbi_datasets_version="13.34.0"
     repeatmasker_version="4.1.7-p1"
     rmblast_version="2.14.1"
     salmon_version="1.10.0"
@@ -294,7 +295,7 @@ ${programs_location}/trf409.linux64"
 
     cd ncbi-datasets-v${ncbi_datasets_version}
     
-    wget https://github.com/ncbi/datasets/releases/download/v16.34.0/linux-amd64.cli.package.zip \
+    wget https://github.com/ncbi/datasets/releases/download/v${ncbi_datasets_version}/linux-amd64.cli.package.zip \
     && unzip linux-amd64.cli.package.zip \
     && rm linux-amd64.cli.package.zip
 
@@ -302,8 +303,8 @@ ${programs_location}/trf409.linux64"
 
     # Install NCBI BLAST
     wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/${ncbi_blast_version}/ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz \
-	&& tar -zxvpf ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz \
-	&& rm ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz
+    && tar -zxvpf ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz \
+    && rm ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz
 
     # RepeatMasker conda environment with Python3 and h5py using mamba
     mamba create -n repeatmasker-env python=3.8 h5py -y

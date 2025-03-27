@@ -100,7 +100,6 @@ ${programs_location}/trf409.linux64"
     coreutils \
     curl \
     debconf \
-    debianutils \
     default-jdk \
     dialog \
     emboss \

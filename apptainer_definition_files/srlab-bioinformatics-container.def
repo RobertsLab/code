@@ -48,7 +48,7 @@ From: rocker/rstudio:4.4.1
     export NXF_HOME='/gscratch/srlab/programs/nextflow'
 
     # Set Nextflow cache and temp directories
-    export NXF_APPTAINER_CACHEDIR='/gscratch/scrubbed/samwhite/nextflow-cache'
+    export APPTAINER_CACHEDIR='/gscratch/scrubbed/samwhite/nextflow-cache'
     export NXF_TEMP='/gscratch/scrubbed/samwhite/nextflow-tmp'
     export NXF_SINGULARITY_CACHEDIR='/gscratch/scrubbed/samwhite/singularity-cache'
 

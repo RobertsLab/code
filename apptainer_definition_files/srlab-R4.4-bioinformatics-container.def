@@ -217,12 +217,6 @@ ${programs_location}/trf409.linux64"
     rm Miniforge3-${miniforge_version}-Linux-x86_64.sh
 
 
-    ## Configure conda channels
-    conda config --add channels conda-forge
-    conda config --add channels defaults
-    conda config --add channels bioconda
-    conda config --set channel_priority strict
-
     # Install Apptainer/Singularity for Nextflow/nf-core
     wget https://github.com/apptainer/apptainer/releases/download/v1.4.0/apptainer_1.4.0_amd64.deb
     dpkg --install apptainer_1.4.0_amd64.deb
@@ -288,6 +282,13 @@ ${programs_location}/trf409.linux64"
 
 
     # Install MultiQC
+
+    ## Configure conda channels
+    conda config --add channels defaults
+    conda config --add channels bioconda
+    conda config --add channels conda-forge
+    conda config --set channel_priority strict
+
     mamba create -n multiqc_env multiqc=${multiqc_version}
 
     # Install Nextflow
@@ -311,10 +312,24 @@ ${programs_location}/trf409.linux64"
     && rm ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz
 
     # Install QIIME2
+
+    ## Configure conda channels
+    conda config --add channels conda-forge
+    conda config --add channels defaults
+    conda config --add channels bioconda
+    conda config --set channel_priority flexible
+
     conda env create -n qiime2-amplicon-${qiime2_version} \
     --file https://data.qiime2.org/distro/amplicon/qiime2-amplicon-${qiime2_version}-py310-linux-conda.yml
 
     # RepeatMasker conda environment with Python3 and h5py using mamba
+    
+    ## Configure conda channels
+    conda config --add channels defaults
+    conda config --add channels bioconda
+    conda config --add channels conda-forge
+    conda config --set channel_priority strict
+
     mamba create -n repeatmasker-env python=3.8 h5py -y
 
     # Install RepeatMasker

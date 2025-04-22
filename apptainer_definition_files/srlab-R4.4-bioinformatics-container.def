@@ -218,9 +218,9 @@ ${programs_location}/trf409.linux64"
 
 
     ## Configure conda channels
+    conda config --add channels conda-forge
     conda config --add channels defaults
     conda config --add channels bioconda
-    conda config --add channels conda-forge
     conda config --set channel_priority strict
 
     # Install Apptainer/Singularity for Nextflow/nf-core

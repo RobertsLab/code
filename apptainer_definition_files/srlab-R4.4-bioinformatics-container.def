@@ -311,7 +311,7 @@ ${programs_location}/trf409.linux64"
     && rm ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz
 
     # Install QIIME2
-    mamba create -n qiime2-amplicon-${qiime2_version}-env \
+    conda env create -n qiime2-amplicon-${qiime2_version} \
     --file https://data.qiime2.org/distro/amplicon/qiime2-amplicon-${qiime2_version}-py310-linux-conda.yml
 
     # RepeatMasker conda environment with Python3 and h5py using mamba

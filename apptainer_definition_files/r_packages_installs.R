@@ -51,3 +51,6 @@ BiocManager::install("MatrixGenerics")
 
 # Install DESeq2
 BiocManager::install("DESeq2")
+
+# Install Rsubread (includes featureCounts)
+BiocManager::install("Rsubread")

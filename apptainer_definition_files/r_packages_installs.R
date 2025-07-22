@@ -6,6 +6,8 @@ if (!requireNamespace("BiocManager", quietly = TRUE, ask = FALSE))
 install.packages("BiocManager")
 BiocManager::install(version = "3.20", ask = FALSE)
 
+# Install bookdown
+install.packages("bookdown")
 
 # Install energy
 install.packages("energy")
@@ -15,6 +17,9 @@ install.packages("gridExtra")
 
 # Install igraph
 install.packages("igraph")
+
+# Install knitr
+install.packages("knitr")
 
 # Install pheatmap
 install.packages("pheatmap")

@@ -23,8 +23,10 @@ From: rocker/rstudio:4.4
 %environment
     ### Set program locations/versions for system PATH ###
     programs_location="/srlab/programs"
+    bamUtil_version="1.0.15"
     bismark_version="0.24.2"
     bowtie2_version="2.5.4"
+    bwa_version="b92993c"
     CPC2_version="1.0.1"
     diamond_version="2.1.9"
     fastp_version="0.23.4"
@@ -36,6 +38,7 @@ From: rocker/rstudio:4.4
     multiqc_version="1.24.1"
     ncbi_blast_version="2.16.0"
     ncbi_datasets_version="13.34.0"
+    picard_version="3.4.0"
     qiime2_version="2024.10"
     repeatmasker_version="4.1.7-p1"
     rmblast_version="2.14.1"
@@ -46,6 +49,7 @@ From: rocker/rstudio:4.4
     trimmomatic_version="0.39"
 
     mamba_envs_dir="${programs_location}/miniforge3-${miniforge_version}/envs"
+    PICARD="${programs_location}/picard.jar"
 
     # Set Nextflow home directory
     export NXF_HOME='/gscratch/srlab/programs/nextflow'
@@ -69,8 +73,10 @@ From: rocker/rstudio:4.4
 /sbin:\
 /bin:\
 ${programs_location}:\
+${programs_location}/bamUtil-${bamUtil_version}:\
 ${programs_location}/Bismark-${bismark_version}:\
 ${programs_location}/bowtie2-${bowtie2_version}-sra-linux-x86_64:\
+${programs_location}/bwa:\
 ${programs_location}/CPC2_standalone-${CPC2_version}/bin:\
 ${programs_location}/fastqc-${fastqc_version}:\
 ${programs_location}/${gffcompare_version}:\
@@ -174,10 +180,11 @@ ${programs_location}/trf409.linux64"
     Rscript /tmp/r_packages_installs.R
 
     ########## Set program versions ##########
-
+    bamUtil_version="1.0.15"
     bedtools_version="v2.31.0"
     bismark_version="0.24.2"
     bowtie2_version="2.5.4"
+    bwa_version="b92993c"
     CPC2_version="1.0.1"
     diamond_version="2.1.9"
     fastp_version="0.23.4"
@@ -189,6 +196,7 @@ ${programs_location}/trf409.linux64"
     multiqc_version="1.24.1"
     ncbi_blast_version="2.16.0"
     ncbi_datasets_version="13.34.0"
+    picard_version="3.4.0"
     qiime2_version="2024.10"
     repeatmasker_version="4.1.7-p1"
     rmblast_version="2.14.1"
@@ -228,6 +236,15 @@ ${programs_location}/trf409.linux64"
     dpkg --install apptainer_1.4.0_amd64.deb
     rm apptainer_1.4.0_amd64.deb
 
+    # Install bamUtil
+    wget https://github.com/statgen/bamUtil/archive/refs/tags/v${bamUtil_version}.tar.gz
+    tar -xzvf v${bamUtil_version}.tar.gz
+    rm v${bamUtil_version}.tar.gz
+    cd bamUtil-${bamUtil_version}
+    make cloneLib
+    make -j ${threads}
+    cd ${programs_location}
+
 
     # Install bedtools
     wget https://github.com/arq5x/bedtools2/releases/download/${bedtools_version}/bedtools.static
@@ -243,6 +260,15 @@ ${programs_location}/trf409.linux64"
     wget https://github.com/BenLangmead/bowtie2/releases/download/v${bowtie2_version}/bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
     unzip bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
     rm bowtie2-${bowtie2_version}-sra-linux-x86_64.zip
+
+    # Install BWA
+    ## BWA version is set to a specific commit
+    git clone https://github.com/lh3/bwa.git
+    cd bwa
+    git checkout ${bwa_version}
+    make -j ${threads}
+    cd ${programs_location}
+
 
     # Install CPC2.py Standlone
     wget https://github.com/gao-lab/CPC2_standalone/archive/refs/tags/v1.0.1.tar.gz
@@ -312,6 +338,7 @@ ${programs_location}/trf409.linux64"
 
     mamba create -n multiqc_env multiqc=${multiqc_version}
 
+
     # Install Nextflow
     curl -s https://get.nextflow.io | bash  # Download Nextflow
     chmod +x nextflow
@@ -332,8 +359,11 @@ ${programs_location}/trf409.linux64"
     && tar -zxvpf ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz \
     && rm ncbi-blast-${ncbi_blast_version}+-x64-linux.tar.gz
 
-    # Install QIIME2
+    # Install Picard
+    wget https://github.com/broadinstitute/picard/releases/download/${picard_version}/picard.jar
 
+
+    # Install QIIME2
     ## Configure conda channels
     conda config --add channels conda-forge
     conda config --add channels defaults

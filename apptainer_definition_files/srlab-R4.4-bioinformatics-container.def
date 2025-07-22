@@ -241,6 +241,9 @@ ${programs_location}/trf409.linux64"
     tar -xzvf v${bamUtil_version}.tar.gz
     rm v${bamUtil_version}.tar.gz
     cd bamUtil-${bamUtil_version}
+    
+    ## Replace outdated git URL in Makefile.inc
+    sed -i 's|git://github.com/statgen/libStatGen.git|https://github.com/statgen/libStatGen.git|g' Makefile.inc
     make cloneLib
     make -j ${threads}
     cd ${programs_location}

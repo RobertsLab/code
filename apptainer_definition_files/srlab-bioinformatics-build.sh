@@ -7,7 +7,7 @@
 # <commit_hash> is the most recent git commit hash from srlab-bioinformatics-container.def
 
 # Set input definition file
-input_definition="srlab-bioinformatics-container.def"
+input_definition="srlab-R4.4-bioinformatics-container.def"
 
 # Set output directory
 output_dir="/gscratch/srlab/containers"
@@ -27,7 +27,7 @@ fi
 cp r_packages_installs.R /tmp/
 
 # Container filename
-container_basename="${input_definition%%.*}-${build_commit}"
+container_basename="${input_definition%.*}-${build_commit}"
 
 
 # Check if build already exists

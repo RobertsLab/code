@@ -180,6 +180,7 @@ ${programs_location}/trf409.linux64"
     Rscript /tmp/r_packages_installs.R
 
     ########## Set program versions ##########
+    programs_location="/srlab/programs"
     bamUtil_version="1.0.15"
     bedtools_version="v2.31.0"
     bismark_version="0.24.2"
@@ -241,7 +242,7 @@ ${programs_location}/trf409.linux64"
     tar -xzvf v${bamUtil_version}.tar.gz
     rm v${bamUtil_version}.tar.gz
     cd bamUtil-${bamUtil_version}
-    
+
     ## Replace outdated git URL in Makefile.inc
     sed -i 's|git://github.com/statgen/libStatGen.git|https://github.com/statgen/libStatGen.git|g' Makefile.inc
     make cloneLib

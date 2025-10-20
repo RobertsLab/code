@@ -231,6 +231,9 @@ ${programs_location}/trf409.linux64"
 
     rm Miniforge3-${miniforge_version}-Linux-x86_64.sh
 
+    # Install Poetry package manager for barnacle installation
+    curl -sSL https://install.python-poetry.org | POETRY_HOME=/srlab/programs python3 -
+
 
     # Install Apptainer/Singularity for Nextflow/nf-core
     wget https://github.com/apptainer/apptainer/releases/download/v1.4.0/apptainer_1.4.0_amd64.deb
@@ -259,8 +262,6 @@ ${programs_location}/trf409.linux64"
 
     ## Activate barnacle environment and install dependencies
     conda activate barnacle_p311_env
-    curl -sSL https://install.python-poetry.org | python3 -
-    export PATH="/root/.local/bin:$PATH
     cd barnacle
     poetry install
     conda deactivate

@@ -260,6 +260,7 @@ ${programs_location}/trf409.linux64"
     ## Activate barnacle environment and install dependencies
     conda activate barnacle_p311_env
     curl -sSL https://install.python-poetry.org | python3 -
+    export PATH="/root/.local/bin:$PATH
     cd barnacle
     poetry install
     conda deactivate

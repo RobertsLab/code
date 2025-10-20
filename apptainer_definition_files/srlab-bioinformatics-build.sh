@@ -16,8 +16,8 @@ output_dir="/gscratch/srlab/containers"
 echo "Pulling the latest changes from git repository..."
 git pull || { echo "Error: git pull failed."; exit 1; }
 
-# Capture most recent commit hash
-build_commit=$(git log --follow --oneline -- "${input_definition}" | awk 'NR == 1 {print $1}')
+# Capture most recent commit hash affecting either the definition file or R packages file
+build_commit=$(git log --oneline -- "${input_definition}" r_packages_installs.R | awk 'NR == 1 {print $1}')
 if [ -z "${build_commit}" ]; then
   echo "Error: Unable to retrieve git commit hash."
   exit 1

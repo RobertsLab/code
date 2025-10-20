@@ -161,7 +161,6 @@ ${programs_location}/trf409.linux64"
     parallel \
     pipx \
     pipx ensurepath \
-    pipx ensurepath --global \
     pkg-config \
     psmisc \
     python3 \

@@ -370,6 +370,9 @@ ${programs_location}/trf409.linux64"
     # Install Picard
     wget https://github.com/broadinstitute/picard/releases/download/${picard_version}/picard.jar
 
+    # Install Poetry Python package manager via pipx
+    pipx install poetry
+
 
     # Install QIIME2
     ## Configure conda channels

@@ -159,7 +159,6 @@ ${programs_location}/trf409.linux64"
     net-tools \
     openssh-client \
     parallel \
-    pipx \
     pkg-config \
     psmisc \
     python3 \
@@ -176,12 +175,6 @@ ${programs_location}/trf409.linux64"
     wget \
     xorg-dev \
     zlib1g-dev
-
-    # Complete pipx setup
-    pipx ensurepath
-    # Install Poetry Python package manager via pipx
-    pipx install poetry
-    pipx ensurepath
 
     # Run R package installation script file
     Rscript /tmp/r_packages_installs.R
@@ -266,6 +259,7 @@ ${programs_location}/trf409.linux64"
 
     ## Activate barnacle environment and install dependencies
     conda activate barnacle_p311_env
+    curl -sSL https://install.python-poetry.org | python3 -
     cd barnacle
     poetry install
     conda deactivate

@@ -159,6 +159,9 @@ ${programs_location}/trf409.linux64"
     net-tools \
     openssh-client \
     parallel \
+    pipx \
+    pipx ensurepath \
+    pipx ensurepath --global \
     pkg-config \
     psmisc \
     python3 \

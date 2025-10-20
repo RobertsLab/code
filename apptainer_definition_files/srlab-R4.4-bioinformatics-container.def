@@ -181,6 +181,7 @@ ${programs_location}/trf409.linux64"
     pipx ensurepath
     # Install Poetry Python package manager via pipx
     pipx install poetry
+    pipx ensurepath
 
     # Run R package installation script file
     Rscript /tmp/r_packages_installs.R

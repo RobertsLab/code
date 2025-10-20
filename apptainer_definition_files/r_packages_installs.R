@@ -21,6 +21,9 @@ install.packages("igraph")
 # Install knitr
 install.packages("knitr")
 
+# Install matrixStats
+install.packages("matrixStats")
+
 # Install pheatmap
 install.packages("pheatmap")
 
@@ -29,6 +32,15 @@ install.packages("reshape2")
 
 # Install reticulate
 install.packages("reticulate")
+
+# Install RColorBrewer
+install.packages("RColorBrewer")
+
+# Install sctransform
+install.packages("sctransform")
+
+# Install glmGamPoi
+install.packages("glmGamPoi")
 
 # Install tidygraph
 install.packages("tidygraph")

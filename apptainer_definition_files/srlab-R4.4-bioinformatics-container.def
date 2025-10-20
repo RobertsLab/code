@@ -253,6 +253,20 @@ ${programs_location}/trf409.linux64"
     make -j ${threads}
     cd ${programs_location}
 
+    # Install barnacle (tensor decomposition tool)
+
+    ## Clone barnacle repository
+    git clone https://github.com/blasks/barnacle.git
+
+    ## Create mamba environment for barnacle
+    mamba create -n barnacle_p311_env python=3.11 -y
+
+    ## Activate barnacle environment and install dependencies
+    conda activate barnacle_p311_env
+    cd barnacle
+    poetry install
+    conda deactivate
+    cd ${programs_location}
 
     # Install bedtools
     wget https://github.com/arq5x/bedtools2/releases/download/${bedtools_version}/bedtools.static

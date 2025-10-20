@@ -27,6 +27,9 @@ install.packages("pheatmap")
 # Install reshape2
 install.packages("reshape2")
 
+# Install reticulate
+install.packages("reticulate")
+
 # Install tidygraph
 install.packages("tidygraph")
 

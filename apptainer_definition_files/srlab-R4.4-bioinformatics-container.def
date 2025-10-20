@@ -179,6 +179,8 @@ ${programs_location}/trf409.linux64"
 
     # Complete pipx setup
     pipx ensurepath
+    # Install Poetry Python package manager via pipx
+    pipx install poetry
 
     # Run R package installation script file
     Rscript /tmp/r_packages_installs.R
@@ -383,9 +385,6 @@ ${programs_location}/trf409.linux64"
 
     # Install Picard
     wget https://github.com/broadinstitute/picard/releases/download/${picard_version}/picard.jar
-
-    # Install Poetry Python package manager via pipx
-    pipx install poetry
 
 
     # Install QIIME2

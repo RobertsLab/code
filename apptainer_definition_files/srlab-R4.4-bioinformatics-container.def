@@ -160,7 +160,6 @@ ${programs_location}/trf409.linux64"
     openssh-client \
     parallel \
     pipx \
-    pipx ensurepath \
     pkg-config \
     psmisc \
     python3 \
@@ -177,6 +176,9 @@ ${programs_location}/trf409.linux64"
     wget \
     xorg-dev \
     zlib1g-dev
+
+    # Complete pipx setup
+    pipx ensurepath
 
     # Run R package installation script file
     Rscript /tmp/r_packages_installs.R

@@ -40,7 +40,7 @@ install.packages("RColorBrewer")
 install.packages("sctransform")
 
 # Install glmGamPoi
-install.packages("glmGamPoi")
+BiocManager::install("glmGamPoi")
 
 # Install tidygraph
 install.packages("tidygraph")

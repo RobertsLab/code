@@ -355,6 +355,9 @@ ${programs_location}/trf409.linux64"
     cd /srlab/programs
     rm v${kallisto_version}.tar.gz
 
+    # Install PacBio lima
+    mamba create -n pacbio_lima_env lima -c bioconda -y
+
 
     # Install MultiQC
 

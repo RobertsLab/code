@@ -181,6 +181,12 @@ ${programs_location}/trf409.linux64"
     # Run R package installation script file
     Rscript /tmp/r_packages_installs.R
 
+    # Configure RStudio Server to prevent session timeout
+    cat >> /etc/rstudio/rserver.conf << EOF
+    # Prevent session timeout
+    auth-timeout-minutes=0
+    EOF
+
     ########## Set program versions ##########
     programs_location="/srlab/programs"
     bamUtil_version="1.0.15"

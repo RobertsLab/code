@@ -182,10 +182,11 @@ ${programs_location}/trf409.linux64"
     Rscript /tmp/r_packages_installs.R
 
     # Configure RStudio Server to prevent session timeout
-    cat >> /etc/rstudio/rserver.conf << EOF
-    # Prevent session timeout
-    auth-timeout-minutes=0
-    EOF
+    mkdir -p /etc/rstudio
+    cat >> /etc/rstudio/rserver.conf << 'EOF'
+# Prevent session timeout
+auth-timeout-minutes=0
+EOF
 
     ########## Set program versions ##########
     programs_location="/srlab/programs"

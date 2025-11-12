@@ -23,6 +23,7 @@ From: rocker/rstudio:4.4
 %environment
     ### Set program locations/versions for system PATH ###
     programs_location="/srlab/programs"
+    bcftools_version="1.22"
     bamUtil_version="1.0.15"
     bismark_version="0.24.2"
     bowtie2_version="2.5.4"
@@ -76,6 +77,7 @@ From: rocker/rstudio:4.4
 /bin:\
 ${programs_location}:\
 ${programs_location}/bamUtil-${bamUtil_version}:\
+${programs_location}/bcftools-${bcftools_version}:\
 ${programs_location}/Bismark-${bismark_version}:\
 ${programs_location}/bowtie2-${bowtie2_version}-sra-linux-x86_64:\
 ${programs_location}/bwa:\
@@ -193,6 +195,7 @@ EOF
     ########## Set program versions ##########
     programs_location="/srlab/programs"
     bamUtil_version="1.0.15"
+    bcftools_version="1.22"
     bedtools_version="v2.31.0"
     bismark_version="0.24.2"
     bowtie2_version="2.5.4"
@@ -256,6 +259,14 @@ EOF
     wget https://github.com/apptainer/apptainer/releases/download/v1.4.0/apptainer_1.4.0_amd64.deb
     dpkg --install apptainer_1.4.0_amd64.deb
     rm apptainer_1.4.0_amd64.deb
+
+    # Install bcftools
+    wget https://github.com/samtools/bcftools/releases/download/${bcftools_version}/bcftools-${bcftools_version}.tar.bz2
+    tar -xjvf bcftools-${bcftools_version}.tar.bz2
+    cd bcftools-${bcftools_version}
+    ./configure
+    make -j ${threads}
+    cd ${programs_location}
 
     # Install bamUtil
     wget https://github.com/statgen/bamUtil/archive/refs/tags/v${bamUtil_version}.tar.gz

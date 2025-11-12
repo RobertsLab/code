@@ -45,6 +45,7 @@ From: rocker/rstudio:4.4
     qiime2_version="2024.10"
     repeatmasker_version="4.1.7-p1"
     rmblast_version="2.14.1"
+    plink_version="20250819"
     salmon_version="1.10.0"
     samtools_version="1.20"
     stringtie_version="2.2.1"
@@ -92,6 +93,7 @@ ${mamba_envs_dir}/multiqc_env/bin:\
 ${programs_location}/ncbi-blast-${ncbi_blast_version}+/bin:\
 ${programs_location}/ncbi-datasets-${ncbi_datasets_version}:\
 ${programs_location}/nextflow:\
+{$programs_location}/plink_linux_x86_64_20250819:\
 ${programs_location}/poetry/bin:\
 ${programs_location}/RepeatMasker:\
 ${programs_location}/rmblast-${rmblast_version}/bin:\
@@ -213,6 +215,7 @@ EOF
     ncbi_blast_version="2.16.0"
     ncbi_datasets_version="13.34.0"
     picard_version="3.4.0"
+    plink_version="20250819"
     poetry_version="2.2.1"
     qiime2_version="2024.10"
     repeatmasker_version="4.1.7-p1"
@@ -418,6 +421,10 @@ EOF
 
     # Install Picard
     wget https://github.com/broadinstitute/picard/releases/download/${picard_version}/picard.jar
+
+    # Install PLINK version 1.9, 20250819
+    wget https://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_${plink_version}.zip
+    unzip plink_linux_x86_64_${plink_version}.zip
 
 
     # Install QIIME2

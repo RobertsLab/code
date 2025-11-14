@@ -270,6 +270,7 @@ EOF
     ./configure
     make -j ${threads}
     cd ${programs_location}
+    rm bcftools-${bcftools_version}.tar.bz2
 
     # Install bamUtil
     wget https://github.com/statgen/bamUtil/archive/refs/tags/v${bamUtil_version}.tar.gz

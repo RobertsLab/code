@@ -51,6 +51,7 @@ From: rocker/rstudio:4.4
     stringtie_version="2.2.1"
     subread_version="2.0.5"
     trimmomatic_version="0.39"
+    trinity_version="2.15.2"
 
     mamba_envs_dir="${programs_location}/miniforge3-${miniforge_version}/envs"
     PICARD="${programs_location}/picard.jar"
@@ -93,7 +94,7 @@ ${mamba_envs_dir}/multiqc_env/bin:\
 ${programs_location}/ncbi-blast-${ncbi_blast_version}+/bin:\
 ${programs_location}/ncbi-datasets-${ncbi_datasets_version}:\
 ${programs_location}/nextflow:\
-{$programs_location}/plink_linux_x86_64_20250819:\
+${programs_location}/plink_linux_x86_64_20250819:\
 ${programs_location}/poetry/bin:\
 ${programs_location}/RepeatMasker:\
 ${programs_location}/rmblast-${rmblast_version}/bin:\
@@ -102,6 +103,7 @@ ${programs_location}/samtools-${samtools_version}:\
 ${programs_location}/stringtie-${stringtie_version}.Linux_x86_64:\
 ${programs_location}/subread-${subread_version}-Linux-x86_64/bin:\
 ${programs_location}/Trimmomatic-${trimmomatic_version}:\
+${programs_location}/trinityrnaseq-v${trinity_version}:\
 ${programs_location}/trf409.linux64"
     ######################################################
 
@@ -225,6 +227,7 @@ EOF
     samtools_version="1.20"
     subread_version="2.0.5"
     trimmomatic_version="0.39"
+    trinity_version="2.15.2"
 
     ##########################################
     
@@ -479,6 +482,11 @@ EOF
     cd -
     rm samtools-${samtools_version}.tar.bz2
 
+    # Install StringTie
+    wget http://ccb.jhu.edu/software/stringtie/dl/stringtie-${stringtie_version}.Linux_x86_64.tar.gz
+    tar -xzvf stringtie-${stringtie_version}.Linux_x86_64.tar.gz
+    rm stringtie-${stringtie_version}.Linux_x86_64.tar.gz
+
     # Install subread
     ## Includes featureCounts
     wget https://sourceforge.net/projects/subread/files/subread-${subread_version}-Linux-x86_64.tar.gz
@@ -492,16 +500,19 @@ EOF
     rm Trimmomatic-${trimmomatic_version}.zip
 
 
-    # Install StringTie
-    wget http://ccb.jhu.edu/software/stringtie/dl/stringtie-${stringtie_version}.Linux_x86_64.tar.gz
-    tar -xzvf stringtie-${stringtie_version}.Linux_x86_64.tar.gz
-    rm stringtie-${stringtie_version}.Linux_x86_64.tar.gz
-
-
 
     # Install TRF
     wget https://github.com/Benson-Genomics-Lab/TRF/releases/download/v4.09.1/trf409.linux64
     chmod +x trf409.linux64
+
+    # Install Trinity
+    wget https://github.com/trinityrnaseq/trinityrnaseq/releases/download/Trinity-v${trinity_version}/trinityrnaseq-v${trinity_version}.FULL.tar.gz
+    tar -xzvf trinityrnaseq-v${trinity_version}.FULL.tar.gz
+    cd trinityrnaseq-v${trinity_version}
+    make -j ${threads}
+    make plugins -j ${threads}
+    cd ${programs_location}
+    rm trinityrnaseq-v${trinity_version}.FULL.tar.gz
 
 
 

@@ -526,6 +526,11 @@ EOF
     cd trinityrnaseq
     git checkout Trinity-v${trinity_version}
     git submodule update --init --recursive
+    
+    # Fix htslib config files issue (https://github.com/trinityrnaseq/trinityrnaseq/issues/1427)
+    cp /usr/share/misc/config.guess trinity-plugins/bamsifter/htslib/
+    cp /usr/share/misc/config.sub trinity-plugins/bamsifter/htslib/
+    
     make
     make plugins
     cd ${programs_location}

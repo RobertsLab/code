@@ -117,6 +117,8 @@ ${programs_location}/trf409.linux64"
     apt-utils \
     aptitude \
     automake \
+    autoconf \
+    autotools-dev \
     build-essential \
     bzip2 \
     cmake \

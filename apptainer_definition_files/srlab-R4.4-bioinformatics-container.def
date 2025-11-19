@@ -237,7 +237,7 @@ EOF
 
     
     # Set threads for faster builds
-    threads="20"
+    threads="40"
 
     # Make programs directory
     mkdir --parents /srlab/programs

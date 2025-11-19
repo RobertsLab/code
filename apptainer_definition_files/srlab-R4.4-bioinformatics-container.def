@@ -519,13 +519,16 @@ EOF
     chmod +x trf409.linux64
 
     # Install Trinity
-    wget https://github.com/trinityrnaseq/trinityrnaseq/releases/download/Trinity-v${trinity_version}/trinityrnaseq-v${trinity_version}.FULL.tar.gz
-    tar -xzvf trinityrnaseq-v${trinity_version}.FULL.tar.gz
-    cd trinityrnaseq-v${trinity_version}
-    make -j ${threads}
-    make plugins -j ${threads}
+    # Clone from git to get proper git submodules support
+    git clone --recursive https://github.com/trinityrnaseq/trinityrnaseq.git
+    cd trinityrnaseq
+    git checkout Trinity-v${trinity_version}
+    git submodule update --init --recursive
+    make
+    make plugins
     cd ${programs_location}
-    rm trinityrnaseq-v${trinity_version}.FULL.tar.gz
+    # Rename to match version in PATH
+    mv trinityrnaseq trinityrnaseq-v${trinity_version}
 
 
 

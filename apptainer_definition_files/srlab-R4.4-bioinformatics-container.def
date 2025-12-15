@@ -530,6 +530,9 @@ EOF
     # Fix htslib config files issue (https://github.com/trinityrnaseq/trinityrnaseq/issues/1427)
     cp /usr/share/misc/config.guess trinity-plugins/bamsifter/htslib/
     cp /usr/share/misc/config.sub trinity-plugins/bamsifter/htslib/
+
+    # Fix samtools version parsing
+    sed -i '4053s/samtools --version/samtools version/' /srlab/programs/trinityrnaseq-v2.15.2/Trinity
     
     make
     make plugins

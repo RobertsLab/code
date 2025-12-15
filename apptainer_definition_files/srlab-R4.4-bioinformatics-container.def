@@ -539,8 +539,8 @@ EOF
     # Rename to match version in PATH
     mv trinityrnaseq trinityrnaseq-v${trinity_version}
 
-    # Fix samtools version parsing
-    sed -i '4053s/samtools --version/samtools version/' /srlab/programs/trinityrnaseq-v${trinity_version}/Trinity
+    # Skip samtools version check, due to issues with samtools 1.20 and Trinity v2.15.2
+    sed -i '1268s/^/#/' /srlab/programs/trinityrnaseq-v2.15.2/Trinity
 
 
 

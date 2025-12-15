@@ -531,14 +531,16 @@ EOF
     cp /usr/share/misc/config.guess trinity-plugins/bamsifter/htslib/
     cp /usr/share/misc/config.sub trinity-plugins/bamsifter/htslib/
 
-    # Fix samtools version parsing
-    sed -i '4053s/samtools --version/samtools version/' /srlab/programs/trinityrnaseq-v2.15.2/Trinity
+
     
     make
     make plugins
     cd ${programs_location}
     # Rename to match version in PATH
     mv trinityrnaseq trinityrnaseq-v${trinity_version}
+
+    # Fix samtools version parsing
+    sed -i '4053s/samtools --version/samtools version/' /srlab/programs/trinityrnaseq-v${trinity_version}/Trinity
 
 
 

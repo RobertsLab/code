@@ -20,3 +20,5 @@ This is a repository for all of [the Roberts Lab](https://robertslab.github.io/r
 
 - [`srlab-NCBI-EGAPx.def`](./srlab-NCBI-EGAPx.def): Apptainer definition file for Roberts Lab implementation of [NCBI's Eukaryotic Genome Annotation Pipeline - External (EGAPx)](https://github.com/ncbi/egapx). See the `%help` section for usage guidelines - specifically on how to utilize (bind) a customized config file.
 
+- [`srlab-R4.4-bioinformatics-container.def`](./srlab-R4.4-bioinformatics-container.def): Apptainer definition file for the Roberts Lab bioinformatics container with R 4.4. Built on the `rocker/rstudio:4.4` image and includes comprehensive bioinformatics tools for genomics, transcriptomics, and related analyses.
+

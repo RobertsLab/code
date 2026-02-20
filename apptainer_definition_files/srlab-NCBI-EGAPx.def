@@ -1,0 +1,115 @@
+Bootstrap: docker
+From: ncbi/egapx:0.5.0
+
+%labels
+    Author sam@roberts-lab
+    Version 0.5.0
+    Description EGAPx - NCBI Eukaryotic Genome Annotation Pipeline with pre-configured local execution
+
+%help
+    This container includes EGAPx 0.5.0 with pre-generated configuration files
+    for local execution. No additional setup is required by users.
+    
+    Usage:
+        singularity run egapx.sif <input.yaml> -e local -w <work_dir> -o <output_dir>
+    
+    Example:
+        singularity run egapx.sif my_genome.yaml -e local -w ./work -o ./results
+    
+    The input YAML should specify:
+        - genome: path to assembled genome FASTA
+        - taxid: NCBI Taxonomy ID
+        - short_reads: RNA-seq data (local files or SRA IDs)
+    
+    See examples in /opt/egapx/examples/ inside the container
+    
+    Advanced - Using Custom Configurations:
+    If you need to modify executor settings (memory limits, CPU allocation, etc.),
+    you can provide your own egapx_config directory:
+    
+    1. Extract default configs from container:
+        singularity exec egapx.sif cp -r /opt/egapx_defaults/egapx_config ./my_custom_config
+    
+    2. Edit the config files for your needs:
+        nano my_custom_config/local.config
+    
+    3. Run with custom configs:
+        singularity run --bind ./my_custom_config:./egapx_config egapx.sif my_genome.yaml -e local -w ./work -o ./results
+    
+    More info: https://github.com/ncbi/egapx
+
+%post
+    # Update package lists
+    apt-get update
+    
+    # Install git if not present
+    apt-get install -y git
+    
+    # Clone the EGAPx repository
+    cd /opt
+    git clone https://github.com/ncbi/egapx.git
+    cd egapx
+    
+    # Set up Python virtual environment
+    python3 -m venv venv
+    . venv/bin/activate
+    pip install --upgrade pip
+    pip install -r requirements.txt
+    
+    # Generate template config files by running a dry run
+    echo "Generating template configuration files..."
+    python3 ui/egapx.py examples/input_D_farinae_small.yaml -o /tmp/test_out || true
+    
+    # Create a permanent location for default configs
+    mkdir -p /opt/egapx_defaults
+    if [ -d "egapx_config" ]; then
+        cp -r egapx_config /opt/egapx_defaults/
+        echo "Configuration files generated and stored in /opt/egapx_defaults/egapx_config"
+    fi
+    
+    # Clean up test output
+    rm -rf /tmp/test_out
+    
+    # Create a wrapper script that handles config initialization
+    cat > /opt/egapx/egapx_wrapper.sh <<'EOF'
+#!/bin/bash
+set -e
+
+cd /opt/egapx
+source venv/bin/activate
+
+# If user doesn't have egapx_config in current directory, use defaults
+if [ ! -d "$PWD/egapx_config" ]; then
+    echo "Using default configuration for local execution..."
+    if [ -d "/opt/egapx_defaults/egapx_config" ]; then
+        cp -r /opt/egapx_defaults/egapx_config "$PWD/"
+    else
+        echo "Warning: Default configs not found, generating fresh ones..."
+        python3 ui/egapx.py "$1" -o /tmp/init_out > /dev/null 2>&1 || true
+        rm -rf /tmp/init_out
+    fi
+fi
+
+# Run EGAPx with all arguments
+exec python3 ui/egapx.py "$@"
+EOF
+    
+    chmod +x /opt/egapx/egapx_wrapper.sh
+    
+    # Clean up
+    apt-get clean
+    rm -rf /var/lib/apt/lists/*
+
+%environment
+    export PATH=/opt/egapx:$PATH
+    export LC_ALL=C
+
+%runscript
+    exec /opt/egapx/egapx_wrapper.sh "$@"
+
+%test
+    # Verify the installation
+    cd /opt/egapx
+    source venv/bin/activate
+    python3 ui/egapx.py --help
+    echo "EGAPx container test passed!"

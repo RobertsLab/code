@@ -11,10 +11,10 @@ From: ncbi/egapx:0.5.0
     for local execution. No additional setup is required by users.
     
     Usage:
-        singularity run egapx.sif <input.yaml> -e local -w <work_dir> -o <output_dir>
+        singularity run srlab-NCBI-EGAPx.sif <input.yaml> -e local -w <work_dir> -o <output_dir>
     
     Example:
-        singularity run egapx.sif my_genome.yaml -e local -w ./work -o ./results
+        singularity run srlab-NCBI-EGAPx.sif my_genome.yaml -e local -w ./work -o ./results
     
     The input YAML should specify:
         - genome: path to assembled genome FASTA
@@ -28,13 +28,13 @@ From: ncbi/egapx:0.5.0
     you can provide your own egapx_config directory:
     
     1. Extract default configs from container:
-        singularity exec egapx.sif cp -r /opt/egapx_defaults/egapx_config ./my_custom_config
+        singularity exec srlab-NCBI-EGAPx.sif cp -r /opt/egapx_defaults/egapx_config ./my_custom_config
     
     2. Edit the config files for your needs:
         nano my_custom_config/local.config
     
     3. Run with custom configs:
-        singularity run --bind ./my_custom_config:./egapx_config egapx.sif my_genome.yaml -e local -w ./work -o ./results
+        singularity run --bind ./my_custom_config:./egapx_config srlab-NCBI-EGAPx.sif my_genome.yaml -e local -w ./work -o ./results
     
     More info: https://github.com/ncbi/egapx
 

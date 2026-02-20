@@ -42,8 +42,8 @@ From: ncbi/egapx:0.5.0
     # Update package lists
     apt-get update
     
-    # Install git if not present
-    apt-get install -y git
+    # Install required packages
+    apt-get install -y git python3-venv
     
     # Clone the EGAPx repository
     cd /opt

@@ -4,17 +4,31 @@ From: ncbi/egapx:0.5.0
 %labels
     Author sam@roberts-lab
     Version 0.5.0
-    Description EGAPx - NCBI Eukaryotic Genome Annotation Pipeline with pre-configured local execution
+    Description EGAPx - NCBI Eukaryotic Genome Annotation Pipeline configured for HPC/Singularity execution
 
 %help
     This container includes EGAPx 0.5.0 with pre-generated configuration files
-    for local execution. No additional setup is required by users.
+    and all dependencies. Designed for HPC systems with Singularity/Apptainer.
+    
+    Prerequisites:
+        - Singularity/Apptainer installed on HPC
+        - Sufficient disk space for work directory
+        - Internet access for downloading reference data
     
     Usage:
-        singularity run srlab-NCBI-EGAPx.sif <input.yaml> -e local -w <work_dir> -o <output_dir>
+        singularity run --cleanenv srlab-NCBI-EGAPx.sif <input.yaml> -e singularity -w <work_dir> -o <output_dir>
     
     Example:
-        singularity run srlab-NCBI-EGAPx.sif my_genome.yaml -e local -w ./work -o ./results
+        singularity run --cleanenv srlab-NCBI-EGAPx.sif my_genome.yaml -e singularity -w ./work -o ./results
+    
+    Test run with included example data (~30 minutes):
+        singularity run --cleanenv srlab-NCBI-EGAPx.sif /opt/egapx/examples/input_D_farinae_small.yaml \
+            -e singularity -w ./work -o ./output
+    
+    Note: Adjust paths based on your Singularity/Apptainer installation:
+        which singularity  # Find binary location
+        which apptainer    # Find apptainer location
+        # If using older Singularity (not Apptainer), use /etc/singularity instead
     
     The input YAML should specify:
         - genome: path to assembled genome FASTA
@@ -30,11 +44,11 @@ From: ncbi/egapx:0.5.0
     1. Extract default configs from container:
         singularity exec srlab-NCBI-EGAPx.sif cp -r /opt/egapx_defaults/egapx_config ./my_custom_config
     
-    2. Edit the config files for your needs:
-        nano my_custom_config/local.config
+    2. Edit the config files as needed for your environment (e.g., singularity.config for HPC settings)
     
     3. Run with custom configs:
-        singularity run --bind ./my_custom_config:./egapx_config srlab-NCBI-EGAPx.sif my_genome.yaml -e local -w ./work -o ./results
+        singularity run --cleanenv --bind ./my_custom_config:./egapx_config \
+            srlab-NCBI-EGAPx.sif my_genome.yaml -e singularity -w ./work -o ./results
     
     More info: https://github.com/ncbi/egapx
 
@@ -42,11 +56,24 @@ From: ncbi/egapx:0.5.0
     # Update package lists
     apt-get update
     
-    # Install required packages
-    apt-get install -y git python3-venv
+    # Install required packages including singularity
+    apt-get install -y git python3-venv wget curl openjdk-17-jre-headless squashfs-tools \
+        software-properties-common fuse3 libfuse3-3
+    
+    # Install singularity from Ubuntu repositories (not used but may be needed for checks)
+    apt-get install -y singularity-container
+    
+    # Install Nextflow v23.10.1
+    cd /opt
+    wget -qO- https://github.com/nextflow-io/nextflow/releases/download/v23.10.1/nextflow-23.10.1-all | bash
+    chmod +x nextflow
+    mv nextflow /usr/local/bin/
+    
+    # Pre-download Nextflow dependencies
+    echo "Downloading Nextflow dependencies..."
+    nextflow info
     
     # Clone the EGAPx repository
-    cd /opt
     git clone https://github.com/ncbi/egapx.git
     cd egapx
     
@@ -75,23 +102,49 @@ From: ncbi/egapx:0.5.0
 #!/bin/bash
 set -e
 
-cd /opt/egapx
-source venv/bin/activate
+# Activate Python virtual environment
+source /opt/egapx/venv/bin/activate
 
 # If user doesn't have egapx_config in current directory, use defaults
 if [ ! -d "$PWD/egapx_config" ]; then
-    echo "Using default configuration for local execution..."
+    echo "Using default configuration for execution..."
     if [ -d "/opt/egapx_defaults/egapx_config" ]; then
         cp -r /opt/egapx_defaults/egapx_config "$PWD/"
     else
         echo "Warning: Default configs not found, generating fresh ones..."
-        python3 ui/egapx.py "$1" -o /tmp/init_out > /dev/null 2>&1 || true
+        python3 /opt/egapx/ui/egapx.py "$1" -o /tmp/init_out > /dev/null 2>&1 || true
         rm -rf /tmp/init_out
+        if [ -d "$PWD/egapx_config" ]; then
+            echo "Config files generated successfully"
+        fi
     fi
 fi
 
-# Run EGAPx with all arguments
-exec python3 ui/egapx.py "$@"
+# Configure Singularity options for nested container execution
+if [ -f "$PWD/egapx_config/singularity.config" ]; then
+    echo "Configuring Singularity for nested container execution..."
+    
+    # Detect available CPUs from SLURM or system
+    CPUS=${SLURM_CPUS_PER_TASK:-$(nproc)}
+    echo "Detected $CPUS CPUs available"
+    
+    # Add bind mounts and environment variables to singularity.config
+    cat >> "$PWD/egapx_config/singularity.config" <<SINGCONFIG
+
+// Additional configuration for nested Singularity execution
+// Disable container usage - processes run directly since we're already in EGAPx container
+docker.enabled = false
+singularity.enabled = false
+
+process {
+    cpus = { $CPUS }
+    maxForks = $CPUS
+}
+SINGCONFIG
+fi
+
+# Run EGAPx with all arguments from the user's working directory
+exec python3 /opt/egapx/ui/egapx.py "$@"
 EOF
     
     chmod +x /opt/egapx/egapx_wrapper.sh

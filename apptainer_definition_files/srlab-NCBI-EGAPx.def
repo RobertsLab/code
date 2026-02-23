@@ -25,13 +25,16 @@ From: ncbi/egapx:0.5.0
         location with sufficient disk space.
     
     Usage:
-        singularity run --cleanenv srlab-NCBI-EGAPx.sif <input.yaml> -e singularity -w <work_dir> -o <output_dir>
+        singularity run --cleanenv --bind /mmfs1/:/mmfs1/ srlab-NCBI-EGAPx.sif <input.yaml> -e singularity -w <work_dir> -o <output_dir>
     
     Alternatively, use the convenience wrapper script (run_egapx.sh):
         ./run_egapx.sh <input.yaml> -e singularity -w <work_dir> -o <output_dir>
         
-        The wrapper script simplifies execution by handling the --cleanenv flag automatically,
-        as well as creating/setting the Singularity cache directory.
+        The wrapper script simplifies execution by handling the --cleanenv flag, bind mounts,
+        and creating/setting the Singularity cache directory automatically.
+        
+        Note: The wrapper binds /mmfs1/ by default for HPC filesystem access. Adjust the
+        run_egapx.sh script if you need different bind mounts for your system.
     
     
     Example:

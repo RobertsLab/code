@@ -8,4 +8,4 @@ mkdir --parents /tmp/${USER}/singularity_cache
 export NXF_SINGULARITY_CACHEDIR=/tmp/${USER}/singularity_cache
 
 # Run the EGAPx container with the provided arguments
-singularity run --cleanenv srlab-NCBI-EGAPx.sif "$@"
+singularity run --cleanenv --bind /mmfs1/:/mmfs1/ srlab-NCBI-EGAPx.sif "$@"

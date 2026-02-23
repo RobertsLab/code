@@ -14,9 +14,25 @@ From: ncbi/egapx:0.5.0
         - Singularity/Apptainer installed on HPC
         - Sufficient disk space for work directory
         - Internet access for downloading reference data
+
+    Singularity Cache Directory - Set before running (not needed if using the run_egapx.sh script - see below):
+    By default, Nextflow will cache Singularity images in the work directory. To specify
+    a custom cache location, set the NXF_SINGULARITY_CACHEDIR environment variable:
+        
+    export NXF_SINGULARITY_CACHEDIR=/path/to/cache
+
+        This is useful for sharing cached images across multiple runs or keeping them in a
+        location with sufficient disk space.
     
     Usage:
         singularity run --cleanenv srlab-NCBI-EGAPx.sif <input.yaml> -e singularity -w <work_dir> -o <output_dir>
+    
+    Alternatively, use the convenience wrapper script (run_egapx.sh):
+        ./run_egapx.sh <input.yaml> -e singularity -w <work_dir> -o <output_dir>
+        
+        The wrapper script simplifies execution by handling the --cleanenv flag automatically,
+        as well as creating/setting the Singularity cache directory.
+    
     
     Example:
         singularity run --cleanenv srlab-NCBI-EGAPx.sif my_genome.yaml -e singularity -w ./work -o ./results
@@ -36,6 +52,8 @@ From: ncbi/egapx:0.5.0
         - short_reads: RNA-seq data (local files or SRA IDs)
     
     See examples in /opt/egapx/examples/ inside the container
+    
+
     
     Advanced - Using Custom Configurations:
     If you need to modify executor settings (memory limits, CPU allocation, etc.),

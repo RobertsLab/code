@@ -21,7 +21,7 @@ From: ncbi/egapx:0.5.0
     Example:
         singularity run --cleanenv srlab-NCBI-EGAPx.sif my_genome.yaml -e singularity -w ./work -o ./results
     
-    Test run with included example data (~30 minutes):
+    Test run with included example data (~60 minutes):
         singularity run --cleanenv srlab-NCBI-EGAPx.sif /opt/egapx/examples/input_D_farinae_small.yaml \
             -e singularity -w ./work -o ./output
     

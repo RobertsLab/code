@@ -28,6 +28,7 @@ From: rocker/rstudio:4.4.1
     diamond_version="2.1.9"
     fastp_version="0.23.4"
     fastqc_version="0.12.1"
+    flye_version="2.9.6"
     gffcompare_version="gffcompare-0.12.6"
     hisat2_version="2.2.1"
     kallisto_version="0.51.1"
@@ -176,6 +177,7 @@ ${programs_location}/trf409.linux64"
     diamond_version="2.1.9"
     fastp_version="0.23.4"
     fastqc_version="0.12.1"
+    flye_version="2.9.6"
     gffcompare_version="gffcompare-0.12.6"
     hisat2_version="2.2.1"
     kallisto_version="0.51.1"
@@ -257,6 +259,9 @@ ${programs_location}/trf409.linux64"
     unzip fastqc_v${fastqc_version}.zip
     mv FastQC fastqc-${fastqc_version}
     rm fastqc_v${fastqc_version}.zip
+
+    # Install Flye
+    mamba create -n flye-${flye_version}-env -c conda-forge -c bioconda flye=${flye_version}
 
 
     # Install gffcompare

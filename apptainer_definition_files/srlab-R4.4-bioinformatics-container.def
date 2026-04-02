@@ -377,6 +377,7 @@ EOF
     # Install gfatools
     git clone https://github.com/lh3/gfatools
     cd gfatools && make
+    cd -
 
 
     # Install gffcompare

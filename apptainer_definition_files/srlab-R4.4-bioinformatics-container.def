@@ -374,6 +374,10 @@ EOF
     # Install Flye
     mamba create -n flye-${flye_version}-env -c conda-forge -c bioconda flye=${flye_version}
 
+    # Install gfatools
+    git clone https://github.com/lh3/gfatools
+    cd gfatools && make
+
 
     # Install gffcompare
     wget http://ccb.jhu.edu/software/stringtie/dl/${gffcompare_version}.Linux_x86_64.tar.gz

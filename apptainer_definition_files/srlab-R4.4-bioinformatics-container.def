@@ -223,6 +223,7 @@ EOF
     fastqc_version="0.12.1"
     flye_version="2.9.6"
     gffcompare_version="gffcompare-0.12.6"
+    gffread_version="0.12.9"
     hifiasm_version="0.25.0"
     hisat2_version="2.2.1"
     jellyfish_version="2.3.1"

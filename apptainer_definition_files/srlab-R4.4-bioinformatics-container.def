@@ -301,7 +301,8 @@ EOF
     ## Replace outdated git URL in Makefile.inc
     sed -i 's|git://github.com/statgen/libStatGen.git|https://github.com/statgen/libStatGen.git|g' Makefile.inc
     make cloneLib
-    make -j ${threads}
+    # Pass -no-pie to avoid DT_TEXTREL error on systems with strict PIE enforcement
+    make -j ${threads} LDFLAGS="-no-pie"
     cd ${programs_location}
 
     # Install barnacle (tensor decomposition tool)
@@ -544,7 +545,8 @@ EOF
     # Install subread
     ## Includes featureCounts
     wget https://sourceforge.net/projects/subread/files/subread-${subread_version}-Linux-x86_64.tar.gz
-    tar -xzvf subread-${subread_version}-Linux-x86_64.tar.gz
+    # --no-same-owner avoids chown failures when archive contains external UIDs/GIDs
+    tar --no-same-owner -xzvf subread-${subread_version}-Linux-x86_64.tar.gz
     rm subread-${subread_version}-Linux-x86_64.tar.gz
 
     # Install trimmomatic

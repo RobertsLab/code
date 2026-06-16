@@ -395,8 +395,8 @@ EOF
 
     # Install gffread
     wget https://github.com/gpertea/gffread/releases/download/v${gffread_version}/gffread-${gffread_version}.Linux_x86_64.tar.gz
-    tar -xzvf ${gffread_version}.Linux_x86_64.tar.gz
-    rm ${gffread_version}.Linux_x86_64.tar.gz
+    tar -xzvf gffread-${gffread_version}.Linux_x86_64.tar.gz
+    rm gffread-${gffread_version}.Linux_x86_64.tar.gz
 
     ## Install hifiasm
     mamba create -n hifiasm-${hifiasm_version}_env -c bioconda hifiasm=${hifiasm_version}

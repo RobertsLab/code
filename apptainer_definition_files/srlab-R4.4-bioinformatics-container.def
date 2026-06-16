@@ -35,6 +35,7 @@ From: rocker/rstudio:4.4
     fastqc_version="0.12.1"
     flye_version="2.9.6"
     gffcompare_version="gffcompare-0.12.6"
+    gffcompare_version="0.12.9"
     hifiasm_version="0.25.0"
     hisat2_version="2.2.1"
     jellyfish_version="2.3.1"
@@ -91,6 +92,7 @@ ${programs_location}/CPC2_standalone-${CPC2_version}/bin:\
 ${programs_location}/dorado-${dorado_version}-linux-x64/bin:\
 ${programs_location}/fastqc-${fastqc_version}:\
 ${programs_location}/${gffcompare_version}:\
+${programs_location}/gffread-${gffread_version}.Linux_x86_64:\
 ${programs_location}/hisat2-${hisat2_version}:\
 ${programs_location}/jellyfish-${jellyfish_version}/bin:\
 ${programs_location}/kallisto-${kallisto_version}/build/src:\
@@ -390,6 +392,11 @@ EOF
     tar -xzvf ${gffcompare_version}.Linux_x86_64.tar.gz
     rm ${gffcompare_version}.Linux_x86_64.tar.gz
 
+    # Install gffread
+    wget https://github.com/gpertea/gffread/releases/download/v${gffread_version}/gffread-${gffread_version}.Linux_x86_64.tar.gz
+    tar -xzvf ${gffread_version}.Linux_x86_64.tar.gz
+    rm ${gffread_version}.Linux_x86_64.tar.gz
+
     ## Install hifiasm
     mamba create -n hifiasm-${hifiasm_version}_env -c bioconda hifiasm=${hifiasm_version}
 
@@ -422,6 +429,9 @@ EOF
     make
     cd /srlab/programs
     rm v${kallisto_version}.tar.gz
+
+    # Install liftoff
+    mamba create -n liftoff_env -c bioconda liftoff -y
 
     # Install PacBio lima
     mamba create -n pacbio_lima_env lima -c bioconda -y

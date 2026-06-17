@@ -97,6 +97,10 @@ ${programs_location}/hisat2-${hisat2_version}:\
 ${programs_location}/jellyfish-${jellyfish_version}/bin:\
 ${programs_location}/kallisto-${kallisto_version}/build/src:\
 ${programs_location}/miniforge3-${miniforge_version}/bin:\
+${programs_location}/miniforge3-${miniforge_version}/envs/flye-2.9.6-env/bin:\
+${programs_location}/miniforge3-${miniforge_version}/envs/hifiasm-0.25.0_env/bin:\
+${programs_location}/miniforge3-${miniforge_version}/envs/liftoff_env/bin:\
+${programs_location}/miniforge3-${miniforge_version}/envs/pacbio_lima_env/bin:\
 ${mamba_envs_dir}/multiqc_env/bin:\
 ${programs_location}/ncbi-blast-${ncbi_blast_version}+/bin:\
 ${programs_location}/ncbi-datasets-v${ncbi_datasets_version}:\

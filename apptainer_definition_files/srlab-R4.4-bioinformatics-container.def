@@ -107,7 +107,7 @@ ${programs_location}/ncbi-datasets-v${ncbi_datasets_version}:\
 ${programs_location}/nextflow:\
 ${programs_location}/plink_linux_x86_64_20250819:\
 ${programs_location}/poetry/bin:\
-${programs_location}/quast-${quast_version} \
+${programs_location}/quast-${quast_version}:\
 ${programs_location}/RepeatMasker:\
 ${programs_location}/rmblast-${rmblast_version}/bin:\
 ${programs_location}/salmon-latest_linux_x86_64/bin:\

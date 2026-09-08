@@ -26,7 +26,7 @@ overwrites previous deployment data already on the card.
 
 import time
 import board
-import digitalio
+import neopixel
 import adafruit_tlv493d
 
 # ----------------------------------------------------------------------
@@ -39,22 +39,31 @@ LOG_SUFFIX = ".csv"
 FLUSH_EVERY_N_ROWS = 1    # flush to disk after every N rows (1 = safest)
 
 # ----------------------------------------------------------------------
-# Onboard status LED (optional heartbeat; safe no-op if board has none)
+# Onboard NeoPixel status LED (optional heartbeat; safe no-op if board
+# has none). Requires neopixel.mpy in /lib on CIRCUITPY.
+#
+# Green = a sample was read and written to the log (data is being
+# collected). Red = an error condition (SD card, sensor, or write
+# failure) -- see call sites below.
 # ----------------------------------------------------------------------
+COLOR_OFF = (0, 0, 0)
+COLOR_LOGGING = (0, 255, 0)
+COLOR_ERROR = (255, 0, 0)
+
 try:
-    led = digitalio.DigitalInOut(board.LED)
-    led.direction = digitalio.Direction.OUTPUT
+    pixel = neopixel.NeoPixel(board.NEOPIXEL, 1, brightness=0.2, auto_write=True)
+    pixel.fill(COLOR_OFF)
 except AttributeError:
-    led = None
+    pixel = None
 
 
-def blink(times=1, duration=0.05):
-    if led is None:
+def blink(times=1, duration=0.05, color=COLOR_LOGGING):
+    if pixel is None:
         return
     for _ in range(times):
-        led.value = True
+        pixel.fill(color)
         time.sleep(duration)
-        led.value = False
+        pixel.fill(COLOR_OFF)
         time.sleep(duration)
 
 
@@ -81,7 +90,7 @@ try:
 except OSError as e:
     print("FATAL: {}".format(e))
     while True:
-        blink(3, 0.1)
+        blink(3, 0.1, color=COLOR_ERROR)
         time.sleep(1)
 
 # ----------------------------------------------------------------------
@@ -95,7 +104,7 @@ except (OSError, ValueError, RuntimeError) as e:
     print("FATAL: could not initialize TLV493D: {}".format(e))
     print("Check wiring on the I2C / STEMMA QT bus.")
     while True:
-        blink(5, 0.1)
+        blink(5, 0.1, color=COLOR_ERROR)
         time.sleep(1)
 
 # ----------------------------------------------------------------------
@@ -162,7 +171,7 @@ while True:
                 f.flush()
     except OSError as e:
         print("Write failed (card removed/full?): {}".format(e))
-        blink(4, 0.1)
+        blink(4, 0.1, color=COLOR_ERROR)
         time.sleep(SAMPLE_INTERVAL)
         continue
 

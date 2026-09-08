@@ -88,16 +88,35 @@ deployment_tz <- "America/Los_Angeles"
 # OPENS the magnet moves away and field magnitude FALLS. So a gape event is
 # a sustained DROP in magnitude below a threshold.
 #
-# The threshold can be set two ways:
-#   "relative" - computed per session as a fractional drop below the
-#                closed-shell baseline (robust to magnet placement /
-#                mounting differences between animals and deployments)
-#   "absolute" - a fixed microtesla value you supply
-threshold_method <- "relative"
+# The threshold can be set three ways:
+#   "noise"    - computed per session from the spread (SD) of the
+#                closed-shell baseline itself: threshold = closed_mean -
+#                n_sd_threshold * closed_sd. This ties the cutoff to how
+#                noisy that particular session's signal actually is, so a
+#                "gape" is a drop that's statistically distinguishable from
+#                background noise, not an arbitrary fractional drop.
+#                RECOMMENDED DEFAULT.
+#   "relative" - computed per session as a fixed fractional drop below the
+#                closed-shell baseline value (kept for comparison /
+#                backward compatibility - doesn't account for how noisy the
+#                signal is).
+#   "absolute" - a fixed microtesla value you supply.
+threshold_method <- "noise"
+
+# Used for both "noise" and "relative" methods: the quantile of magnitude
+# taken as representative of "fully closed" (magnet closest to sensor).
+baseline_quantile <- 0.90
+
+# Used when threshold_method == "noise":
+# The closed-baseline mean/SD are estimated from samples at/above
+# `baseline_quantile`. n_sd_threshold sets how many SDs below that mean a
+# sample must fall to count as "open" - larger values are more conservative
+# (fewer false-positive events from sensor noise), smaller values are more
+# sensitive. 3 SD is a common starting point for "clearly not noise".
+n_sd_threshold <- 3
 
 # Used when threshold_method == "relative":
-baseline_quantile <- 0.90   # quantile of magnitude taken as "fully closed"
-gape_drop_frac    <- 0.10   # open if magnitude < baseline * (1 - this)
+gape_drop_frac <- 0.10   # open if magnitude < baseline * (1 - this)
 
 # Used when threshold_method == "absolute":
 gape_threshold_uT <- 40
@@ -245,25 +264,43 @@ gaping %>%
 
 ## Threshold and open/closed state
 
+The `"noise"` method characterizes the closed-shell baseline as a
+distribution, not a single value: samples at/above `baseline_quantile` are
+taken as "closed", and their mean and SD describe that session's baseline
+noise. The threshold then sits `n_sd_threshold` SDs below that mean, so a
+gape event is a drop that's statistically distinct from background noise -
+not just a fixed percentage below baseline, which says nothing about
+whether that drop is bigger than the sensor's own jitter.
+
 ```{r classify-state}
 gaping <- gaping %>%
   group_by(session_id) %>%
   mutate(
-    baseline_uT = quantile(field_magnitude_uT, baseline_quantile, na.rm = TRUE),
-    threshold_uT = if (threshold_method == "relative") {
+    baseline_uT    = quantile(field_magnitude_uT, baseline_quantile, na.rm = TRUE),
+    closed_mean_uT = mean(field_magnitude_uT[field_magnitude_uT >= baseline_uT], na.rm = TRUE),
+    closed_sd_uT   = sd(field_magnitude_uT[field_magnitude_uT >= baseline_uT], na.rm = TRUE),
+    threshold_uT = if (threshold_method == "noise") {
+      closed_mean_uT - n_sd_threshold * closed_sd_uT
+    } else if (threshold_method == "relative") {
       baseline_uT * (1 - gape_drop_frac)
-    } else {
+    } else if (threshold_method == "absolute") {
       gape_threshold_uT
+    } else {
+      NA_real_
     },
     is_open = field_magnitude_uT < threshold_uT
   ) %>%
   ungroup()
 
+stopifnot("`threshold_method` must be one of \"noise\", \"relative\", \"absolute\"." =
+            !any(is.na(gaping$threshold_uT)))
+
 gaping %>%
   group_by(session_id, source_file) %>%
   summarise(
-    baseline_uT    = first(baseline_uT),
-    threshold_uT   = first(threshold_uT),
+    closed_mean_uT   = first(closed_mean_uT),
+    closed_sd_uT     = first(closed_sd_uT),
+    threshold_uT     = first(threshold_uT),
     pct_samples_open = 100 * mean(is_open),
     .groups = "drop"
   ) %>%
@@ -592,11 +629,23 @@ p_rate
 
 # NOTES / NEXT STEPS
 
-- **Threshold calibration.** The `relative` method assumes the animal is
-  closed for most of the recording (the `baseline_quantile` = 0.90 sample
-  is treated as "fully closed"). If an animal gapes more than ~half the
-  time, that assumption breaks - characterize known open/closed magnitudes
-  on the bench and switch to `threshold_method = "absolute"`.
+- **Threshold calibration.** The `noise` and `relative` methods both assume
+  the animal is closed for most of the recording (the top
+  `1 - baseline_quantile` fraction of samples, default 10%, is treated as
+  "closed" and used to characterize the baseline). If an animal gapes more
+  than that, the baseline estimate - and for `noise`, the SD used to set
+  the threshold - gets contaminated by open samples and the threshold
+  drifts too low. If that assumption breaks, characterize known
+  open/closed magnitudes on the bench and switch to
+  `threshold_method = "absolute"`.
+- **Noise-based threshold (`n_sd_threshold`).** The default of 3 SD below
+  the closed-baseline mean is a starting point, not a calibrated value -
+  check the `closed_sd_uT` column in the per-session table. A very small SD
+  (a clean, low-noise sensor) with 3 SD may flag drops that are real but
+  small; a very large SD (noisy signal, or a baseline window that already
+  contains some open samples) may require a larger `n_sd_threshold` to
+  avoid false positives. Vary it and confirm the detected event count and
+  `pct_samples_open` are stable rather than an artifact of one setting.
 - **Event filtering.** `min_event_duration_s` and `min_gap_between_s` set
   how aggressively blips are rejected and near-adjacent gapes are merged.
   Vary them and re-render to check the event count is stable rather than an

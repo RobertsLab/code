@@ -22,6 +22,16 @@ elapsed-time column with rtc.datetime directly.
 A new log file is created each time the board (re)boots, named
 gapelog_001.csv, gapelog_002.csv, etc., so re-running the script never
 overwrites previous deployment data already on the card.
+
+Event logging: every boot and every error condition (SD card, sensor,
+or write failures) is appended to a single persistent /sd/eventlog.csv
+that accumulates across all deployments -- it is never recreated or
+truncated. Each row is tagged with a boot number (from /sd/boot_count.txt,
+incremented once per boot) and the seconds elapsed since that boot's
+script start, so events from different sessions can be told apart even
+without an RTC. Note there is no way to detect clean power-OFF in
+CircuitPython (power just disappears) -- only power-ON (boot) events
+are observable, and that's what gets logged.
 """
 
 import time
@@ -37,6 +47,10 @@ SD_MOUNT_POINT = "/sd"
 LOG_PREFIX = "gapelog_"
 LOG_SUFFIX = ".csv"
 FLUSH_EVERY_N_ROWS = 1    # flush to disk after every N rows (1 = safest)
+EVENT_LOG_PATH = SD_MOUNT_POINT + "/eventlog.csv"
+BOOT_COUNT_PATH = SD_MOUNT_POINT + "/boot_count.txt"
+
+boot_start_time = time.monotonic()
 
 # ----------------------------------------------------------------------
 # Onboard NeoPixel status LED (optional heartbeat; safe no-op if board
@@ -88,10 +102,55 @@ try:
     check_sd_card()
     print("SD card confirmed at {}".format(SD_MOUNT_POINT))
 except OSError as e:
+    # Can't persist this one -- the SD card itself is the thing that failed.
     print("FATAL: {}".format(e))
     while True:
         blink(3, 0.1, color=COLOR_ERROR)
         time.sleep(1)
+
+# ----------------------------------------------------------------------
+# Persistent event log (boot events + errors), separate from the
+# per-boot sensor-data CSV. Unlike gapelog_NNN.csv, this file is never
+# recreated -- it accumulates across every deployment so boot/error
+# history survives reboots.
+# ----------------------------------------------------------------------
+def next_boot_number():
+    n = 0
+    try:
+        with open(BOOT_COUNT_PATH, "r") as f:
+            n = int(f.read().strip())
+    except (OSError, ValueError):
+        n = 0
+    n += 1
+    try:
+        with open(BOOT_COUNT_PATH, "w") as f:
+            f.write(str(n))
+    except OSError:
+        pass
+    return n
+
+
+boot_number = next_boot_number()
+
+try:
+    with open(EVENT_LOG_PATH, "r"):
+        pass
+except OSError:
+    with open(EVENT_LOG_PATH, "w") as f:
+        f.write("boot_number,elapsed_s,event,detail\n")
+
+
+def log_event(event, detail=""):
+    elapsed = time.monotonic() - boot_start_time
+    row = "{},{:.3f},{},{}\n".format(boot_number, elapsed, event, detail)
+    try:
+        with open(EVENT_LOG_PATH, "a") as f:
+            f.write(row)
+    except OSError as e:
+        print("Event log write failed: {}".format(e))
+
+
+log_event("BOOT", "SD card confirmed at {}".format(SD_MOUNT_POINT))
 
 # ----------------------------------------------------------------------
 # Initialize the TLV493D magnetometer (I2C / STEMMA QT)
@@ -100,9 +159,11 @@ try:
     i2c = board.I2C()
     tlv = adafruit_tlv493d.TLV493D(i2c)
     print("TLV493D magnetometer initialized")
+    log_event("SENSOR_INIT_OK", "TLV493D magnetometer initialized")
 except (OSError, ValueError, RuntimeError) as e:
     print("FATAL: could not initialize TLV493D: {}".format(e))
     print("Check wiring on the I2C / STEMMA QT bus.")
+    log_event("SENSOR_INIT_ERROR", str(e))
     while True:
         blink(5, 0.1, color=COLOR_ERROR)
         time.sleep(1)
@@ -130,6 +191,7 @@ def os_listdir_safe(path):
 
 log_path = next_log_path()
 print("Logging to {}".format(log_path))
+log_event("LOG_START", "Logging sensor data to {}".format(log_path))
 
 with open(log_path, "w") as f:
     f.write("elapsed_s,x_uT,y_uT,z_uT\n")
@@ -152,6 +214,7 @@ while True:
         x, y, z = tlv.magnetic
     except (OSError, RuntimeError) as e:
         print("Sensor read failed: {}".format(e))
+        log_event("SENSOR_READ_ERROR", str(e))
         time.sleep(SAMPLE_INTERVAL)
         continue
 
@@ -171,6 +234,7 @@ while True:
                 f.flush()
     except OSError as e:
         print("Write failed (card removed/full?): {}".format(e))
+        log_event("WRITE_ERROR", str(e))
         blink(4, 0.1, color=COLOR_ERROR)
         time.sleep(SAMPLE_INTERVAL)
         continue

@@ -1,0 +1,609 @@
+---
+title: "Oyster Gaping - Magnetometer Data Analysis"
+author: ""
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    code_folding: show
+---
+
+# OVERVIEW
+
+This notebook reads the CSV log(s) produced by the CircuitPython datalogger
+running on the Feather RP2040 Adalogger (`gapelog_001.csv`,
+`gapelog_002.csv`, ... on the SD card), reconstructs real-world timestamps,
+detects gape events, and plots the resulting time series.
+
+**Data format on disk (wide form):** one row per sample, with the three
+simultaneous magnetic field components as columns:
+
+| column      | meaning                                                  |
+|-------------|----------------------------------------------------------|
+| `elapsed_s` | seconds since that log file's session started            |
+| `x_uT`      | magnetic field, X axis, microtesla                       |
+| `y_uT`      | magnetic field, Y axis, microtesla                       |
+| `z_uT`      | magnetic field, Z axis, microtesla                       |
+
+Wide form is kept on the device and on disk because X/Y/Z are simultaneous
+components of one field vector, not independent long-form observations -
+computing field magnitude, per-axis deltas, etc. all need all three values
+from the same row. We pivot to long form only for specific plots below.
+
+**One file per power-on.** The logger starts a new numbered file every time
+the board boots, so each `gapelog_NNN.csv` is exactly one session. Session
+identity comes from the filename - no need to infer reboots from the data.
+
+**No onboard real-time clock.** The board has no battery-backed RTC, so it
+records `elapsed_s` (seconds since that session started) rather than a
+wall-clock date/time. Supply one real-world start time per session in the
+SETUP section below to reconstruct absolute timestamps.
+
+# SETUP
+
+## Libraries
+
+```{r libraries, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, message = FALSE, warning = FALSE,
+  fig.width = 10, fig.height = 5
+)
+
+library(tidyverse)
+library(lubridate)
+library(knitr)
+```
+
+## Analysis parameters
+
+All user-configurable values are assigned here - edit this chunk for your
+deployment and nothing else below should need changing.
+
+```{r parameters}
+# ---- Data location -------------------------------------------------------
+# Directory holding the CSV files copied off the SD card, and the filename
+# pattern to match. Every matching file is treated as one logging session.
+data_dir      <- "."
+file_pattern  <- "^gapelog_[0-9]+\\.csv$"
+
+# ---- Deployment start times ---------------------------------------------
+# One real-world start date/time per log file, in filename order
+# (gapelog_001.csv, gapelog_002.csv, ...). Record these in the field at the
+# moment you apply power to the board. Format "YYYY-MM-DD HH:MM:SS".
+#
+# If you leave this as NULL, timestamps stay RELATIVE (elapsed seconds) and
+# every plot/metric below is still computed - just on relative time.
+session_start_times <- NULL
+# session_start_times <- c(
+#   "2026-09-01 08:00:00",
+#   "2026-09-03 14:22:00"
+# )
+
+deployment_tz <- "America/Los_Angeles"
+
+# ---- Gape event detection -----------------------------------------------
+# The magnet sits on one valve, the magnetometer on the other: as the shell
+# OPENS the magnet moves away and field magnitude FALLS. So a gape event is
+# a sustained DROP in magnitude below a threshold.
+#
+# The threshold can be set two ways:
+#   "relative" - computed per session as a fractional drop below the
+#                closed-shell baseline (robust to magnet placement /
+#                mounting differences between animals and deployments)
+#   "absolute" - a fixed microtesla value you supply
+threshold_method <- "relative"
+
+# Used when threshold_method == "relative":
+baseline_quantile <- 0.90   # quantile of magnitude taken as "fully closed"
+gape_drop_frac    <- 0.10   # open if magnitude < baseline * (1 - this)
+
+# Used when threshold_method == "absolute":
+gape_threshold_uT <- 40
+
+# ---- Event filtering ----------------------------------------------------
+# Reject blips and bridge momentary re-closures, so sensor noise doesn't
+# inflate the event count.
+min_event_duration_s <- 30   # discard "open" runs shorter than this
+min_gap_between_s    <- 30   # merge two events separated by less than this
+```
+
+# DATA IMPORT
+
+## Locate log files
+
+```{r locate-files}
+log_files <- list.files(
+  path = data_dir, pattern = file_pattern, full.names = TRUE
+) %>%
+  sort()
+
+stopifnot("No log files matched `file_pattern` in `data_dir`." =
+            length(log_files) > 0)
+
+tibble(
+  file     = basename(log_files),
+  size_kb  = round(file.size(log_files) / 1024, 1)
+) %>%
+  kable(caption = "Log files found")
+```
+
+## Read and combine
+
+```{r read-data}
+raw <- log_files %>%
+  set_names(basename(.)) %>%
+  map(
+    read_csv,
+    col_types = cols(
+      elapsed_s = col_double(),
+      x_uT      = col_double(),
+      y_uT      = col_double(),
+      z_uT      = col_double()
+    )
+  ) %>%
+  list_rbind(names_to = "source_file") %>%
+  mutate(session_id = dense_rank(source_file), .after = source_file)
+
+glimpse(raw)
+```
+
+## Reconstruct timestamps
+
+Real time = that session's start time + `elapsed_s`. If
+`session_start_times` is `NULL`, `timestamp` stays `NA` and all downstream
+timing uses `elapsed_s` instead.
+
+```{r reconstruct-timestamps}
+n_sessions <- n_distinct(raw$session_id)
+
+use_absolute_time <- !is.null(session_start_times) &&
+  length(session_start_times) == n_sessions
+
+if (!is.null(session_start_times) && !use_absolute_time) {
+  warning(sprintf(
+    paste("Found %d log file(s) but %d entry/entries in",
+          "`session_start_times`. Falling back to RELATIVE time for every",
+          "session - supply exactly one start time per log file in the",
+          "SETUP chunk to get absolute timestamps."),
+    n_sessions, length(session_start_times)
+  ))
+}
+
+if (use_absolute_time) {
+  session_starts <- tibble(
+    session_id    = seq_len(n_sessions),
+    session_start = ymd_hms(session_start_times, tz = deployment_tz)
+  )
+} else {
+  session_starts <- tibble(
+    session_id    = seq_len(n_sessions),
+    session_start = as.POSIXct(NA, tz = deployment_tz)
+  )
+}
+
+gaping <- raw %>%
+  left_join(session_starts, by = "session_id") %>%
+  mutate(
+    timestamp = session_start + elapsed_s,
+    date      = as_date(timestamp),
+    time      = format(timestamp, "%H:%M:%S")
+  )
+
+# Require EVERY session to have a real start time before plotting on a
+# datetime axis - a partial mix would render some panels on real time and
+# others on nothing, which is easy to misread.
+has_real_time <- !any(is.na(gaping$timestamp))
+
+cat(sprintf(
+  "%d session(s), %d total samples. Absolute timestamps: %s\n",
+  n_sessions, nrow(gaping),
+  if (has_real_time) "YES" else "NO (relative elapsed_s only)"
+))
+```
+
+# DERIVED METRICS
+
+## Field magnitude
+
+Field magnitude `sqrt(x^2 + y^2 + z^2)` is the primary gape proxy: it is
+rotation-invariant, so it doesn't depend on exactly how the sensor is
+oriented relative to the magnet.
+
+```{r field-magnitude}
+gaping <- gaping %>%
+  mutate(field_magnitude_uT = sqrt(x_uT^2 + y_uT^2 + z_uT^2))
+
+gaping %>%
+  select(x_uT, y_uT, z_uT, field_magnitude_uT) %>%
+  summary()
+```
+
+## Sampling interval
+
+```{r sampling-interval}
+gaping <- gaping %>%
+  group_by(session_id) %>%
+  arrange(elapsed_s, .by_group = TRUE) %>%
+  mutate(sample_dt_s = elapsed_s - lag(elapsed_s)) %>%
+  ungroup()
+
+gaping %>%
+  group_by(session_id, source_file) %>%
+  summarise(
+    n_samples     = n(),
+    duration_min  = (max(elapsed_s) - min(elapsed_s)) / 60,
+    median_dt_s   = median(sample_dt_s, na.rm = TRUE),
+    max_gap_s     = max(sample_dt_s, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  kable(digits = 2, caption = "Per-session sampling summary")
+```
+
+# GAP EVENT DETECTION
+
+## Threshold and open/closed state
+
+```{r classify-state}
+gaping <- gaping %>%
+  group_by(session_id) %>%
+  mutate(
+    baseline_uT = quantile(field_magnitude_uT, baseline_quantile, na.rm = TRUE),
+    threshold_uT = if (threshold_method == "relative") {
+      baseline_uT * (1 - gape_drop_frac)
+    } else {
+      gape_threshold_uT
+    },
+    is_open = field_magnitude_uT < threshold_uT
+  ) %>%
+  ungroup()
+
+gaping %>%
+  group_by(session_id, source_file) %>%
+  summarise(
+    baseline_uT    = first(baseline_uT),
+    threshold_uT   = first(threshold_uT),
+    pct_samples_open = 100 * mean(is_open),
+    .groups = "drop"
+  ) %>%
+  kable(digits = 2, caption = "Detection threshold per session")
+```
+
+## Build the event table
+
+Contiguous runs of `is_open` become candidate events; runs shorter than
+`min_event_duration_s` are dropped, and events separated by less than
+`min_gap_between_s` are merged into one.
+
+```{r build-events}
+# 1. Contiguous runs of the same open/closed state, per session.
+runs <- gaping %>%
+  group_by(session_id) %>%
+  mutate(run_id = cumsum(is_open != lag(is_open, default = first(is_open)))) %>%
+  group_by(session_id, source_file, run_id, is_open) %>%
+  summarise(
+    start_s   = min(elapsed_s),
+    end_s     = max(elapsed_s),
+    n_samples = n(),
+    mean_magnitude_uT = mean(field_magnitude_uT),
+    min_magnitude_uT  = min(field_magnitude_uT),
+    .groups   = "drop"
+  ) %>%
+  mutate(duration_s = end_s - start_s)
+
+# 2. Keep open runs long enough to count as real events.
+events <- runs %>%
+  filter(is_open, duration_s >= min_event_duration_s) %>%
+  arrange(session_id, start_s)
+
+# 3. Merge events separated by a shorter closure than min_gap_between_s.
+events <- events %>%
+  group_by(session_id) %>%
+  mutate(
+    gap_before_s = start_s - lag(end_s),
+    new_event    = is.na(gap_before_s) | gap_before_s >= min_gap_between_s,
+    event_group  = cumsum(new_event)
+  ) %>%
+  group_by(session_id, source_file, event_group) %>%
+  summarise(
+    start_s           = min(start_s),
+    end_s             = max(end_s),
+    # Weighted mean must be computed BEFORE n_samples is collapsed to a
+    # single sum, otherwise the weights vector no longer matches the values.
+    mean_magnitude_uT = weighted.mean(mean_magnitude_uT, n_samples),
+    min_magnitude_uT  = min(min_magnitude_uT),
+    n_samples         = sum(n_samples),
+    .groups = "drop"
+  ) %>%
+  group_by(session_id) %>%
+  mutate(
+    event_id    = row_number(),
+    duration_s  = end_s - start_s,
+    duration_min = duration_s / 60
+  ) %>%
+  ungroup() %>%
+  left_join(session_starts, by = "session_id") %>%
+  mutate(
+    start_time = session_start + start_s,
+    end_time   = session_start + end_s
+  )
+
+cat(sprintf("Detected %d gape event(s) across %d session(s).\n",
+            nrow(events), n_sessions))
+
+events %>%
+  select(session_id, event_id, start_s, end_s, duration_s, duration_min,
+         mean_magnitude_uT, min_magnitude_uT, n_samples) %>%
+  kable(digits = 2, caption = "Detected gape events")
+```
+
+## Event frequency
+
+```{r event-frequency}
+event_frequency <- events %>%
+  group_by(session_id, source_file) %>%
+  summarise(n_events = n(), .groups = "drop") %>%
+  left_join(
+    gaping %>%
+      group_by(session_id) %>%
+      summarise(
+        recording_hr = (max(elapsed_s) - min(elapsed_s)) / 3600,
+        .groups = "drop"
+      ),
+    by = "session_id"
+  ) %>%
+  mutate(
+    events_per_hr  = n_events / recording_hr,
+    events_per_day = events_per_hr * 24
+  )
+
+event_frequency %>%
+  kable(digits = 3, caption = "Gape event frequency per session")
+```
+
+## Event durations
+
+```{r event-durations}
+duration_stats <- events %>%
+  group_by(session_id, source_file) %>%
+  summarise(
+    n_events        = n(),
+    mean_duration_s = mean(duration_s),
+    sd_duration_s   = sd(duration_s),
+    min_duration_s  = min(duration_s),
+    median_duration_s = median(duration_s),
+    max_duration_s  = max(duration_s),
+    total_open_s    = sum(duration_s),
+    .groups = "drop"
+  ) %>%
+  left_join(
+    gaping %>%
+      group_by(session_id) %>%
+      summarise(
+        recording_s = max(elapsed_s) - min(elapsed_s), .groups = "drop"
+      ),
+    by = "session_id"
+  ) %>%
+  mutate(pct_time_open = 100 * total_open_s / recording_s)
+
+duration_stats %>%
+  kable(digits = 2, caption = "Gape event duration statistics (seconds)")
+```
+
+## Time between events
+
+Inter-event interval = time from the **end** of one event to the **start**
+of the next (i.e. how long the animal stayed closed between gapes).
+
+```{r inter-event-intervals}
+intervals <- events %>%
+  group_by(session_id, source_file) %>%
+  arrange(start_s, .by_group = TRUE) %>%
+  mutate(interval_s = start_s - lag(end_s)) %>%
+  filter(!is.na(interval_s)) %>%
+  ungroup()
+
+interval_stats <- intervals %>%
+  group_by(session_id, source_file) %>%
+  summarise(
+    n_intervals      = n(),
+    mean_interval_s  = mean(interval_s),
+    sd_interval_s    = sd(interval_s),
+    shortest_interval_s = min(interval_s),
+    median_interval_s   = median(interval_s),
+    longest_interval_s  = max(interval_s),
+    .groups = "drop"
+  )
+
+if (nrow(interval_stats) > 0) {
+  interval_stats %>%
+    kable(digits = 2,
+          caption = "Time between consecutive gape events (seconds)")
+} else {
+  cat("Fewer than 2 events per session - no inter-event intervals to report.\n")
+}
+```
+
+## Combined summary
+
+```{r combined-summary}
+gape_summary <- event_frequency %>%
+  select(session_id, source_file, n_events, recording_hr,
+         events_per_hr, events_per_day) %>%
+  left_join(
+    duration_stats %>%
+      select(session_id, mean_duration_s, min_duration_s, max_duration_s,
+             total_open_s, pct_time_open),
+    by = "session_id"
+  ) %>%
+  left_join(
+    interval_stats %>%
+      select(session_id, mean_interval_s, shortest_interval_s,
+             longest_interval_s),
+    by = "session_id"
+  )
+
+gape_summary %>%
+  kable(digits = 2, caption = "Gape event summary, all metrics by session")
+```
+
+# PLOTS
+
+## Field magnitude with detected events
+
+Shaded bands are detected gape events; the dashed line is the detection
+threshold.
+
+```{r plot-magnitude-events}
+x_var  <- if (has_real_time) "timestamp" else "elapsed_s"
+x_lab  <- if (has_real_time) "Time" else "Elapsed time (s)"
+
+p_magnitude <- ggplot(gaping, aes(x = .data[[x_var]], y = field_magnitude_uT))
+
+if (nrow(events) > 0) {
+  event_bands <- events %>%
+    mutate(
+      xmin = if (has_real_time) start_time else start_s,
+      xmax = if (has_real_time) end_time   else end_s
+    )
+  p_magnitude <- p_magnitude +
+    geom_rect(
+      data = event_bands,
+      aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf),
+      inherit.aes = FALSE, fill = "steelblue", alpha = 0.20
+    )
+}
+
+p_magnitude <- p_magnitude +
+  geom_line(linewidth = 0.3) +
+  geom_hline(
+    aes(yintercept = threshold_uT), linetype = "dashed", color = "firebrick"
+  ) +
+  facet_wrap(~source_file, scales = "free_x", ncol = 1) +
+  labs(
+    title = "Field magnitude over time, with detected gape events shaded",
+    subtitle = "Magnitude falls as the shell opens (magnet moves away from sensor)",
+    x = x_lab, y = "Field magnitude (uT)"
+  ) +
+  theme_minimal()
+
+p_magnitude
+```
+
+## Per-axis time series
+
+Pivoting to long form here is purely a plotting convenience - it is not how
+the data is stored.
+
+```{r plot-per-axis}
+gaping_long <- gaping %>%
+  select(session_id, source_file, all_of(x_var), x_uT, y_uT, z_uT) %>%
+  pivot_longer(
+    cols = c(x_uT, y_uT, z_uT), names_to = "axis", values_to = "field_uT"
+  )
+
+p_axes <- ggplot(gaping_long, aes(x = .data[[x_var]], y = field_uT, color = axis)) +
+  geom_line(linewidth = 0.3) +
+  facet_grid(axis ~ source_file, scales = "free") +
+  labs(
+    title = "Magnetic field components over time",
+    x = x_lab, y = "Field (uT)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+p_axes
+```
+
+## Event duration distribution
+
+```{r plot-duration-distribution}
+if (nrow(events) > 0) {
+  p_durations <- ggplot(events, aes(x = duration_min)) +
+    geom_histogram(bins = 30, fill = "steelblue", color = "white") +
+    facet_wrap(~source_file, ncol = 1) +
+    labs(
+      title = "Distribution of gape event durations",
+      x = "Event duration (minutes)", y = "Count of events"
+    ) +
+    theme_minimal()
+  p_durations
+} else {
+  cat("No events detected - nothing to plot.\n")
+}
+```
+
+## Event duration over time
+
+Shows whether gape bouts get longer or shorter across the deployment.
+
+```{r plot-duration-over-time}
+if (nrow(events) > 0) {
+  p_dur_time <- events %>%
+    mutate(x_pos = if (has_real_time) start_time else start_s) %>%
+    ggplot(aes(x = x_pos, y = duration_min)) +
+    geom_point(size = 2, color = "steelblue") +
+    geom_line(linewidth = 0.3, alpha = 0.5, color = "steelblue") +
+    facet_wrap(~source_file, scales = "free_x", ncol = 1) +
+    labs(
+      title = "Gape event duration over the course of the deployment",
+      x = x_lab, y = "Event duration (minutes)"
+    ) +
+    theme_minimal()
+  p_dur_time
+} else {
+  cat("No events detected - nothing to plot.\n")
+}
+```
+
+## Inter-event intervals
+
+```{r plot-intervals}
+if (nrow(intervals) > 0) {
+  p_intervals <- ggplot(intervals, aes(x = interval_s / 60)) +
+    geom_histogram(bins = 30, fill = "darkorange", color = "white") +
+    facet_wrap(~source_file, ncol = 1) +
+    labs(
+      title = "Time between consecutive gape events",
+      x = "Interval between events (minutes)", y = "Count"
+    ) +
+    theme_minimal()
+  p_intervals
+} else {
+  cat("Fewer than 2 events per session - no intervals to plot.\n")
+}
+```
+
+## Events per hour by session
+
+```{r plot-event-rate}
+p_rate <- ggplot(event_frequency, aes(x = source_file, y = events_per_hr)) +
+  geom_col(fill = "steelblue") +
+  labs(
+    title = "Gape event frequency by session",
+    x = "Log file (session)", y = "Events per hour"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+p_rate
+```
+
+# NOTES / NEXT STEPS
+
+- **Threshold calibration.** The `relative` method assumes the animal is
+  closed for most of the recording (the `baseline_quantile` = 0.90 sample
+  is treated as "fully closed"). If an animal gapes more than ~half the
+  time, that assumption breaks - characterize known open/closed magnitudes
+  on the bench and switch to `threshold_method = "absolute"`.
+- **Event filtering.** `min_event_duration_s` and `min_gap_between_s` set
+  how aggressively blips are rejected and near-adjacent gapes are merged.
+  Vary them and re-render to check the event count is stable rather than an
+  artifact of one particular setting.
+- **Timestamps.** Record the real power-on time for each `gapelog_NNN.csv`
+  in the field and enter them in `session_start_times`; without them all
+  timing is relative to the start of each file.
+- **Adding an RTC** (PCF8523 / DS3231 breakout) would remove the manual
+  start-time bookkeeping entirely, since the logger could then write real
+  date/time to each row.

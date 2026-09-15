@@ -21,8 +21,8 @@ detects gape events, and plots the resulting time series.
 simultaneous magnetic field components as columns:
 
 | column      | meaning                                                  |
-|-------------|----------------------------------------------------------|
-| `elapsed_s` | seconds since that log file's session started            |
+|-------------|-----------------------------------------------------------|
+| `timestamp` | `YYYY-MM-DDTHH:MM:SS` from the onboard DS3231 RTC, or `T+123.456s` (seconds since that session started) if the RTC wasn't detected at boot |
 | `x_uT`      | magnetic field, X axis, microtesla                       |
 | `y_uT`      | magnetic field, Y axis, microtesla                       |
 | `z_uT`      | magnetic field, Z axis, microtesla                       |
@@ -36,10 +36,13 @@ from the same row. We pivot to long form only for specific plots below.
 the board boots, so each `gapelog_NNN.csv` is exactly one session. Session
 identity comes from the filename - no need to infer reboots from the data.
 
-**No onboard real-time clock.** The board has no battery-backed RTC, so it
-records `elapsed_s` (seconds since that session started) rather than a
-wall-clock date/time. Supply one real-world start time per session in the
-SETUP section below to reconstruct absolute timestamps.
+**Onboard real-time clock.** The board has a battery-backed DS3231 RTC, so
+`timestamp` is normally an absolute wall-clock value straight off the
+device - no manual bookkeeping needed. If the RTC isn't detected at boot
+(and that failure is recorded in `eventlog.csv` on the card, see below),
+the script falls back to a relative `T+123.456s` marker for that whole
+session, and this notebook derives `elapsed_s` from either form so the
+downstream analysis code is the same regardless.
 
 # SETUP
 
@@ -68,19 +71,8 @@ deployment and nothing else below should need changing.
 data_dir      <- "."
 file_pattern  <- "^gapelog_[0-9]+\\.csv$"
 
-# ---- Deployment start times ---------------------------------------------
-# One real-world start date/time per log file, in filename order
-# (gapelog_001.csv, gapelog_002.csv, ...). Record these in the field at the
-# moment you apply power to the board. Format "YYYY-MM-DD HH:MM:SS".
-#
-# If you leave this as NULL, timestamps stay RELATIVE (elapsed seconds) and
-# every plot/metric below is still computed - just on relative time.
-session_start_times <- NULL
-# session_start_times <- c(
-#   "2026-09-01 08:00:00",
-#   "2026-09-03 14:22:00"
-# )
-
+# Timezone the onboard RTC was set in (see set_rtc.py) - used to parse the
+# absolute timestamps it writes.
 deployment_tz <- "America/Los_Angeles"
 
 # ---- Gape event detection -----------------------------------------------
@@ -156,70 +148,89 @@ raw <- log_files %>%
   map(
     read_csv,
     col_types = cols(
-      elapsed_s = col_double(),
+      timestamp = col_character(),
       x_uT      = col_double(),
       y_uT      = col_double(),
       z_uT      = col_double()
     )
   ) %>%
   list_rbind(names_to = "source_file") %>%
-  mutate(session_id = dense_rank(source_file), .after = source_file)
+  mutate(session_id = dense_rank(source_file), .after = source_file) %>%
+  rename(timestamp_raw = timestamp)
 
 glimpse(raw)
 ```
 
 ## Reconstruct timestamps
 
-Real time = that session's start time + `elapsed_s`. If
-`session_start_times` is `NULL`, `timestamp` stays `NA` and all downstream
-timing uses `elapsed_s` instead.
+`timestamp_raw` holds either an absolute RTC reading
+(`YYYY-MM-DDTHH:MM:SS`) or, when the DS3231 wasn't detected at boot, a
+relative marker (`T+123.456s` = seconds since that session started - see
+`eventlog.csv` on the card for the matching `RTC_INIT_ERROR` row). A
+session is treated as absolute-time only if every row in it parsed as a
+real RTC reading; otherwise `elapsed_s` is derived from the relative
+marker instead, so every downstream chunk below (all written in terms of
+`elapsed_s`) works the same either way.
 
 ```{r reconstruct-timestamps}
 n_sessions <- n_distinct(raw$session_id)
 
-use_absolute_time <- !is.null(session_start_times) &&
-  length(session_start_times) == n_sessions
-
-if (!is.null(session_start_times) && !use_absolute_time) {
-  warning(sprintf(
-    paste("Found %d log file(s) but %d entry/entries in",
-          "`session_start_times`. Falling back to RELATIVE time for every",
-          "session - supply exactly one start time per log file in the",
-          "SETUP chunk to get absolute timestamps."),
-    n_sessions, length(session_start_times)
-  ))
-}
-
-if (use_absolute_time) {
-  session_starts <- tibble(
-    session_id    = seq_len(n_sessions),
-    session_start = ymd_hms(session_start_times, tz = deployment_tz)
-  )
-} else {
-  session_starts <- tibble(
-    session_id    = seq_len(n_sessions),
-    session_start = as.POSIXct(NA, tz = deployment_tz)
-  )
-}
+is_relative <- str_starts(raw$timestamp_raw, "T\\+")
 
 gaping <- raw %>%
-  left_join(session_starts, by = "session_id") %>%
   mutate(
-    timestamp = session_start + elapsed_s,
-    date      = as_date(timestamp),
-    time      = format(timestamp, "%H:%M:%S")
+    abs_time = if_else(
+      is_relative, as.POSIXct(NA, tz = deployment_tz),
+      ymd_hms(timestamp_raw, tz = deployment_tz, quiet = TRUE)
+    ),
+    relative_s = if_else(
+      is_relative,
+      as.numeric(str_match(timestamp_raw, "^T\\+([0-9.]+)s$")[, 2]),
+      NA_real_
+    )
+  ) %>%
+  group_by(session_id) %>%
+  mutate(
+    timestamp = if (all(!is.na(abs_time))) abs_time else as.POSIXct(NA, tz = deployment_tz),
+    elapsed_s = if (all(!is.na(abs_time))) {
+      as.numeric(difftime(abs_time, min(abs_time), units = "secs"))
+    } else {
+      relative_s - min(relative_s, na.rm = TRUE)
+    }
+  ) %>%
+  ungroup() %>%
+  select(-abs_time, -relative_s) %>%
+  mutate(
+    date = as_date(timestamp),
+    time = format(timestamp, "%H:%M:%S")
   )
 
-# Require EVERY session to have a real start time before plotting on a
+# Require EVERY session to have real RTC timestamps before plotting on a
 # datetime axis - a partial mix would render some panels on real time and
-# others on nothing, which is easy to misread.
+# others on nothing, which is easy to misread. `elapsed_s` (above) has no
+# such restriction and is always populated, so it's the safe common axis
+# to fall back on for the combined plots when sessions are mixed.
 has_real_time <- !any(is.na(gaping$timestamp))
 
 cat(sprintf(
-  "%d session(s), %d total samples. Absolute timestamps: %s\n",
+  "%d session(s), %d total samples. Absolute timestamps for ALL sessions: %s\n",
   n_sessions, nrow(gaping),
-  if (has_real_time) "YES" else "NO (relative elapsed_s only)"
+  if (has_real_time) "YES (from onboard RTC)" else "NO (falling back to elapsed_s for combined plots)"
 ))
+```
+
+Some experiments mix RTC-timestamped and elapsed-only files (e.g. the RTC
+wasn't detected on one boot). `timestamp`/`date`/`time` stay real per row
+for any session that has them, and `elapsed_s` is always populated for
+every session either way - only the combined multi-panel plots below fall
+back to `elapsed_s` for everyone when the mix isn't uniform. Check which
+sessions are which here:
+
+```{r timestamp-availability}
+gaping %>%
+  group_by(session_id, source_file) %>%
+  summarise(has_real_time = !any(is.na(timestamp)), .groups = "drop") %>%
+  kable(caption = "Timestamp availability per session")
 ```
 
 # DERIVED METRICS
@@ -322,6 +333,8 @@ runs <- gaping %>%
   summarise(
     start_s   = min(elapsed_s),
     end_s     = max(elapsed_s),
+    start_time = min(timestamp),
+    end_time   = max(timestamp),
     n_samples = n(),
     mean_magnitude_uT = mean(field_magnitude_uT),
     min_magnitude_uT  = min(field_magnitude_uT),
@@ -346,6 +359,8 @@ events <- events %>%
   summarise(
     start_s           = min(start_s),
     end_s             = max(end_s),
+    start_time        = min(start_time),
+    end_time          = max(end_time),
     # Weighted mean must be computed BEFORE n_samples is collapsed to a
     # single sum, otherwise the weights vector no longer matches the values.
     mean_magnitude_uT = weighted.mean(mean_magnitude_uT, n_samples),
@@ -359,12 +374,7 @@ events <- events %>%
     duration_s  = end_s - start_s,
     duration_min = duration_s / 60
   ) %>%
-  ungroup() %>%
-  left_join(session_starts, by = "session_id") %>%
-  mutate(
-    start_time = session_start + start_s,
-    end_time   = session_start + end_s
-  )
+  ungroup()
 
 cat(sprintf("Detected %d gape event(s) across %d session(s).\n",
             nrow(events), n_sessions))
@@ -650,9 +660,8 @@ p_rate
   how aggressively blips are rejected and near-adjacent gapes are merged.
   Vary them and re-render to check the event count is stable rather than an
   artifact of one particular setting.
-- **Timestamps.** Record the real power-on time for each `gapelog_NNN.csv`
-  in the field and enter them in `session_start_times`; without them all
-  timing is relative to the start of each file.
-- **Adding an RTC** (PCF8523 / DS3231 breakout) would remove the manual
-  start-time bookkeeping entirely, since the logger could then write real
-  date/time to each row.
+- **Timestamps.** The onboard DS3231 RTC supplies absolute time directly,
+  so no manual start-time entry is needed. If a session shows "NO
+  (relative T+ elapsed time only)" in the DATA IMPORT summary, check that
+  session's `RTC_INIT_ERROR` row in `eventlog.csv` to see why the RTC
+  wasn't detected at boot.

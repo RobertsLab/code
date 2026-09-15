@@ -1,5 +1,5 @@
 """
-oyster_gape_logger.py  ->  save this file as code.py on CIRCUITPY
+Save this file as code.py on CIRCUITPY
 
 Logs three-axis magnetometer readings from an Adafruit TLV493D
 (STEMMA QT, connected via I2C) to a CSV file on the SD card of an
@@ -11,33 +11,39 @@ card for at boot, to /sd, before code.py ever runs (no storage.mount()
 call needed here). This was confirmed on the actual hardware: a bare
 open("/sd/test.txt", "w") succeeded with no mounting code at all.
 
-Timestamping: NO real-time clock is installed yet. Each row records
-seconds elapsed since this script started (time.monotonic()), not a
-wall-clock date/time. Write down the actual start date/time by hand
-when you deploy the logger -- the companion R Markdown file adds it
-back in to reconstruct real timestamps. An RTC module (e.g. PCF8523 /
-DS3231) is planned for a future revision; once installed, replace the
-elapsed-time column with rtc.datetime directly.
+Timestamping: an Adafruit DS3231 RTC (STEMMA QT, shares the I2C bus
+with the TLV493D) provides wall-clock date/time. Each row records an
+ISO-8601-ish timestamp (YYYY-MM-DDTHH:MM:SS) read from the RTC. The
+RTC must be set once (e.g. with a small one-off script that writes
+time.struct_time to rtc.datetime) -- this script only reads it.
+
+If the RTC is not detected at boot (wiring issue, module not
+installed, etc.), the script does NOT halt -- it falls back to
+seconds elapsed since script start (time.monotonic()), same as
+before, and records an RTC_INIT_ERROR event in the event log so the
+gap is visible after the fact.
 
 A new log file is created each time the board (re)boots, named
 gapelog_001.csv, gapelog_002.csv, etc., so re-running the script never
 overwrites previous deployment data already on the card.
 
-Event logging: every boot and every error condition (SD card, sensor,
-or write failures) is appended to a single persistent /sd/eventlog.csv
-that accumulates across all deployments -- it is never recreated or
-truncated. Each row is tagged with a boot number (from /sd/boot_count.txt,
-incremented once per boot) and the seconds elapsed since that boot's
-script start, so events from different sessions can be told apart even
-without an RTC. Note there is no way to detect clean power-OFF in
-CircuitPython (power just disappears) -- only power-ON (boot) events
-are observable, and that's what gets logged.
+Event logging: every boot and every error condition (SD card, RTC,
+sensor, or write failures) is appended to a single persistent
+/sd/eventlog.csv that accumulates across all deployments -- it is
+never recreated or truncated. Each row is tagged with a boot number
+(from /sd/boot_count.txt, incremented once per boot) and a timestamp
+(RTC wall-clock time, or elapsed seconds since boot if the RTC is
+unavailable), so events from different sessions can be told apart.
+Note there is no way to detect clean power-OFF in CircuitPython
+(power just disappears) -- only power-ON (boot) events are
+observable, and that's what gets logged.
 """
 
 import time
 import board
 import neopixel
 import adafruit_tlv493d
+import adafruit_ds3231
 
 # ----------------------------------------------------------------------
 # CONFIGURATION -- tune these without touching the rest of the script
@@ -137,12 +143,36 @@ try:
         pass
 except OSError:
     with open(EVENT_LOG_PATH, "w") as f:
-        f.write("boot_number,elapsed_s,event,detail\n")
+        f.write("boot_number,timestamp,event,detail\n")
+
+i2c = board.I2C()
+
+# ----------------------------------------------------------------------
+# Initialize the DS3231 RTC (I2C / STEMMA QT, shares the bus with the
+# magnetometer). Not fatal if absent -- timestamps fall back to
+# seconds elapsed since boot, same as before an RTC was added.
+# ----------------------------------------------------------------------
+rtc = None
+try:
+    rtc = adafruit_ds3231.DS3231(i2c)
+    _ = rtc.datetime  # force a bus read to confirm it's actually present
+    print("DS3231 RTC detected")
+except (OSError, ValueError, RuntimeError) as e:
+    rtc = None
+    print("RTC not found, falling back to elapsed-time timestamps: {}".format(e))
+
+
+def format_timestamp(ref_start):
+    if rtc is not None:
+        t = rtc.datetime
+        return "{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}".format(
+            t.tm_year, t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec)
+    return "T+{:.3f}s".format(time.monotonic() - ref_start)
 
 
 def log_event(event, detail=""):
-    elapsed = time.monotonic() - boot_start_time
-    row = "{},{:.3f},{},{}\n".format(boot_number, elapsed, event, detail)
+    row = "{},{},{},{}\n".format(
+        boot_number, format_timestamp(boot_start_time), event, detail)
     try:
         with open(EVENT_LOG_PATH, "a") as f:
             f.write(row)
@@ -150,13 +180,17 @@ def log_event(event, detail=""):
         print("Event log write failed: {}".format(e))
 
 
+if rtc is not None:
+    log_event("RTC_INIT_OK", "DS3231 RTC detected")
+else:
+    log_event("RTC_INIT_ERROR", "RTC not found, falling back to elapsed-time timestamps")
+
 log_event("BOOT", "SD card confirmed at {}".format(SD_MOUNT_POINT))
 
 # ----------------------------------------------------------------------
 # Initialize the TLV493D magnetometer (I2C / STEMMA QT)
 # ----------------------------------------------------------------------
 try:
-    i2c = board.I2C()
     tlv = adafruit_tlv493d.TLV493D(i2c)
     print("TLV493D magnetometer initialized")
     log_event("SENSOR_INIT_OK", "TLV493D magnetometer initialized")
@@ -194,7 +228,7 @@ print("Logging to {}".format(log_path))
 log_event("LOG_START", "Logging sensor data to {}".format(log_path))
 
 with open(log_path, "w") as f:
-    f.write("elapsed_s,x_uT,y_uT,z_uT\n")
+    f.write("timestamp,x_uT,y_uT,z_uT\n")
 
 # ----------------------------------------------------------------------
 # Main logging loop
@@ -203,12 +237,13 @@ start_time = time.monotonic()
 row_count = 0
 
 print("Starting logging loop. Sample interval: {} s".format(SAMPLE_INTERVAL))
-print("NOTE: elapsed_s is seconds since this script started, "
-      "NOT a wall-clock timestamp (no RTC installed).")
+if rtc is None:
+    print("NOTE: no RTC detected -- timestamp is seconds since this "
+          "script started, NOT a wall-clock timestamp.")
 
 while True:
     loop_start = time.monotonic()
-    elapsed = loop_start - start_time
+    timestamp = format_timestamp(start_time)
 
     try:
         x, y, z = tlv.magnetic
@@ -218,13 +253,13 @@ while True:
         time.sleep(SAMPLE_INTERVAL)
         continue
 
-    row = "{:.3f},{:.3f},{:.3f},{:.3f}\n".format(elapsed, x, y, z)
+    row = "{},{:.3f},{:.3f},{:.3f}\n".format(timestamp, x, y, z)
 
     # Echo each reading to the serial console as it's captured -- useful
     # for testing over USB/REPL. Remove or comment out this line for
     # unattended field deployment if you want a quieter console.
-    print("elapsed_s={:.3f}  x_uT={:.3f}  y_uT={:.3f}  z_uT={:.3f}".format(
-        elapsed, x, y, z))
+    print("timestamp={}  x_uT={:.3f}  y_uT={:.3f}  z_uT={:.3f}".format(
+        timestamp, x, y, z))
 
     try:
         with open(log_path, "a") as f:

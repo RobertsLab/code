@@ -38,6 +38,16 @@ ID exposed over I2C, so if a magnetometer is swapped between boards
 magnetometer-to-calibration-curve association must be tracked by
 physically marking the components.
 
+Unit labels: three RP2040 Adalogger boards are being connected and
+deployed sequentially for this project, referenced by the short
+labels below rather than their raw UIDs. Update this table as each
+unit is connected and its UID confirmed via the REPL
+(microcontroller.cpu.uid).
+
+    Unit-A: df6470a31b8a2f2e  (confirmed 2026-09-17)
+    Unit-B: df6470a31b744b2e  (confirmed 2026-09-17)
+    Unit-C: df6470a31b8b442e  (confirmed 2026-09-17)
+
 Event logging: every boot and every error condition (SD card, RTC,
 sensor, or write failures) is appended to a single persistent
 /sd/eventlog.csv that accumulates across all deployments -- it is

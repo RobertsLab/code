@@ -27,6 +27,17 @@ A new log file is created each time the board (re)boots, named
 gapelog_001.csv, gapelog_002.csv, etc., so re-running the script never
 overwrites previous deployment data already on the card.
 
+RP2040 unique ID: each Adalogger's RP2040 has a unique per-chip ID
+burned in at manufacture (read via microcontroller.cpu.uid). It is
+recorded in a dedicated rp2040_uid column on every data row (and in
+the BOOT event) so collected data can always be traced back to the
+physical board that recorded it. This identifies the Adalogger only
+-- the TLV493D magnetometer and DS3231 RTC have no equivalent unique
+ID exposed over I2C, so if a magnetometer is swapped between boards
+(they connect via STEMMA QT, not soldered), the correct
+magnetometer-to-calibration-curve association must be tracked by
+physically marking the components.
+
 Event logging: every boot and every error condition (SD card, RTC,
 sensor, or write failures) is appended to a single persistent
 /sd/eventlog.csv that accumulates across all deployments -- it is
@@ -41,6 +52,8 @@ observable, and that's what gets logged.
 
 import time
 import board
+import microcontroller
+import binascii
 import neopixel
 import adafruit_tlv493d
 import adafruit_ds3231
@@ -57,6 +70,16 @@ EVENT_LOG_PATH = SD_MOUNT_POINT + "/eventlog.csv"
 BOOT_COUNT_PATH = SD_MOUNT_POINT + "/boot_count.txt"
 
 boot_start_time = time.monotonic()
+
+# ----------------------------------------------------------------------
+# RP2040 unique ID (per-chip, burned in at manufacture). Neither the
+# TLV493D magnetometer nor the DS3231 RTC exposes a comparable unique
+# ID over I2C, so this only identifies the Adalogger board itself --
+# not which physical magnetometer is plugged into it. If magnetometers
+# get swapped between boards, that association must still be tracked
+# by physically marking the components.
+# ----------------------------------------------------------------------
+RP2040_UID = binascii.hexlify(microcontroller.cpu.uid).decode()
 
 # ----------------------------------------------------------------------
 # Onboard NeoPixel status LED (optional heartbeat; safe no-op if board
@@ -185,7 +208,8 @@ if rtc is not None:
 else:
     log_event("RTC_INIT_ERROR", "RTC not found, falling back to elapsed-time timestamps")
 
-log_event("BOOT", "SD card confirmed at {}".format(SD_MOUNT_POINT))
+log_event("BOOT", "SD card confirmed at {}. RP2040 UID: {}".format(
+    SD_MOUNT_POINT, RP2040_UID))
 
 # ----------------------------------------------------------------------
 # Initialize the TLV493D magnetometer (I2C / STEMMA QT)
@@ -228,7 +252,7 @@ print("Logging to {}".format(log_path))
 log_event("LOG_START", "Logging sensor data to {}".format(log_path))
 
 with open(log_path, "w") as f:
-    f.write("timestamp,x_uT,y_uT,z_uT\n")
+    f.write("timestamp,rp2040_uid,x_uT,y_uT,z_uT\n")
 
 # ----------------------------------------------------------------------
 # Main logging loop
@@ -253,13 +277,13 @@ while True:
         time.sleep(SAMPLE_INTERVAL)
         continue
 
-    row = "{},{:.3f},{:.3f},{:.3f}\n".format(timestamp, x, y, z)
+    row = "{},{},{:.3f},{:.3f},{:.3f}\n".format(timestamp, RP2040_UID, x, y, z)
 
     # Echo each reading to the serial console as it's captured -- useful
     # for testing over USB/REPL. Remove or comment out this line for
     # unattended field deployment if you want a quieter console.
-    print("timestamp={}  x_uT={:.3f}  y_uT={:.3f}  z_uT={:.3f}".format(
-        timestamp, x, y, z))
+    print("timestamp={}  rp2040_uid={}  x_uT={:.3f}  y_uT={:.3f}  z_uT={:.3f}".format(
+        timestamp, RP2040_UID, x, y, z))
 
     try:
         with open(log_path, "a") as f:

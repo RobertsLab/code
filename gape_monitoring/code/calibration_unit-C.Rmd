@@ -1,0 +1,66 @@
+---
+title: "Magnetometer Calibration - Unit-C"
+author: ""
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    code_folding: show
+params:
+  unit_label: "Unit-C"
+  expected_uid: "df6470a31b8b442e"
+  log_path: "calibration/unit-C/gapelog_001.csv"
+  manifest_path: "calibration/unit-C/calibration_manifest_unit-C.csv"
+---
+
+<!--
+Calibration notebook for Unit-C (RP2040 UID df6470a31b8b442e).
+
+INPUT PATHS live in the `params:` block above. Either edit them there, or
+supply them at render time without touching the file:
+
+  rmarkdown::render("calibration_unit-C.Rmd",
+                    params = list(log_path = "path/to/gapelog_007.csv",
+                                  manifest_path = "path/to/manifest.csv"))
+
+  # or, to be prompted for them interactively:
+  rmarkdown::render("calibration_unit-C.Rmd", params = "ask")
+
+`log_path` may be a single file or a character vector of files (e.g. if the
+calibration session spanned a reboot). Every row of every file must carry
+UID df6470a31b8b442e or the notebook stops.
+
+The analysis itself lives in `_calibration-body.Rmd`, shared by all three
+unit notebooks so a fix lands everywhere at once.
+-->
+
+```{r unit-analysis-parameters}
+# ---- Hold trimming -------------------------------------------------------
+# Seconds discarded from the start/end of each manifest hold, to drop the
+# hand still settling and starting to move away again. At 1 Hz these are
+# also sample counts.
+settle_s    <- 10
+tail_trim_s <- 5
+
+# Holds left with fewer samples than this after trimming get flagged.
+min_samples_per_step <- 10
+
+# ---- Sensor ---------------------------------------------------------------
+# TLV493D full-scale range, microtesla (+/- 130 mT). Readings at or above
+# `saturation_frac` of this are clipping and are flagged.
+sensor_range_uT <- 130000
+saturation_frac <- 0.95
+
+# ---- Background -----------------------------------------------------------
+# Subtract the ambient field vector measured during `n_magnets = 0` holds.
+subtract_background <- TRUE
+
+# ---- Misc -----------------------------------------------------------------
+deployment_tz <- "America/Los_Angeles"   # timezone the DS3231 was set in
+output_dir    <- "output"
+```
+
+```{r calibration-body, child = "_calibration-body.Rmd"}
+```

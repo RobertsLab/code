@@ -129,7 +129,7 @@ apply_calibration <- TRUE
 # Coefficient CSV(s) written by `calibration_unit-*.Rmd`. Pass as many as you
 # like (e.g. all three units); the right row is selected per session by
 # matching rp2040_uid AND magnet count.
-coef_path <- c("output/calibration-coefficients_Unit-A.csv")
+coef_path <- c("../outputs/calibration_unit-A/calibration-coefficients_Unit-A.csv")
 
 # Deployment metadata: which magnet count each log file was recorded with.
 # The logger records the board UID but NOT the magnet count, so this is the
@@ -263,12 +263,20 @@ Field magnitude `sqrt(x^2 + y^2 + z^2)` is the primary gape proxy: it is
 rotation-invariant, so it doesn't depend on exactly how the sensor is
 oriented relative to the magnet.
 
+What is computed here is the **raw** magnitude, `field_raw_uT` - straight off
+the sensor, ambient field included. The quantity everything downstream
+actually uses, `field_magnitude_uT`, is that same magnitude with the ambient
+vector removed, and it cannot be computed yet: the background vector is a
+per-unit property that arrives with the calibration coefficients, so it is
+not known until the GAPE DISTANCE section has matched a curve to each
+session. See "Background correction" there.
+
 ```{r field-magnitude}
 gaping <- gaping %>%
-  mutate(field_magnitude_uT = sqrt(x_uT^2 + y_uT^2 + z_uT^2))
+  mutate(field_raw_uT = sqrt(x_uT^2 + y_uT^2 + z_uT^2))
 
 gaping %>%
-  select(x_uT, y_uT, z_uT, field_magnitude_uT) %>%
+  select(x_uT, y_uT, z_uT, field_raw_uT) %>%
   summary()
 ```
 
@@ -348,6 +356,19 @@ curves <- if (!apply_calibration) {
     model = col_character(), is_best_model = col_logical()
   ))
 
+  # These curves were fit to background-corrected field, so the background
+  # vector has to come with them. A coefficient file written before that was
+  # exported would otherwise be applied to raw field and silently misread
+  # every distance - the failure this stop exists to prevent.
+  bg_cols <- c("bg_x_uT", "bg_y_uT", "bg_z_uT")
+  missing_bg <- setdiff(bg_cols, names(all_coefs))
+  if (length(missing_bg) > 0) {
+    stop("Coefficient file(s) are missing the background column(s): ",
+         paste(missing_bg, collapse = ", "),
+         "\nThese were written by an older version of the calibration ",
+         "notebooks. Re-knit `calibration_unit-*.Rmd` to regenerate them.")
+  }
+
   if (calibration_model == "best") {
     all_coefs %>% filter(is_best_model)
   } else {
@@ -401,6 +422,7 @@ if (apply_calibration) {
     left_join(
       curves %>% select(rp2040_uid, n_magnets, unit, model,
                         cal_a = a, cal_b = b, cal_c = c, rmse_mm,
+                        bg_x_uT, bg_y_uT, bg_z_uT,
                         fit_min_field_uT, fit_max_field_uT),
       by = c("rp2040_uid", "n_magnets")
     )
@@ -425,16 +447,64 @@ if (apply_calibration) {
 }
 ```
 
+## Background correction
+
+The calibration curves were fit to field with the ambient vector removed, so
+the same has to be done here before a curve is applied - otherwise the curve
+is being handed a different quantity than the one it was built from, and it
+answers confidently in the wrong units.
+
+Ambient field adds as a **vector**, so it is subtracted per axis and the
+magnitude recomputed from the corrected axes. Subtracting it from the
+magnitude would be wrong.
+
+`field_magnitude_uT` is defined here, and it is what the rest of the notebook
+uses - event detection included. A fixed vector offset distorts magnitude
+unevenly as the magnet moves, so the corrected signal is the better one to
+detect gapes on, not just to convert to millimetres.
+
+With `apply_calibration = FALSE` there is no background to subtract (it
+arrives with the coefficients), so `field_magnitude_uT` falls back to the raw
+magnitude and every field-magnitude result below still works - it is just
+uncorrected, and the printout says so.
+
+```{r background-correction}
+if (apply_calibration) {
+  gaping <- gaping %>%
+    left_join(
+      session_curves %>% select(session_id, n_magnets, cal_a, cal_b, cal_c,
+                                bg_x_uT, bg_y_uT, bg_z_uT,
+                                fit_min_field_uT, fit_max_field_uT),
+      by = "session_id"
+    ) %>%
+    mutate(field_magnitude_uT = sqrt((x_uT - bg_x_uT)^2 +
+                                     (y_uT - bg_y_uT)^2 +
+                                     (z_uT - bg_z_uT)^2))
+
+  gaping %>%
+    group_by(session_id, source_file) %>%
+    summarise(
+      bg_uT          = sqrt(first(bg_x_uT)^2 + first(bg_y_uT)^2 + first(bg_z_uT)^2),
+      mean_raw_uT    = mean(field_raw_uT),
+      mean_corr_uT   = mean(field_magnitude_uT),
+      shift_uT       = mean_corr_uT - mean_raw_uT,
+      .groups = "drop"
+    ) %>%
+    mutate(across(where(is.numeric), ~ round(.x, 1))) %>%
+    kable(caption = paste("Background removed per session (bg_uT is the",
+                          "magnitude of the subtracted vector)"))
+} else {
+  gaping <- gaping %>% mutate(field_magnitude_uT = field_raw_uT)
+  cat("`apply_calibration = FALSE`: no background available, so",
+      "`field_magnitude_uT` is the RAW magnitude (ambient field included).\n")
+}
+```
+
 ## Convert field magnitude to distance
 
 ```{r apply-calibration}
 if (apply_calibration) {
   gaping <- gaping %>%
-    left_join(
-      session_curves %>% select(session_id, n_magnets, cal_a, cal_b, cal_c,
-                                fit_min_field_uT, fit_max_field_uT),
-      by = "session_id"
-    ) %>%
     mutate(gape_distance_mm = cal_a * field_magnitude_uT^cal_b + coalesce(cal_c, 0))
 } else {
   gaping <- gaping %>% mutate(gape_distance_mm = NA_real_)
@@ -871,8 +941,9 @@ p_magnitude <- p_magnitude +
   facet_wrap(~source_file, scales = "free_x", ncol = 1) +
   labs(
     title = "Field magnitude over time, with detected gape events shaded",
-    subtitle = "Magnitude falls as the shell opens (magnet moves away from sensor)",
-    x = x_lab, y = "Field magnitude (uT)"
+    subtitle = paste("Background-corrected; magnitude falls as the shell opens",
+                     "(magnet moves away from sensor)"),
+    x = x_lab, y = "Field magnitude, background-corrected (uT)"
   ) +
   theme_minimal()
 

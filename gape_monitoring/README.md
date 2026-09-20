@@ -35,36 +35,57 @@ deployment, or falls back to relative time if none is supplied.
   `calibration_unit-C.Rmd`: one R Markdown notebook per logger unit, each
   turning a bench calibration recording into a field-strength-to-distance
   curve (following Vereycken et al. 2024, *Ecological Indicators*
-  166:112437). Input paths are set in the `params:` block at the top of each
-  file, or supplied at render time -- including interactively via
-  `rmarkdown::render("calibration_unit-A.Rmd", params = "ask")`. Each
-  notebook checks the `rp2040_uid` on every data row against the UID it was
+  166:112437). Everything settable lives in one `## Variables` chunk under
+  SETUP -- unit identity (`unit_label`, `unit_id`, `expected_uid`), input
+  paths (`log_dir`, the unit's directory under `calibration/`, and
+  `manifest_path`, the shared `calibration/calibration_metadata.csv`) and the
+  analysis knobs, all as plain R assignments. To point a notebook at
+  different files, edit that chunk. Each notebook checks the `rp2040_uid` on every data row against the UID it was
   written for and refuses to knit against another unit's data. Magnet count
-  is a grouping variable within each notebook, not a separate file, so 1, 2
-  and 3 magnets are fit and compared side by side. Writes
-  `calibration-coefficients_Unit-X.csv` and
-  `calibration-hold-summary_Unit-X.csv` to `output/`.
+  is a grouping variable within each notebook, so 1, 2 and 3 magnets are fit
+  and compared side by side even though each was recorded to its own file.
+  Writes `calibration-coefficients_Unit-X.csv`,
+  `calibration-hold-summary_Unit-X.csv` and the rendered HTML to
+  `outputs/calibration_unit-X/`. The coefficient file carries the ambient
+  background vector (`bg_x_uT`, `bg_y_uT`, `bg_z_uT`) alongside the fitted
+  `a`/`b`/`c`, because the curves are fit to background-corrected field and
+  anything applying them has to correct its own readings the same way
+  first.
 
-- `_calibration-body.Rmd`: the shared analysis body pulled in as a knitr
-  child document by all three unit notebooks -- data import, UID
-  verification, manifest matching and QC, background subtraction, model
-  fitting and comparison, plots, and export. Not knit directly (it has no
-  YAML header). Edit this file to change the analysis for every unit at once.
+  Each notebook is **self-contained**: data import, UID verification,
+  metadata matching and QC, background subtraction, model fitting and
+  comparison, plots and export all live in the file itself, so it can be
+  knit on its own with no other `.Rmd` present. The three are identical
+  apart from the title, the header comment and the `## Variables` chunk --
+  which also means a change to the analysis has to be made in all three.
+  `diff code/calibration_unit-A.Rmd code/calibration_unit-B.Rmd` should
+  report only those two blocks.
 
-- `calibration_manifest_template.csv`: template for the hand-written bench
-  log that tells the calibration notebooks which stretch of the recording
-  corresponds to which distance and magnet count. One row per hold:
-  `n_magnets` (`0` = a no-magnet background hold), `distance_mm`,
-  `start_time`, `end_time` (both `YYYY-MM-DDTHH:MM:SS`, matching the RTC),
-  and free-text `notes`. Times are deliberately left blank -- the notebooks
-  stop with an explanatory error until they are filled in.
+- `calibration/calibration_metadata.csv`: the hand-written bench log that
+  tells the calibration notebooks which stretch of which recording
+  corresponds to which distance and magnet count. One row per hold, covering
+  **all** units in one file -- each notebook filters it to its own `unit`:
+  `unit` (`A`/`B`/`C`), `distance` (mm), `magnet.count` (`0` = a no-magnet
+  background hold), `start.time`, `end.time` (both `YYYY-MM-DDTHH:MM:SS`,
+  matching the RTC), and `data.file` (which `calibration-N.csv` the hold was
+  recorded in). Samples are matched to holds on file *and* time, since two
+  units recorded on the same day share wall-clock times.
+  `calibration_manifest_template.csv` is the older per-unit form of this
+  file, kept for reference.
 
 - `gaping_analysis.Rmd`: R Markdown notebook that reads one or more
   `gapelog_NNN.csv` files (one per logging session/boot), reconstructs
   wall-clock timestamps for elapsed-time rows from user-supplied session
   start times, computes field magnitude, and detects gape events as
   sustained drops in magnitude below a threshold (configurable as
-  noise-based, relative, or absolute). Produces event tables (frequency,
+  noise-based, relative, or absolute). Field magnitude is
+  **background-corrected** before anything else uses it: the per-axis ambient
+  vector recorded at calibration is subtracted from the logged axes and the
+  magnitude recomputed, so the curve is applied to the same quantity it was
+  fit to. The corrected magnitude drives event detection as well as the
+  distance conversion. With `apply_calibration <- FALSE` there is no
+  background available, so magnitude falls back to raw and the notebook says
+  so. Produces event tables (frequency,
   duration, time between events) and plots (magnitude with detected
   events, per-axis time series, duration/interval distributions, events
   per hour). Optionally applies the calibration curves to convert field
@@ -87,20 +108,30 @@ Each magnetometer needs its own calibration curve, and the curve is specific
 to the magnet and geometry it was measured with -- re-calibrate after any
 physical change to the magnet, its mounting, or the sensor-magnet layout.
 
-1. Fix the magnetometer; move the magnet(s) to each distance in turn
-   (0, 1, 2, ... 10 mm), holding each **still for 60 s** while the logger
-   runs at 1 Hz. The notebooks discard 10 s at the start and 5 s at the end
-   of each hold, leaving ~45 clean samples per point.
-2. Leave a ~15-20 s pause between holds while repositioning, so the step
-   boundaries are unambiguous in the recorded trace.
-3. Repeat the full sweep with 1, 2 and 3 magnets.
-4. Record a no-magnet background hold at the start and end of the session,
-   with the magnets well away from the sensor.
-5. Write down the wall-clock start/end of every hold as you go, then
-   transcribe them into a copy of `calibration_manifest_template.csv`.
+A **hold** is the unit of measurement below: the magnet parked at one
+distance, with one magnet count, held still while the logger samples at 1 Hz
+for at least 60 s (~61 samples). One row of `calibration_metadata.csv` is one
+hold, and each hold is averaged into a single point on the curve.
 
-That is ~35 holds and roughly 45 minutes of recording per unit, in one
-continuous session and so one `gapelog_NNN.csv` file.
+1. Fix the magnetometer; move the magnet(s) to each distance in turn
+   (1, 2, ... 20 mm), holding each **still for at least 60 s** while the
+   logger runs at 1 Hz -- ~61 samples per point.
+2. **Log the holds only.** Stop logging while repositioning, so no
+   adjustment period is ever recorded: each hold is a contiguous run of
+   samples and the timestamp jumps to the next hold. Nothing then needs
+   trimming off the ends of a hold, and every recorded sample is a genuine
+   still-magnet reading. (Earlier recordings ran continuously and the
+   notebooks discarded 10 s at the start and 5 s at the end of each hold;
+   that trimming has been removed.)
+3. Repeat the full sweep with 1, 2 and 3 magnets, one file per magnet count:
+   `calibration-1.csv`, `calibration-2.csv`, `calibration-3.csv`.
+4. Record a no-magnet background hold with the magnets well away from the
+   sensor, as `calibration-0.csv`.
+5. Write down the wall-clock start/end of every hold as you go, then
+   transcribe them into `calibration/calibration_metadata.csv`.
+
+That is ~61 holds and roughly two hours of recording per unit, split across
+the four `calibration-N.csv` files in `calibration/unit-X/`.
 
 **Magnet count is part of the calibration.** Different oysters may need
 different magnet counts (leading-edge shell thickness, animal size), and more
@@ -131,7 +162,7 @@ Two caveats worth checking before committing to a magnet:
 - **Saturation.** The TLV493D clips at +/- 130 mT. At 0-2 mm a stack of
   magnets can exceed that, and a clipped reading looks like a plateau rather
   than an error. The notebooks flag any hold with near-full-scale readings.
-- **Range.** 0-10 mm covers gape distance, but the sensor-to-magnet
+- **Range.** 1-20 mm covers gape distance, but the sensor-to-magnet
   separation also includes whatever the magnet and sensor are mounted on.
-  Extend the sweep to 15-20 mm if the mounted geometry never actually gets
+  Extend the sweep further if the mounted geometry never actually gets
   down to a few mm.

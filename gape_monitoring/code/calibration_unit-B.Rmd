@@ -8,44 +8,165 @@ output:
     toc_float: true
     toc_depth: 3
     code_folding: show
-params:
-  unit_label: "Unit-B"
-  expected_uid: "df6470a31b744b2e"
-  log_path: "calibration/unit-B/gapelog_001.csv"
-  manifest_path: "calibration/unit-B/calibration_manifest_unit-B.csv"
+knit: (function(input, ...) {
+    out_dir <- file.path(dirname(input), "..", "outputs",
+                         tools::file_path_sans_ext(basename(input)));
+    dir.create(out_dir, recursive = TRUE, showWarnings = FALSE);
+    rmarkdown::render(input, output_dir = out_dir, ...)
+  })
+editor_options: 
+  markdown: 
+    wrap: 72
+bibliography: references.bib
 ---
 
+```{=html}
 <!--
 Calibration notebook for Unit-B (RP2040 UID df6470a31b744b2e).
 
-INPUT PATHS live in the `params:` block above. Either edit them there, or
-supply them at render time without touching the file:
+ALL USER-SETTABLE VALUES live in one place: the `## Variables` chunk under
+SETUP below. Unit identity, input paths and the analysis knobs are set
+there, as plain R assignments - there is no YAML `params:` block and no
+`params = "ask"` prompt, so edit that chunk to point this notebook at
+different files.
 
-  rmarkdown::render("calibration_unit-B.Rmd",
-                    params = list(log_path = "path/to/gapelog_007.csv",
-                                  manifest_path = "path/to/manifest.csv"))
-
-  # or, to be prompted for them interactively:
-  rmarkdown::render("calibration_unit-B.Rmd", params = "ask")
-
-`log_path` may be a single file or a character vector of files (e.g. if the
-calibration session spanned a reboot). Every row of every file must carry
+`log_dir` is the unit's calibration directory; every `calibration-N.csv` in
+it is read, where `N` is the magnet count that file was recorded with. The
+manifest (`calibration_metadata.csv`) is shared by all three units and is
+filtered to `unit_id` here. Every row of every file must carry
 UID df6470a31b744b2e or the notebook stops.
 
-The analysis itself lives in `_calibration-body.Rmd`, shared by all three
-unit notebooks so a fix lands everywhere at once.
+Paths are relative to this file's directory (`code/`). The `knit:` field
+above sends the rendered HTML to `../outputs/calibration_unit-B/` (the
+RStudio Knit button honours it; `rmarkdown::render()` does not, so pass
+`output_dir = "../outputs/calibration_unit-B"`). CSV exports go to the same
+directory via `output_dir` in the Variables chunk.
+
+This notebook is self-contained -- the analysis is inlined below rather than
+pulled in from a shared child document, so the file depends on nothing but
+its inputs. The trade-off is that the three unit notebooks are now copies:
+they are identical apart from the title, this comment and the `## Variables`
+chunk, so a change to the analysis has to be made in all three.
+`diff calibration_unit-B.Rmd calibration_unit-A.Rmd` should report only
+those two blocks.
 -->
+```
 
-```{r unit-analysis-parameters}
-# ---- Hold trimming -------------------------------------------------------
-# Seconds discarded from the start/end of each manifest hold, to drop the
-# hand still settling and starting to move away again. At 1 Hz these are
-# also sample counts.
-settle_s    <- 10
-tail_trim_s <- 5
+# OVERVIEW
 
-# Holds left with fewer samples than this after trimming get flagged.
-min_samples_per_step <- 10
+This notebook turns a bench calibration recording into a
+**field-strength to distance** curve for one magnetometer unit,
+following the approach of the VGWatch valve-gape monitor [@debruyn2024],
+whose calibration script fit
+
+$$ d = a \cdot B^{\,b} $$
+
+where $d$ is magnet-to-sensor distance (mm) and $B$ is measured field
+magnitude ($\mu$T). That is the model used in the field: the logger
+records $B$, and the curve converts it back to a gape distance.
+
+A **hold** is the unit of measurement throughout: the magnet parked at
+one distance, with one magnet count, held still while the logger samples
+at 1 Hz for at least 60 s (\~61 samples). One row of the calibration
+metadata is one hold, and each hold is averaged into a single point on
+the curve.
+
+Two models are fit here and compared:
+
+| model | form | notes |
+|----|----|----|
+| `power` | $d = a B^{b}$ | the published VGWatch form; two parameters |
+| `offset` | $d = a B^{b} + c$ | adds an offset for the gap between the magnet's dipole centre / the sensor die and the measured "0 mm" surface. A dipole gives $B \propto r^{-3}$ where $r = d + d_0$, so $c \approx -d_0$. Handles a 0 mm calibration point, which the two-parameter form structurally cannot (it needs $B = \infty$ to predict $d = 0$). |
+
+## Bench protocol this notebook expects
+
+1.  Fix the magnetometer, move the magnet(s) to each distance in turn,
+    and **hold each distance still for at least 60 s** while the logger
+    runs at 1 Hz - \~61 samples per point.
+2.  **Only the holds are recorded.** The logger is not running while the
+    magnet is being repositioned, so the recording contains no
+    adjustment or settling periods: each hold is a contiguous run of
+    samples and the timestamp simply jumps to the next hold. Nothing is
+    trimmed off the ends of a hold - every in-window sample is a genuine
+    still-magnet reading, and throwing the first and last few away would
+    only cost precision.
+3.  One file per magnet count, `calibration-N.csv`, where `N` is the
+    number of magnets. `calibration-0.csv` is the **no-magnet
+    background** recording (magnets well away from the sensor), used to
+    subtract the ambient field vector (Earth's field, nearby ferrous
+    material) rather than assuming it is zero.
+4.  Write down the wall-clock start/end of every hold, then transcribe
+    them into the shared calibration metadata CSV (see below). The
+    DS3231 RTC timestamps in the log are what the manifest windows are
+    matched against.
+
+## Input: the calibration metadata
+
+One row per hold, times in the same `YYYY-MM-DDTHH:MM:SS` form the
+logger writes. `calibration/calibration_metadata.csv` holds the rows for
+**all** units; this notebook uses only those with `unit == unit_id`.
+
+| column | meaning |
+|----|----|
+| `unit` | which logger unit the hold belongs to (`A`, `B`, `C`) |
+| `distance` | magnet-to-sensor distance for this hold, mm (ignored on background rows) |
+| `magnet.count` | number of magnets on the target (`0` = background hold) |
+| `start.time` | wall-clock start of the hold |
+| `end.time` | wall-clock end of the hold |
+| `data.file` | the `calibration-N.csv` this hold was recorded in |
+
+# SETUP
+
+## Libraries
+
+```{r libraries, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, message = FALSE, warning = FALSE,
+  # Halt on error rather than carrying on with a half-valid document: the
+  # UID and manifest checks below are guards, and a guard that only prints
+  # its complaint isn't a guard. (`rmarkdown::render` defaults to this
+  # anyway; setting it explicitly covers a bare `knitr::knit()` too.)
+  error = FALSE,
+  fig.width = 10, fig.height = 5
+)
+
+library(tidyverse)
+library(lubridate)
+library(knitr)
+```
+
+## Variables
+
+Everything this notebook can be pointed at or tuned with, in one chunk.
+
+```{r variables}
+# ---- Unit identity --------------------------------------------------------
+# Which logger this notebook is for. `unit_id` selects this unit's rows from
+# the shared calibration metadata; `expected_uid` is the RP2040's
+# factory-burned UID, checked against every data row so the notebook cannot
+# be knit against another unit's recording.
+unit_label   <- "Unit-B"
+unit_id      <- "B"
+expected_uid <- "df6470a31b744b2e"
+
+# ---- Inputs ---------------------------------------------------------------
+# Paths are relative to this file's directory (`code/`). `log_dir` holds one
+# `calibration-N.csv` per magnet count; the manifest covers all three units
+# and is filtered to `unit_id` above.
+log_dir       <- "../calibration/unit-B"
+manifest_path <- "../calibration/calibration_metadata.csv"
+
+# ---- Holds ---------------------------------------------------------------
+# No hold trimming. The logger was only running while the magnet was held
+# still: each hold is a contiguous run of >= 60 s of samples, and the
+# repositioning between holds is simply absent from the recording (the
+# timestamps jump). There is no settling period in the data to discard, so
+# every in-window sample is used.
+#
+# Holds with fewer samples than this get flagged - at 1 Hz a 60 s hold
+# should give ~61 samples, so anything much below that means the manifest
+# times and the recording disagree.
+min_samples_per_step <- 45
 
 # ---- Sensor ---------------------------------------------------------------
 # TLV493D full-scale range, microtesla (+/- 130 mT). Readings at or above
@@ -57,10 +178,1104 @@ saturation_frac <- 0.95
 # Subtract the ambient field vector measured during `n_magnets = 0` holds.
 subtract_background <- TRUE
 
+# ---- Magnet count recommendation ------------------------------------------
+# Resolution degrades with distance at a different rate for each magnet
+# count, so each count gets its own usable range rather than all being judged
+# over one arbitrary window. A count is usable out to the distance where its
+# noise-limited resolution first exceeds this value - set it to the smallest
+# gape change you need to be able to resolve.
+max_acceptable_resolution_mm <- 0.25
+
+# The gape range you actually intend to measure, c(min, max) in mm. The
+# headline recommendation is made over this; counts that cannot cover it are
+# ruled out rather than ranked.
+target_gape_mm <- c(1, 10)
+
 # ---- Misc -----------------------------------------------------------------
 deployment_tz <- "America/Los_Angeles"   # timezone the DS3231 was set in
-output_dir    <- "output"
+output_dir    <- "../outputs/calibration_unit-B"
 ```
 
-```{r calibration-body, child = "_calibration-body.Rmd"}
+```{r output-dir}
+dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
+
+cat(sprintf(
+  "Unit:          %s (%s)\nExpected UID:  %s\nLog dir:       %s\nManifest:      %s\nOutput dir:    %s\n",
+  unit_label, unit_id, expected_uid,
+  log_dir, manifest_path, normalizePath(output_dir)
+))
 ```
+
+# DATA IMPORT
+
+## Read the logger CSV(s)
+
+One file per magnet count - `calibration-0.csv` (background) through
+`calibration-3.csv` - all read together. `source_file` carries the file
+name through, because that is what the metadata's `data.file` column
+matches against: two units recorded on the same day can share wall-clock
+times, so time alone is not enough to pin a sample to a hold.
+
+```{r read-log}
+stopifnot("`log_dir` does not exist." = dir.exists(log_dir))
+
+log_files <- list.files(log_dir, pattern = "^calibration-[0-9]+\\.csv$",
+                        full.names = TRUE)
+
+stopifnot("No `calibration-N.csv` files found in `log_dir`." = length(log_files) > 0)
+
+raw <- log_files %>%
+  set_names(basename(.)) %>%
+  map(
+    read_csv,
+    col_types = cols(
+      timestamp  = col_character(),
+      rp2040_uid = col_character(),
+      x_uT       = col_double(),
+      y_uT       = col_double(),
+      z_uT       = col_double()
+    )
+  ) %>%
+  list_rbind(names_to = "source_file") %>%
+  mutate(sample_id = row_number(), .before = everything())
+
+glimpse(raw)
+```
+
+## Confirm the data came from this unit
+
+The RP2040's factory-burned UID is written on every data row, so a log
+can always be traced back to the board that recorded it. Knitting stops
+here if the file doesn't belong to this unit - that is the whole point
+of having one notebook per unit.
+
+Note the UID identifies the **Adalogger board only**. The TLV493D
+exposes no unique ID over I2C, so if magnetometers get swapped between
+boards the board-to-sensor pairing has to be tracked by physically
+marking the parts.
+
+```{r verify-uid}
+uids <- sort(unique(raw$rp2040_uid))
+
+if (length(uids) != 1) {
+  stop(sprintf(
+    "Expected exactly one rp2040_uid in the input, found %d: %s",
+    length(uids), paste(uids, collapse = ", ")
+  ))
+}
+
+if (!identical(uids, expected_uid)) {
+  stop(sprintf(
+    paste0("UID MISMATCH - this data was NOT recorded by %s.\n",
+           "  expected: %s\n  found:    %s\n",
+           "Knit the notebook for the unit with the matching UID instead."),
+    unit_label, expected_uid, uids
+  ))
+}
+
+cat(sprintf("UID confirmed: %s recorded by %s (%d samples).\n",
+            uids, unit_label, nrow(raw)))
+```
+
+## Parse timestamps
+
+Matching samples to manifest windows needs real wall-clock time, so a
+session that fell back to `T+123.456s` elapsed markers (RTC not detected
+at boot - look for `RTC_INIT_ERROR` in `eventlog.csv`) can't be
+calibrated against a hand-written time log. That is a hard stop.
+
+```{r parse-timestamps}
+log_data <- raw %>%
+  mutate(timestamp = ymd_hms(timestamp, tz = deployment_tz, quiet = TRUE))
+
+n_unparsed <- sum(is.na(log_data$timestamp))
+
+if (n_unparsed > 0) {
+  stop(sprintf(
+    paste0("%d of %d rows have no absolute RTC timestamp (elapsed-time ",
+           "fallback). Calibration needs wall-clock time to match the ",
+           "manifest windows - re-record with a working DS3231."),
+    n_unparsed, nrow(log_data)
+  ))
+}
+
+cat(sprintf("Recording spans %s to %s (%.1f min).\n",
+            format(min(log_data$timestamp)), format(max(log_data$timestamp)),
+            as.numeric(difftime(max(log_data$timestamp),
+                                min(log_data$timestamp), units = "mins"))))
+```
+
+## Raw field magnitude
+
+Magnitude `sqrt(x^2 + y^2 + z^2)` is rotation-invariant, so it doesn't
+depend on exactly how the sensor is oriented relative to the magnet -
+the same reason it is the gape proxy in `gaping_analysis.Rmd`.
+
+```{r raw-magnitude}
+log_data <- log_data %>%
+  mutate(field_raw_uT = sqrt(x_uT^2 + y_uT^2 + z_uT^2))
+
+log_data %>%
+  select(x_uT, y_uT, z_uT, field_raw_uT) %>%
+  summary()
+```
+
+## Read the calibration manifest
+
+The metadata file covers every unit, so it is filtered to this one
+first. Column names are mapped to the names used throughout the rest of
+the notebook (`magnet.count` -\> `n_magnets`, `distance` -\>
+`distance_mm`, and so on), and `distance_mm` is blanked on background
+rows where it has no meaning.
+
+```{r read-manifest}
+stopifnot("`manifest_path` does not exist." = file.exists(manifest_path))
+
+manifest_all <- read_csv(
+  manifest_path,
+  col_types = cols(
+    unit         = col_character(),
+    distance     = col_double(),
+    magnet.count = col_integer(),
+    start.time   = col_character(),
+    end.time     = col_character(),
+    data.file    = col_character()
+  )
+)
+
+manifest <- manifest_all %>%
+  filter(unit == unit_id) %>%
+  transmute(
+    n_magnets   = magnet.count,
+    distance_mm = if_else(magnet.count > 0, distance, NA_real_),
+    start_time  = ymd_hms(start.time, tz = deployment_tz, quiet = TRUE),
+    end_time    = ymd_hms(end.time,   tz = deployment_tz, quiet = TRUE),
+    source_file = data.file
+  ) %>%
+  arrange(start_time) %>%
+  mutate(step_id = row_number(), .before = everything())
+
+if (nrow(manifest) == 0) {
+  stop(sprintf(
+    "No rows with unit == '%s' in %s - units present: %s",
+    unit_id, manifest_path,
+    paste(sort(unique(manifest_all$unit)), collapse = ", ")
+  ))
+}
+
+manifest %>%
+  mutate(hold_s = as.numeric(difftime(end_time, start_time, units = "secs"))) %>%
+  kable(caption = sprintf("Calibration metadata for %s", unit_label))
+```
+
+## Validate the manifest
+
+Catches the transcription mistakes that are easy to make at the bench
+and hard to spot later: unparsed times, backwards windows, overlapping
+holds, missing distances on magnet rows, and a `data.file` that names a
+file which was not read.
+
+```{r validate-manifest}
+bad_times <- manifest %>% filter(is.na(start_time) | is.na(end_time))
+backwards <- manifest %>% filter(end_time <= start_time)
+no_dist   <- manifest %>% filter(n_magnets > 0, is.na(distance_mm))
+no_file   <- manifest %>% filter(!source_file %in% basename(log_files))
+
+overlaps <- manifest %>%
+  arrange(source_file, start_time) %>%
+  filter(source_file == lag(source_file), start_time < lag(end_time)) %>%
+  select(step_id, n_magnets, distance_mm, start_time, end_time, source_file)
+
+problems <- c(
+  if (nrow(bad_times)) sprintf("%d row(s) with unparseable start/end time", nrow(bad_times)),
+  if (nrow(backwards)) sprintf("%d row(s) where end_time <= start_time", nrow(backwards)),
+  if (nrow(no_dist))   sprintf("%d magnet row(s) missing distance_mm", nrow(no_dist)),
+  if (nrow(no_file))   sprintf("%d row(s) naming a data.file not present in log_dir: %s",
+                               nrow(no_file), paste(unique(no_file$source_file), collapse = ", ")),
+  if (nrow(overlaps))  sprintf("%d overlapping time window(s)", nrow(overlaps))
+)
+
+if (length(problems) > 0) {
+  stop("Manifest problems:\n  - ", paste(problems, collapse = "\n  - "))
+}
+
+cat(sprintf("Manifest OK: %d hold(s) - %d background, %d magnet holds across %s magnet count(s).\n",
+            nrow(manifest),
+            sum(manifest$n_magnets == 0),
+            sum(manifest$n_magnets > 0),
+            paste(sort(unique(manifest$n_magnets[manifest$n_magnets > 0])), collapse = "/")))
+```
+
+## Assign samples to holds
+
+Samples are matched to holds **within a file**: a sample can only belong
+to a hold that the metadata says was recorded in the file that sample
+came from.
+
+```{r assign-samples}
+assigned <- log_data %>%
+  inner_join(manifest %>% select(step_id, n_magnets, distance_mm,
+                                 start_time, end_time, source_file),
+             by = "source_file", relationship = "many-to-many") %>%
+  filter(timestamp >= start_time, timestamp <= end_time)
+
+# A sample landing in two windows means the manifest is internally
+# inconsistent in a way the overlap check above didn't catch.
+multi_assigned <- assigned %>% count(sample_id) %>% filter(n > 1)
+stopifnot("Some samples fall inside more than one manifest window." =
+            nrow(multi_assigned) == 0)
+
+cat(sprintf(
+  "%d of %d samples (%.1f%%) fall inside a manifest window; %d are unclaimed.\n",
+  nrow(assigned), nrow(log_data), 100 * nrow(assigned) / nrow(log_data),
+  nrow(log_data) - nrow(assigned)
+))
+```
+
+## QC: do the manifest windows line up with the trace?
+
+The single most useful plot here. Grey is the whole recording - a
+staircase, one tread per hold, with no risers because the logger was off
+while the magnet was moved. Coloured points are the samples the metadata
+actually claimed. Every tread should be fully coloured and flat: grey
+showing through, or a coloured run that steps part-way through, means
+those hand-written times are off and need fixing before anything below
+is worth reading.
+
+```{r plot-coverage, fig.height = 5}
+ggplot(log_data, aes(x = timestamp, y = field_raw_uT)) +
+  geom_line(colour = "grey75", linewidth = 0.3) +
+  geom_point(data = assigned, aes(colour = factor(n_magnets)), size = 0.5) +
+  scale_y_log10() +
+  scale_colour_viridis_d(name = "Magnets", end = 0.9) +
+  labs(
+    title = paste(unit_label, "- calibration recording vs. manifest windows"),
+    subtitle = "Grey = full recording; coloured = samples claimed by a manifest hold",
+    x = "Time", y = expression(paste("Raw field magnitude (", mu, "T, log scale)"))
+  ) +
+  theme_bw()
+```
+
+To inspect one stretch closely, add a `coord_cartesian(xlim = ...)` to
+the plot above rather than re-filtering the data.
+
+## Hold completeness
+
+**No samples are trimmed.** Earlier versions of this notebook discarded
+a settling window at each end of every hold, because the recording then
+ran continuously and the ends of a window caught the hand still coming
+to rest or already moving away. These recordings do not work that way:
+logging covered the holds only, each at least 60 s long, with the
+repositioning simply absent from the file. There is no settling period
+in the data to remove, so every in-window sample is kept and the
+per-hold means below are built from \~61 samples rather than \~45.
+
+What is still worth checking is that each hold got the samples it should
+have, and that no sample went unclaimed - both are symptoms of
+hand-written times that drifted from the recording.
+
+```{r hold-coverage}
+hold_samples <- assigned
+
+hold_counts <- hold_samples %>%
+  count(step_id, n_magnets, distance_mm, name = "n_samples") %>%
+  left_join(
+    manifest %>%
+      mutate(hold_s = as.numeric(difftime(end_time, start_time, units = "secs"))) %>%
+      select(step_id, hold_s),
+    by = "step_id"
+  )
+
+thin_steps <- hold_counts %>% filter(n_samples < min_samples_per_step)
+
+if (nrow(thin_steps) > 0) {
+  thin_steps %>%
+    kable(caption = sprintf("WARNING - holds with fewer than %d samples",
+                            min_samples_per_step)) %>%
+    print()
+}
+
+unclaimed <- log_data %>% filter(!sample_id %in% hold_samples$sample_id)
+
+if (nrow(unclaimed) > 0) {
+  unclaimed %>%
+    count(source_file, name = "n_unclaimed") %>%
+    kable(caption = paste("Samples in the recording that no metadata window claims",
+                          "- check these times")) %>%
+    print()
+}
+
+cat(sprintf(
+  "Using all %d in-window samples across %d hold(s): %.0f-%.0f samples per hold (median %.0f).\n",
+  nrow(hold_samples), nrow(hold_counts),
+  min(hold_counts$n_samples), max(hold_counts$n_samples),
+  median(hold_counts$n_samples)
+))
+```
+
+## Saturation check
+
+The TLV493D clips at its full-scale range. A clipped reading looks like
+a flat-topped plateau and will quietly bend the low-distance end of the
+curve, so any hold with near-full-scale readings is flagged here and
+should be dropped or re-recorded with fewer/weaker magnets.
+
+```{r saturation-check}
+sat_limit <- sensor_range_uT * saturation_frac
+
+saturated <- hold_samples %>%
+  mutate(any_axis_max = pmax(abs(x_uT), abs(y_uT), abs(z_uT))) %>%
+  group_by(n_magnets, distance_mm) %>%
+  summarise(
+    max_axis_uT = max(any_axis_max),
+    n_saturated = sum(any_axis_max >= sat_limit),
+    .groups = "drop"
+  ) %>%
+  filter(n_saturated > 0)
+
+if (nrow(saturated) > 0) {
+  saturated %>%
+    kable(caption = sprintf(
+      "SATURATED holds (>= %.0f uT on an axis) - exclude these before trusting the fit",
+      sat_limit))
+} else {
+  cat(sprintf("No saturation: all axes stayed below %.0f uT (%.0f%% of the +/-%.0f uT range).\n",
+              sat_limit, 100 * saturation_frac, sensor_range_uT))
+}
+```
+
+# BACKGROUND CORRECTION
+
+Ambient field (Earth's \~50 $\mu$T, plus anything ferrous on the bench)
+adds as a **vector**, not as a magnitude, so it is subtracted per axis
+before magnitude is recomputed. This matters most at the far end of the
+sweep, where the magnet's own contribution is smallest.
+
+```{r background-subtraction}
+bg_samples <- hold_samples %>% filter(n_magnets == 0)
+
+background <- if (subtract_background && nrow(bg_samples) > 0) {
+  bg_samples %>% summarise(bx = mean(x_uT), by = mean(y_uT), bz = mean(z_uT))
+} else {
+  tibble(bx = 0, by = 0, bz = 0)
+}
+
+if (!subtract_background) {
+  cat("Background subtraction disabled (`subtract_background = FALSE`).\n")
+} else if (nrow(bg_samples) == 0) {
+  cat("No `n_magnets = 0` holds in the manifest - no background subtracted.\n")
+} else {
+  cat(sprintf(
+    "Background from %d sample(s): x = %.2f, y = %.2f, z = %.2f uT (|B| = %.2f uT).\n",
+    nrow(bg_samples), background$bx, background$by, background$bz,
+    sqrt(background$bx^2 + background$by^2 + background$bz^2)
+  ))
+}
+
+calib <- hold_samples %>%
+  filter(n_magnets > 0) %>%
+  mutate(
+    x_corr   = x_uT - background$bx,
+    y_corr   = y_uT - background$by,
+    z_corr   = z_uT - background$bz,
+    field_uT = sqrt(x_corr^2 + y_corr^2 + z_corr^2),
+    n_magnets = factor(n_magnets)
+  )
+```
+
+# PER-HOLD SUMMARIES
+
+## Summary table
+
+`cv_pct` is the within-hold coefficient of variation - a stability check
+on the hold itself. A few percent is normal; a large value means the
+magnet moved, or the readings were clipping.
+
+```{r step-summary}
+step_summary <- calib %>%
+  group_by(n_magnets, distance_mm) %>%
+  summarise(
+    n           = n(),
+    mean_uT     = mean(field_uT),
+    sd_uT       = sd(field_uT),
+    cv_pct      = 100 * sd_uT / mean_uT,
+    min_uT      = min(field_uT),
+    max_uT      = max(field_uT),
+    .groups     = "drop"
+  ) %>%
+  arrange(n_magnets, distance_mm)
+
+step_summary %>%
+  mutate(across(c(mean_uT, sd_uT, min_uT, max_uT), ~ round(.x, 1)),
+         cv_pct = round(cv_pct, 2)) %>%
+  kable(caption = "Field magnitude per calibration hold (background-corrected)")
+```
+
+## Within-hold spread
+
+```{r plot-step-stability, fig.height = 4}
+ggplot(calib, aes(x = factor(distance_mm), y = field_uT, fill = n_magnets)) +
+  geom_boxplot(outlier.size = 0.4, linewidth = 0.3) +
+  scale_y_log10() +
+  scale_fill_viridis_d(name = "Magnets") +
+  facet_grid(cols = vars(n_magnets), labeller = label_both) +
+  labs(
+    title = paste(unit_label, "- spread of readings within each hold"),
+    x = "Distance to magnet (mm)",
+    y = expression(paste("Field magnitude (", mu, "T, log scale)"))
+  ) +
+  theme_bw() +
+  theme(legend.position = "none")
+```
+
+# MODEL FITTING
+
+Fits use the per-hold **means**, one point per distance, matching the
+published VGWatch calibration. Sample-level points are still shown on
+the plots below, but fitting on means keeps a noisy hold from dominating
+the fit just because it has spread.
+
+## Fit both models per magnet count
+
+Starting values matter for `nls`. `power` starts from a log-log linear
+regression (exact if the relationship were a pure power law); `offset`
+starts from the dipole expectation $b = -1/3$, with $a$ and $c$ taken
+from a linear regression of $d$ on $B^{-1/3}$.
+
+```{r fit-models}
+fit_power <- function(df) {
+  pos <- df %>% filter(distance_mm > 0)
+  start <- coef(lm(log(distance_mm) ~ log(mean_uT), data = pos))
+  nls(
+    distance_mm ~ a * mean_uT^b, data = df,
+    start   = list(a = unname(exp(start[1])), b = unname(start[2])),
+    control = nls.control(maxiter = 200, warnOnly = TRUE)
+  )
+}
+
+fit_offset <- function(df) {
+  lin <- lm(distance_mm ~ I(mean_uT^(-1 / 3)), data = df)
+  nls(
+    distance_mm ~ a * mean_uT^b + c, data = df,
+    start   = list(a = unname(coef(lin)[2]), b = -1 / 3, c = unname(coef(lin)[1])),
+    control = nls.control(maxiter = 200, warnOnly = TRUE)
+  )
+}
+
+safely_fit <- function(f) function(df) tryCatch(f(df), error = function(e) NULL)
+
+fits <- step_summary %>%
+  nest(data = -n_magnets) %>%
+  mutate(
+    power  = map(data, safely_fit(fit_power)),
+    offset = map(data, safely_fit(fit_offset))
+  ) %>%
+  pivot_longer(c(power, offset), names_to = "model", values_to = "fit")
+
+failed <- fits %>% filter(map_lgl(fit, is.null))
+if (nrow(failed) > 0) {
+  cat("Models that failed to converge:\n")
+  failed %>% select(n_magnets, model) %>% kable() %>% print()
+}
+
+fits <- fits %>% filter(!map_lgl(fit, is.null))
+stopifnot("No models converged - check the data above." = nrow(fits) > 0)
+```
+
+## Coefficients
+
+```{r coefficient-table}
+coefficients <- fits %>%
+  mutate(tidied = map(fit, ~ as_tibble(t(coef(.x))))) %>%
+  select(n_magnets, model, tidied) %>%
+  unnest(tidied) %>%
+  arrange(n_magnets, model)
+
+# `power` has no `c` term; keep the column present so downstream code that
+# reports/uses it doesn't have to branch on which models converged.
+if (!"c" %in% names(coefficients)) coefficients$c <- NA_real_
+
+coefficients %>%
+  mutate(across(where(is.numeric), ~ signif(.x, 5))) %>%
+  kable(caption = "Fitted coefficients (distance_mm = a * field_uT^b [+ c])")
+```
+
+## Model comparison
+
+`rmse_mm` is the root-mean-square distance error across the calibration
+points - read it as "how many mm off this curve is, on average, over the
+range it was fit on".
+
+```{r model-comparison}
+model_stats <- fits %>%
+  mutate(
+    n_points = map_int(fit, ~ length(residuals(.x))),
+    rmse_mm  = map_dbl(fit, ~ sqrt(mean(residuals(.x)^2))),
+    max_err_mm = map_dbl(fit, ~ max(abs(residuals(.x)))),
+    aic      = map_dbl(fit, AIC)
+  ) %>%
+  select(n_magnets, model, n_points, rmse_mm, max_err_mm, aic) %>%
+  group_by(n_magnets) %>%
+  mutate(delta_aic = aic - min(aic)) %>%
+  ungroup() %>%
+  arrange(n_magnets, aic)
+
+model_stats %>%
+  mutate(across(c(rmse_mm, max_err_mm, aic, delta_aic), ~ round(.x, 3))) %>%
+  kable(caption = "Model comparison per magnet count (lower AIC / RMSE is better)")
+
+best_models <- model_stats %>%
+  group_by(n_magnets) %>%
+  slice_min(aic, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  select(n_magnets, best_model = model, rmse_mm)
+
+best_models %>% kable(caption = "Best-fitting model per magnet count")
+```
+
+## Magnet count is part of the calibration
+
+A curve maps field strength to distance **for one particular magnet
+configuration**. Adding magnets raises the field at every distance, so
+the same reading means a different distance - applying the wrong curve
+produces a confidently wrong number, not an obviously broken one.
+
+For a point dipole, $B = n k /(d + d_0)^3$, so the inverted form
+$d = a B^{b} + c$ keeps the same $b$ and $c$ while $a$ scales as
+$n^{1/3}$. Checking that against the fitted values tests whether the
+magnets really are stacking additively. Deviation is informative rather
+than alarming: a stack has physical length, so its effective dipole
+centre sits further from the leading face than a single magnet's does,
+which shifts both $a$ and $c$. A *large* deviation, though, points at a
+mis-seated or reversed magnet in the stack, and is worth chasing before
+trusting the fit.
+
+```{r magnet-scaling}
+scaling <- coefficients %>%
+  inner_join(best_models %>% select(n_magnets, best_model), by = "n_magnets") %>%
+  filter(model == best_model) %>%
+  mutate(n = as.numeric(as.character(n_magnets))) %>%
+  arrange(n)
+
+if (!1 %in% scaling$n) {
+  cat("No single-magnet holds in this session - skipping the additivity check.\n")
+} else {
+  scaling %>%
+    mutate(
+      a_ratio_observed = a / a[n == 1],
+      a_ratio_expected = n^(1 / 3),
+      deviation_pct    = 100 * (a_ratio_observed / a_ratio_expected - 1)
+    ) %>%
+    select(n_magnets, model, a, a_ratio_observed, a_ratio_expected,
+           deviation_pct, b, c) %>%
+    mutate(across(where(is.numeric), ~ signif(.x, 4))) %>%
+    kable(caption = "Additivity check: does `a` scale as n^(1/3), with b and c shared?")
+}
+```
+
+```{r wrong-curve-cost}
+# Concrete cost of picking the wrong row out of the exported coefficients:
+# take a few true distances, work out what field each magnet count actually
+# produces there, then read that field back through every curve. Probe
+# distances are taken from the calibrated range rather than hard-coded, so
+# nothing here is an extrapolation past the sweep that was actually run.
+probe_mm <- unique(round(seq(min(step_summary$distance_mm),
+                             max(step_summary$distance_mm), length.out = 4)))
+
+wrong_curve <- scaling %>%
+  select(n_true = n, a, b, c) %>%
+  cross_join(tibble(true_distance_mm = probe_mm)) %>%
+  mutate(field_uT = ((true_distance_mm - coalesce(c, 0)) / a)^(1 / b)) %>%
+  select(n_true, true_distance_mm, field_uT) %>%
+  cross_join(scaling %>% select(n_curve = n, a, b, c)) %>%
+  mutate(read_distance_mm = round(a * field_uT^b + coalesce(c, 0), 2)) %>%
+  select(n_true, true_distance_mm, n_curve, read_distance_mm) %>%
+  pivot_wider(names_from = n_curve, values_from = read_distance_mm,
+              names_prefix = "read_with_n=") %>%
+  arrange(n_true, true_distance_mm)
+
+wrong_curve %>%
+  kable(caption = paste("Distance read when the applied curve's magnet count",
+                        "does not match the data's (diagonal = correct)"))
+```
+
+Read the off-diagonal entries as the error from a metadata mix-up. Note
+that a mismatched curve can even return a negative distance - the one
+failure mode here that announces itself.
+
+## Calibration curves
+
+Axes follow the published figure: measured field on x, inferred distance
+on y - the direction the curve is actually used in.
+
+```{r plot-curves, fig.height = 4.5}
+curve_grid <- fits %>%
+  mutate(
+    pred = map2(fit, data, function(f, d) {
+      grid <- tibble(mean_uT = exp(seq(log(min(d$mean_uT)), log(max(d$mean_uT)),
+                                       length.out = 200)))
+      grid %>% mutate(distance_mm = predict(f, newdata = grid))
+    })
+  ) %>%
+  select(n_magnets, model, pred) %>%
+  unnest(pred)
+
+annot <- coefficients %>%
+  mutate(label = sprintf("%s: a=%.3g, b=%.4f%s", model, a, b,
+                         if_else(is.na(c), "", sprintf(", c=%.3g", c)))) %>%
+  group_by(n_magnets) %>%
+  summarise(label = paste(label, collapse = "\n"), .groups = "drop")
+
+ggplot(step_summary, aes(x = mean_uT, y = distance_mm)) +
+  geom_point(size = 2) +
+  geom_errorbar(aes(xmin = mean_uT - sd_uT, xmax = mean_uT + sd_uT),
+                orientation = "y", width = 0.2) +
+  geom_line(data = curve_grid, aes(colour = model), linewidth = 0.7) +
+  geom_text(data = annot, aes(x = Inf, y = Inf, label = label),
+            hjust = 1.05, vjust = 1.3, size = 2.6, inherit.aes = FALSE) +
+  scale_x_log10() +
+  scale_colour_brewer(palette = "Set1", name = "Model") +
+  facet_grid(cols = vars(n_magnets), labeller = label_both) +
+  labs(
+    title = paste(unit_label, "- calibration curves"),
+    subtitle = "Points are per-hold means +/- 1 SD",
+    x = expression(paste("Magnetic field strength (", mu, "T, log scale)")),
+    y = "Distance to magnet (mm)"
+  ) +
+  theme_bw()
+```
+
+## Residuals
+
+Systematic curvature in these residuals (rather than scatter about zero)
+is the sign that the model form is wrong over part of the range -
+typically the two-parameter `power` form struggling near 0 mm.
+
+```{r plot-residuals, fig.height = 4}
+residual_data <- fits %>%
+  mutate(res = map2(fit, data, ~ .y %>% mutate(residual_mm = residuals(.x)))) %>%
+  select(n_magnets, model, res) %>%
+  unnest(res)
+
+ggplot(residual_data, aes(x = distance_mm, y = residual_mm, colour = model)) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey40") +
+  geom_point(size = 2) +
+  geom_line(linewidth = 0.4) +
+  scale_colour_brewer(palette = "Set1", name = "Model") +
+  facet_grid(cols = vars(n_magnets), labeller = label_both) +
+  labs(
+    title = paste(unit_label, "- fit residuals"),
+    x = "Distance to magnet (mm)",
+    y = "Observed - predicted (mm)"
+  ) +
+  theme_bw()
+```
+
+# CHOOSING A MAGNET COUNT
+
+More magnets give a stronger signal but saturate sooner at close range.
+The useful quantity is **resolution**: how many $\mu$T of change there
+is per mm of gape, relative to the sensor's own noise. `mm_per_uT_noise`
+below is the smallest distance change distinguishable from within-hold
+noise at each point - smaller is better.
+
+Resolution degrades with distance, and it degrades at a *different rate*
+for each magnet count - so there is no single sweep range that is fair to
+all three. Judging every count over one window either flatters the weak
+ones (if the window is short) or penalises them for holds nobody would
+act on (if it is long). The assessment therefore runs in three steps.
+
+**1. How far is each count usable?** A count is usable out to the
+distance where its resolution first crosses
+`max_acceptable_resolution_mm` (currently
+`r max_acceptable_resolution_mm` mm). One magnet might be good to 11 mm
+and three to 14 mm; that difference is a result in itself, not noise to
+be averaged away.
+
+**2. Re-assess each count over its own range.** Scoring a count on holds
+past its usable limit judges it on data you would never act on, so each
+count is summarised over its own range only.
+
+**3. Which count wins over the range you care about?** Counts that
+cannot cover `target_gape_mm` are ruled out rather than ranked, and the
+survivors compared over exactly that range. A per-band table shows how
+the answer shifts with the range, because a count that wins over
+1-5 mm need not win over 1-20 mm.
+
+A median can also hide a tie, so the margin to the runner-up is printed,
+and if ranking on worst-case resolution would pick a different count that
+is said out loud rather than quietly discarded.
+
+```{r magnet-resolution}
+resolution <- step_summary %>%
+  arrange(n_magnets, distance_mm) %>%
+  group_by(n_magnets) %>%
+  mutate(
+    d_uT_per_mm     = abs(mean_uT - lag(mean_uT)) / (distance_mm - lag(distance_mm)),
+    mm_per_uT_noise = sd_uT / d_uT_per_mm
+  ) %>%
+  ungroup()
+
+resolution %>%
+  filter(!is.na(d_uT_per_mm)) %>%
+  select(n_magnets, distance_mm, mean_uT, sd_uT, d_uT_per_mm, mm_per_uT_noise) %>%
+  mutate(across(where(is.numeric), ~ signif(.x, 4))) %>%
+  kable(caption = "Sensitivity and noise-limited resolution between adjacent holds")
+```
+
+```{r plot-resolution, fig.height = 4}
+resolution %>%
+  filter(!is.na(mm_per_uT_noise)) %>%
+  ggplot(aes(x = distance_mm, y = mm_per_uT_noise, colour = n_magnets)) +
+  geom_hline(yintercept = max_acceptable_resolution_mm,
+             linetype = "dashed", colour = "firebrick") +
+  geom_line(linewidth = 0.6) +
+  geom_point(size = 2) +
+  scale_y_log10() +
+  scale_colour_viridis_d(name = "Magnets") +
+  labs(
+    title = paste(unit_label, "- noise-limited distance resolution"),
+    subtitle = sprintf(paste("Lower is better. Dashed line = the %g mm acceptance",
+                             "limit;\nwhere each curve crosses it is that count's",
+                             "usable limit."),
+                       max_acceptable_resolution_mm),
+    x = "Distance to magnet (mm)", y = "Resolution (mm, log scale)"
+  ) +
+  theme_bw()
+```
+
+## Step 1 - how far is each magnet count usable?
+
+```{r usable-range}
+# Peak field comes from `step_summary`, not `resolution`: `resolution` has no
+# row for the closest hold (there is no preceding hold to difference against),
+# and that closest hold is exactly where the field peaks and saturation risk
+# is highest.
+field_range <- step_summary %>%
+  group_by(n_magnets) %>%
+  summarise(max_field_uT = max(mean_uT), .groups = "drop") %>%
+  mutate(pct_of_range = 100 * max_field_uT / sensor_range_uT)
+
+res_ok       <- resolution %>% filter(!is.na(mm_per_uT_noise))
+sweep_min_mm <- min(step_summary$distance_mm)
+
+# `mm_per_uT_noise` at distance d describes the step from the previous hold
+# up to d, so a count is usable out to the last d BEFORE the first crossing.
+usable_to <- function(d, res, limit) {
+  bad <- which(res > limit)
+  if (length(bad) == 0) return(max(d))   # never crosses - good to the end
+  if (bad[1] == 1)      return(NA_real_) # too coarse from the very first step
+  d[bad[1] - 1]
+}
+
+usable_range <- res_ok %>%
+  arrange(n_magnets, distance_mm) %>%
+  group_by(n_magnets) %>%
+  summarise(
+    usable_max_mm = usable_to(distance_mm, mm_per_uT_noise,
+                              max_acceptable_resolution_mm),
+    swept_to_mm   = max(distance_mm),
+    .groups = "drop"
+  ) %>%
+  mutate(usable_range = if_else(
+    is.na(usable_max_mm), "none",
+    sprintf("%g-%g mm", sweep_min_mm, usable_max_mm)))
+
+usable_range %>%
+  left_join(field_range, by = "n_magnets") %>%
+  select(n_magnets, usable_range, usable_max_mm, swept_to_mm,
+         max_field_uT, pct_of_range) %>%
+  mutate(across(where(is.numeric), ~ signif(.x, 4))) %>%
+  kable(caption = sprintf(
+    "Usable range per magnet count (resolution stays under %g mm)",
+    max_acceptable_resolution_mm))
+
+cat(sprintf("Swept to %g mm. Usable limits: %s\n",
+            max(res_ok$distance_mm),
+            paste(sprintf("%s magnet(s) to %s",
+                          as.character(usable_range$n_magnets),
+                          if_else(is.na(usable_range$usable_max_mm), "(none)",
+                                  sprintf("%g mm", usable_range$usable_max_mm))),
+                  collapse = "; ")))
+```
+
+## Step 2 - each count scored over its own usable range
+
+```{r per-count-assessment}
+per_count <- res_ok %>%
+  inner_join(usable_range %>% select(n_magnets, usable_max_mm, usable_range),
+             by = "n_magnets") %>%
+  filter(!is.na(usable_max_mm), distance_mm <= usable_max_mm) %>%
+  group_by(n_magnets, usable_range) %>%
+  summarise(
+    median_resolution_mm = median(mm_per_uT_noise),
+    worst_resolution_mm  = max(mm_per_uT_noise),
+    n_steps              = n(),
+    .groups = "drop"
+  ) %>%
+  arrange(median_resolution_mm)
+
+if (nrow(per_count) == 0) {
+  cat(sprintf(paste0("No magnet count keeps resolution under %g mm even at the ",
+                     "closest holds. Loosen `max_acceptable_resolution_mm`, or ",
+                     "re-record with stronger magnets.\n"),
+              max_acceptable_resolution_mm))
+} else {
+  per_count %>%
+    mutate(across(where(is.numeric), ~ signif(.x, 4))) %>%
+    kable(caption = paste("Each count over ITS OWN usable range - the ranges",
+                          "differ, so these are not directly comparable"))
+}
+```
+
+Each row above is scored over a **different** range, so a lower median here
+does not by itself mean a better count - a count that gives up at 11 mm is
+being flattered relative to one still going at 14 mm. Step 3 makes the
+comparison on equal terms.
+
+## Step 3 - which count is best over a given range?
+
+```{r magnet-recommendation}
+# Resolution at distance d covers the step (d-1, d], so a range [lo, hi]
+# is the steps with d > lo and d <= hi.
+rank_over <- function(lo, hi) {
+  res_ok %>%
+    filter(distance_mm > lo, distance_mm <= hi) %>%
+    group_by(n_magnets) %>%
+    summarise(median_resolution_mm = median(mm_per_uT_noise),
+              worst_resolution_mm  = max(mm_per_uT_noise),
+              .groups = "drop") %>%
+    left_join(usable_range %>% select(n_magnets, usable_max_mm),
+              by = "n_magnets") %>%
+    mutate(covers = !is.na(usable_max_mm) & usable_max_mm >= hi) %>%
+    arrange(median_resolution_mm)
+}
+
+band_max <- sort(unique(c(5, 10, 15, max(res_ok$distance_mm))))
+band_max <- band_max[band_max <= max(res_ok$distance_mm)]
+
+bands <- map_dfr(band_max, function(h) {
+  r <- rank_over(sweep_min_mm, h) %>% filter(covers)
+  tibble(
+    range          = sprintf("%g-%g mm", sweep_min_mm, h),
+    usable_counts  = nrow(r),
+    best_n_magnets = if (nrow(r) == 0) NA_character_ else as.character(r$n_magnets[1]),
+    median_res_mm  = if (nrow(r) == 0) NA_real_ else r$median_resolution_mm[1],
+    runner_up      = if (nrow(r) > 1)
+      sprintf("%s magnet(s) at %.3f mm", as.character(r$n_magnets[2]),
+              r$median_resolution_mm[2]) else "-"
+  )
+})
+
+bands %>%
+  mutate(across(where(is.numeric), ~ signif(.x, 4))) %>%
+  kable(caption = paste("Best magnet count per range, among counts that stay",
+                        "under the resolution limit that far"))
+
+tgt_lo <- target_gape_mm[1]
+tgt_hi <- target_gape_mm[2]
+eligible <- rank_over(tgt_lo, tgt_hi) %>% filter(covers)
+
+if (nrow(eligible) == 0) {
+  reach <- usable_range %>% filter(!is.na(usable_max_mm))
+  # Nothing qualifies, but downstream chunks still need a count to
+  # demonstrate with: fall back to whichever reaches furthest.
+  recommended_n_magnets <- {
+    r <- usable_range %>% filter(!is.na(usable_max_mm))
+    if (nrow(r) == 0) as.character(sort(unique(res_ok$n_magnets))[1])
+    else as.character(r$n_magnets[which.max(r$usable_max_mm)])
+  }
+
+  cat(sprintf(
+    paste0("NO magnet count holds %g mm resolution all the way to %g mm ",
+           "(`target_gape_mm`).\n  Furthest any count reaches: %s.\n",
+           "  Either shorten `target_gape_mm`, loosen ",
+           "`max_acceptable_resolution_mm`, or re-record with more magnets.\n"),
+    max_acceptable_resolution_mm, tgt_hi,
+    if (nrow(reach) == 0) "none" else
+      sprintf("%g mm with %s magnet(s)", max(reach$usable_max_mm),
+              as.character(reach$n_magnets[which.max(reach$usable_max_mm)]))))
+} else {
+  best_n  <- as.character(eligible$n_magnets[1])
+  recommended_n_magnets <- best_n
+  best_fr <- field_range %>% filter(as.character(n_magnets) == best_n)
+
+  cat(sprintf(
+    "Suggested for %s over %g-%g mm: %s magnet(s) - median resolution %.3f mm, worst %.3f mm, peak field %.0f uT (%.1f%% of range).\n",
+    unit_label, tgt_lo, tgt_hi, best_n,
+    eligible$median_resolution_mm[1], eligible$worst_resolution_mm[1],
+    best_fr$max_field_uT[1], best_fr$pct_of_range[1]))
+
+  ruled_out <- rank_over(tgt_lo, tgt_hi) %>% filter(!covers)
+  if (nrow(ruled_out) > 0) {
+    cat(sprintf("  Ruled out (usable range too short to cover %g mm): %s.\n",
+                tgt_hi,
+                paste(sprintf("%s magnet(s), good to %s",
+                              as.character(ruled_out$n_magnets),
+                              if_else(is.na(ruled_out$usable_max_mm), "(none)",
+                                      sprintf("%g mm", ruled_out$usable_max_mm))),
+                      collapse = "; ")))
+  }
+
+  # A median can separate two counts by a fraction of a percent, which is a
+  # tie, not a result.
+  if (nrow(eligible) > 1) {
+    margin_pct <- 100 * (eligible$median_resolution_mm[2] /
+                         eligible$median_resolution_mm[1] - 1)
+    runner_n <- as.character(eligible$n_magnets[2])
+    cat(sprintf("  Runner-up: %s magnet(s) at %.3f mm - %.1f%% behind.\n",
+                runner_n, eligible$median_resolution_mm[2], margin_pct))
+    if (margin_pct < 10) {
+      cat(sprintf(
+        paste0("  That is effectively a tie over this range: %s and %s ",
+               "magnet(s) resolve gape equally well here, so choose on magnet ",
+               "weight and saturation headroom instead of on this number.\n"),
+        best_n, runner_n))
+    }
+  }
+
+  # Median is robust to exactly the far-end blow-up that says which count
+  # degrades gracefully - so say when the two disagree.
+  by_worst <- eligible %>% arrange(worst_resolution_mm)
+  if (as.character(by_worst$n_magnets[1]) != best_n) {
+    cat(sprintf(
+      paste0("  NOTE: ranking on worst-case resolution instead would pick %s ",
+             "magnet(s) (%.3f mm worst, vs %.3f mm for %s). Prefer that count ",
+             "if consistency across the whole range matters more than the ",
+             "typical case.\n"),
+      as.character(by_worst$n_magnets[1]), by_worst$worst_resolution_mm[1],
+      eligible$worst_resolution_mm[1], best_n))
+  }
+}
+```
+
+# EXPORT
+
+## Coefficients
+
+The file written here is what `gaping_analysis.Rmd` reads to convert
+logged field magnitude into gape distance. `uid` travels with the
+coefficients so the pairing can never be applied to the wrong board's
+data.
+
+The **background vector** travels with them too, as `bg_x_uT`, `bg_y_uT`
+and `bg_z_uT`. That matters: these curves were fit to
+background-corrected field, so anything applying them has to correct its
+own readings the same way first, or it is feeding the curve a different
+quantity than the one it was built from. Exporting the vector is what
+makes that possible downstream. (With `subtract_background = FALSE` the
+three columns are written as zeros, which makes the correction
+downstream a no-op, as it should be.)
+
+```{r export-coefficients}
+coef_out <- coefficients %>%
+  left_join(model_stats %>% select(n_magnets, model, n_points, rmse_mm, max_err_mm, aic),
+            by = c("n_magnets", "model")) %>%
+  left_join(best_models %>% select(n_magnets, best_model), by = "n_magnets") %>%
+  left_join(
+    step_summary %>%
+      group_by(n_magnets) %>%
+      summarise(fit_min_distance_mm = min(distance_mm),
+                fit_max_distance_mm = max(distance_mm),
+                fit_min_field_uT    = min(mean_uT),
+                fit_max_field_uT    = max(mean_uT), .groups = "drop"),
+    by = "n_magnets"
+  ) %>%
+  mutate(
+    unit          = unit_label,
+    rp2040_uid    = expected_uid,
+    is_best_model = model == best_model,
+    calibrated_on = Sys.Date(),
+    .before       = everything()
+  ) %>%
+  # The ambient vector these curves were fit against. Without it downstream,
+  # the curve gets applied to uncorrected field and quietly reads the wrong
+  # distance - see the note above.
+  mutate(
+    bg_x_uT = background$bx,
+    bg_y_uT = background$by,
+    bg_z_uT = background$bz
+  ) %>%
+  select(-best_model)
+
+coef_path <- file.path(output_dir,
+                       sprintf("calibration-coefficients_%s.csv", unit_label))
+write_csv(coef_out, coef_path)
+
+cat(sprintf("Wrote %s\n", coef_path))
+coef_out %>%
+  mutate(across(where(is.numeric), ~ signif(.x, 5))) %>%
+  kable(caption = "Exported calibration coefficients")
+```
+
+## Per-hold summary
+
+```{r export-summary}
+summary_path <- file.path(output_dir,
+                          sprintf("calibration-hold-summary_%s.csv", unit_label))
+
+step_summary %>%
+  mutate(unit = unit_label, rp2040_uid = expected_uid,
+         .before = everything()) %>%
+  write_csv(summary_path)
+
+cat(sprintf("Wrote %s\n", summary_path))
+```
+
+## Using the curve
+
+```{r predict-demo}
+predict_distance <- function(field_uT, a, b, c = 0) {
+  a * field_uT^b + coalesce(c, 0)
+}
+
+demo_magnets <- recommended_n_magnets
+demo <- coef_out %>% filter(n_magnets == demo_magnets, is_best_model)
+
+tibble(field_uT = signif(exp(seq(log(demo$fit_min_field_uT),
+                                 log(demo$fit_max_field_uT), length.out = 8)), 4)) %>%
+  mutate(distance_mm = round(predict_distance(field_uT, demo$a, demo$b, demo$c), 2)) %>%
+  kable(caption = sprintf("%s, %s magnet(s), %s model: field -> distance",
+                          unit_label, demo_magnets, demo$model))
+```
+
+Two rules for using the exported CSV:
+
+1.  **Select the row by `n_magnets`, not just by unit.** The
+    coefficients are keyed on `(rp2040_uid, n_magnets, model)` precisely
+    because the magnet count is part of the calibration. Whichever
+    magnet count an oyster was deployed with is deployment metadata the
+    logger does not record - it has to be written down at deployment and
+    carried alongside the `gapelog_NNN.csv`, or there is no way to know
+    which row applies.
+2.  **Stay inside the fitted range** (`fit_min_field_uT` to
+    `fit_max_field_uT`). A power law extrapolates confidently and
+    wrongly outside the range it was fit on.
+3.  **Subtract the background first.** These coefficients map
+    *background-corrected* field to distance. Before applying them,
+    subtract `bg_x_uT` / `bg_y_uT` / `bg_z_uT` from the logged axes and
+    recompute magnitude from the corrected axes - per axis, not off the
+    magnitude. `gaping_analysis.Rmd` does this for you.
+
+# NOTES
+
+-   **Per unit, not per magnet count.** Magnet count is a grouping
+    variable here, not a separate notebook, so the three counts are
+    fitted and compared side by side in one place - which is the
+    comparison that decides how the units get deployed. Separate *files*
+    per magnet count were considered and rejected; separate *rows* in
+    the exported coefficients are what actually matters, and those are
+    keyed on `n_magnets`.
+-   **Magnet count must travel with the deployment.** Different oysters
+    may need different magnet counts (shell thickness at the leading
+    edge, animal size), and the logger records no magnet count - only
+    the board UID. Note it down per deployment; without it the right
+    calibration row cannot be chosen.
+-   **The UID identifies the board, not the sensor.** If a TLV493D is
+    moved to a different Adalogger, these coefficients follow the
+    *sensor*, and the pairing has to be re-established by hand.
+-   **Re-calibrate after any physical change** to the magnet, its
+    mounting, or the sensor-magnet geometry. The curve is specific to
+    that combination.
+
+# REFERENCES

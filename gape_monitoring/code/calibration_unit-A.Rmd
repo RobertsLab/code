@@ -74,7 +74,7 @@ the curve.
 Two models are fit here and compared:
 
 | model | form | notes |
-|----|----|----|
+|------------------------|------------------------|------------------------|
 | `power` | $d = a B^{b}$ | the published VGWatch form; two parameters |
 | `offset` | $d = a B^{b} + c$ | adds an offset for the gap between the magnet's dipole centre / the sensor die and the measured "0 mm" surface. A dipole gives $B \propto r^{-3}$ where $r = d + d_0$, so $c \approx -d_0$. Handles a 0 mm calibration point, which the two-parameter form structurally cannot (it needs $B = \infty$ to predict $d = 0$). |
 
@@ -107,7 +107,7 @@ logger writes. `calibration/calibration_metadata.csv` holds the rows for
 **all** units; this notebook uses only those with `unit == unit_id`.
 
 | column | meaning |
-|----|----|
+|------------------------------------|------------------------------------|
 | `unit` | which logger unit the hold belongs to (`A`, `B`, `C`) |
 | `distance` | magnet-to-sensor distance for this hold, mm (ignored on background rows) |
 | `magnet.count` | number of magnets on the target (`0` = background hold) |
@@ -880,10 +880,11 @@ below is the smallest distance change distinguishable from within-hold
 noise at each point - smaller is better.
 
 Resolution degrades with distance, and it degrades at a *different rate*
-for each magnet count - so there is no single sweep range that is fair to
-all three. Judging every count over one window either flatters the weak
-ones (if the window is short) or penalises them for holds nobody would
-act on (if it is long). The assessment therefore runs in three steps.
+for each magnet count - so there is no single sweep range that is fair
+to all three. Judging every count over one window either flatters the
+weak ones (if the window is short) or penalises them for holds nobody
+would act on (if it is long). The assessment therefore runs in three
+steps.
 
 **1. How far is each count usable?** A count is usable out to the
 distance where its resolution first crosses
@@ -899,12 +900,12 @@ count is summarised over its own range only.
 **3. Which count wins over the range you care about?** Counts that
 cannot cover `target_gape_mm` are ruled out rather than ranked, and the
 survivors compared over exactly that range. A per-band table shows how
-the answer shifts with the range, because a count that wins over
-1-5 mm need not win over 1-20 mm.
+the answer shifts with the range, because a count that wins over 1-5 mm
+need not win over 1-20 mm.
 
 A median can also hide a tie, so the margin to the runner-up is printed,
-and if ranking on worst-case resolution would pick a different count that
-is said out loud rather than quietly discarded.
+and if ranking on worst-case resolution would pick a different count
+that is said out loud rather than quietly discarded.
 
 ```{r magnet-resolution}
 resolution <- step_summary %>%
@@ -1028,10 +1029,10 @@ if (nrow(per_count) == 0) {
 }
 ```
 
-Each row above is scored over a **different** range, so a lower median here
-does not by itself mean a better count - a count that gives up at 11 mm is
-being flattered relative to one still going at 14 mm. Step 3 makes the
-comparison on equal terms.
+Each row above is scored over a **different** range, so a lower median
+here does not by itself mean a better count - a count that gives up at
+11 mm is being flattered relative to one still going at 14 mm. Step 3
+makes the comparison on equal terms.
 
 ## Step 3 - which count is best over a given range?
 

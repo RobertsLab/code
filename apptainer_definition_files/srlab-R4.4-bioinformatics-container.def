@@ -53,6 +53,7 @@ From: rocker/rstudio:4.4
     plink_version="20250819"
     salmon_version="1.10.0"
     samtools_version="1.20"
+    stacks_version="2.68"
     stringtie_version="2.2.1"
     subread_version="2.0.5"
     trimmomatic_version="0.39"
@@ -112,6 +113,7 @@ ${programs_location}/RepeatMasker:\
 ${programs_location}/rmblast-${rmblast_version}/bin:\
 ${programs_location}/salmon-latest_linux_x86_64/bin:\
 ${programs_location}/samtools-${samtools_version}:\
+${programs_location}/stakcs-${stacks_version}:\
 ${programs_location}/stringtie-${stringtie_version}.Linux_x86_64:\
 ${programs_location}/subread-${subread_version}-Linux-x86_64/bin:\
 ${programs_location}/Trimmomatic-${trimmomatic_version}:\
@@ -540,6 +542,17 @@ EOF
     make -j ${threads}
     cd -
     rm samtools-${samtools_version}.tar.bz2
+
+    # Install stacks
+    wget https://catchenlab.life.illinois.edu/stacks/source/stacks-${stacks_version}.tar.gz
+    tar -xzvf stacks-${stacks_version}.tar.gz
+    rm stacks-${stacks_version}.tar.gz
+    cd stacks-${stacks_version}
+    ./configure
+    make -j 8
+    cd -
+
+
 
     # Install StringTie
     wget http://ccb.jhu.edu/software/stringtie/dl/stringtie-${stringtie_version}.Linux_x86_64.tar.gz

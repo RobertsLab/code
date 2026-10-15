@@ -113,7 +113,7 @@ ${programs_location}/RepeatMasker:\
 ${programs_location}/rmblast-${rmblast_version}/bin:\
 ${programs_location}/salmon-latest_linux_x86_64/bin:\
 ${programs_location}/samtools-${samtools_version}:\
-${programs_location}/stakcs-${stacks_version}:\
+${programs_location}/stacks-${stacks_version}:\
 ${programs_location}/stringtie-${stringtie_version}.Linux_x86_64:\
 ${programs_location}/subread-${subread_version}-Linux-x86_64/bin:\
 ${programs_location}/Trimmomatic-${trimmomatic_version}:\
@@ -246,6 +246,7 @@ EOF
     repeatmasker_version="4.1.7-p1"
     rmblast_version="2.14.1"
     salmon_version="1.10.0"
+    stacks_version="2.68"
     stringtie_version="2.2.1"
     samtools_version="1.20"
     subread_version="2.0.5"
@@ -491,7 +492,7 @@ EOF
     conda config --add channels bioconda
     conda config --set channel_priority flexible
 
-    conda env create -n qiime2-amplicon-${qiime2_version} \
+    conda env create -n qiime2-${qiime2_version} \
     --file https://data.qiime2.org/distro/amplicon/qiime2-amplicon-${qiime2_version}-py310-linux-conda.yml
 
     # Install QUAST

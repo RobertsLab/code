@@ -546,11 +546,12 @@ EOF
 
     # Install stacks
     wget https://catchenlab.life.illinois.edu/stacks/source/stacks-${stacks_version}.tar.gz
-    tar -xzvf stacks-${stacks_version}.tar.gz
+    # --no-same-owner avoids chown failures when archive contains external UIDs/GIDs
+    tar --no-same-owner -xzvf stacks-${stacks_version}.tar.gz
     rm stacks-${stacks_version}.tar.gz
     cd stacks-${stacks_version}
     ./configure
-    make -j 8
+    make -j ${threads}
     cd -
 
 

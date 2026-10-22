@@ -133,8 +133,19 @@ coef_path <- c("../outputs/calibration_unit-A/calibration-coefficients_Unit-A.cs
 
 # Deployment metadata: which magnet count each log file was recorded with.
 # The logger records the board UID but NOT the magnet count, so this is the
-# only place that association exists - see `deployment_metadata_template.csv`.
-deployment_path <- "deployment_metadata.csv"
+# only place that association exists.
+#
+# The general version of this (see `read-deployment-metadata` below) reads a
+# `deployment_metadata.csv` with one row per log file - built for a real
+# deployment with many oysters/boards/sessions, where magnet count can
+# differ file to file. This pilot is a single oyster on a single log file,
+# so that whole CSV collapses to one value: just set it here.
+#
+# If this notebook ever covers more than one oyster/magnet-count at once,
+# switch `read-deployment-metadata` back to reading a CSV keyed by
+# `source_file` instead of broadcasting these two values to every file.
+n_magnets_used  <- 3          # magnets glued to this oyster's valve
+pilot_oyster_id <- "oyster_1" # cosmetic label only - not used in any calculation
 
 # Which fitted model to apply: "best" (lowest AIC per magnet count, as marked
 # in the coefficient CSV), or force "offset" / "power" to compare them.
@@ -323,17 +334,22 @@ the field-magnitude results further down are unaffected either way.
 One row per log file. `n_magnets` is the number that matters; `oyster_id` and
 `notes` are carried through for convenience but not used in any calculation.
 
+This pilot is one oyster on one board, so there's nothing to look up per
+file - `n_magnets_used`/`pilot_oyster_id` from the parameters chunk are just
+broadcast to every log file found above. (A multi-oyster deployment would
+replace this with `read_csv(deployment_path, ...)` keyed by `source_file`,
+same column names, so nothing downstream would need to change.)
+
 ```{r read-deployment-metadata}
 deployment <- if (!apply_calibration) {
   NULL
 } else {
-  stopifnot("`deployment_path` does not exist." = file.exists(deployment_path))
-  read_csv(deployment_path, col_types = cols(
-    source_file = col_character(),
-    n_magnets   = col_integer(),
-    oyster_id   = col_character(),
-    notes       = col_character()
-  ))
+  tibble(
+    source_file = basename(log_files),
+    n_magnets   = n_magnets_used,
+    oyster_id   = pilot_oyster_id,
+    notes       = NA_character_
+  )
 }
 
 if (!is.null(deployment)) {
@@ -409,12 +425,16 @@ if (apply_calibration) {
          paste(mixed_uid$source_file, mixed_uid$rp2040_uid, collapse = "\n  "))
   }
 
-  # Magnet count comes from the metadata - it is nowhere in the data.
+  # Magnet count comes from the metadata - it is nowhere in the data. With
+  # `deployment` now built by broadcasting `n_magnets_used`/`pilot_oyster_id`
+  # to every file in `log_files` (see `read-deployment-metadata`), this
+  # should never actually trigger - it's left in as a guard in case that
+  # assumption is ever changed.
   missing_meta <- setdiff(session_uid$source_file, deployment$source_file)
   if (length(missing_meta) > 0) {
     stop("No deployment metadata row (and so no magnet count) for:\n  ",
          paste(missing_meta, collapse = "\n  "),
-         "\nAdd these to ", deployment_path, ".")
+         "\nCheck `n_magnets_used`/`pilot_oyster_id` in the parameters chunk.")
   }
 
   session_curves <- session_uid %>%
@@ -744,14 +764,15 @@ if (apply_calibration && nrow(events) > 0) {
       .groups = "drop"
     )
 
-  # Samples inside each event window. The join fans out to
-  # (samples x events) within a session before filtering, which is fine at
-  # these sizes; revisit if a deployment ever gets very long.
+  # Samples inside each event window. A range (non-equi) join only ever
+  # materializes the samples that actually fall inside an event - an equi
+  # join on session_id followed by a filter would fan out to
+  # (samples x events) first, which for ~900k samples and ~1,300 events is
+  # over a billion rows and crashes R.
   event_samples <- gaping %>%
     select(session_id, elapsed_s, gape_distance_mm) %>%
     inner_join(events %>% select(session_id, event_id, start_s, end_s),
-               by = "session_id", relationship = "many-to-many") %>%
-    filter(elapsed_s >= start_s, elapsed_s <= end_s)
+               by = join_by(session_id, between(elapsed_s, start_s, end_s)))
 
   event_distance <- event_samples %>%
     group_by(session_id, event_id) %>%
@@ -935,7 +956,10 @@ if (nrow(events) > 0) {
 
 p_magnitude <- p_magnitude +
   geom_line(linewidth = 0.3) +
+  # One threshold row per session - inheriting `gaping` here would draw the
+  # same line once per sample.
   geom_hline(
+    data = gaping %>% distinct(source_file, threshold_uT),
     aes(yintercept = threshold_uT), linetype = "dashed", color = "firebrick"
   ) +
   facet_wrap(~source_file, scales = "free_x", ncol = 1) +

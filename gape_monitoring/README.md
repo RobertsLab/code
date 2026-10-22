@@ -94,13 +94,12 @@ deployment, or falls back to relative time if none is supplied.
   distance time series. Set `apply_calibration <- FALSE` to skip that and
   work in field magnitude alone; every other result is unaffected either
   way. All user-configurable settings live in a single parameters chunk
-  near the top of the notebook.
-
-- `deployment_metadata_template.csv`: template recording which magnet count
-  each `gapelog_NNN.csv` was deployed with (`source_file`, `n_magnets`,
-  `oyster_id`, `notes`). Required by `gaping_analysis.Rmd` when
-  `apply_calibration` is on -- the logger records the board UID but not the
-  magnet count, so this file is the only place that association exists.
+  near the top of the notebook. That includes the magnet count
+  (`n_magnets_used`) and oyster label (`pilot_oyster_id`), which are applied
+  to every log file -- the logger records the board UID but not the magnet
+  count, so this parameter is the only place that association exists. This
+  assumes one oyster/magnet count per analysis; a multi-oyster deployment
+  would need a per-file metadata table keyed by `source_file` instead.
 
 ### CALIBRATION PROTOCOL
 

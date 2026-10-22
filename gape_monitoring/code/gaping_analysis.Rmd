@@ -1064,14 +1064,47 @@ p_axes
 
 ## Event duration distribution
 
+Durations span several orders of magnitude (tens of seconds to hours), so
+the x-axis is log10-scaled; on a linear axis nearly every event lands in the
+first bin. Dashed line = median.
+
 ```{r plot-duration-distribution}
+# Human-readable tick marks for log-scaled time axes (values in seconds)
+time_breaks_s <- c(30, 60, 300, 600, 1800, 3600, 3 * 3600, 10 * 3600, 24 * 3600)
+time_labels   <- c("30 s", "1 min", "5 min", "10 min", "30 min",
+                   "1 h", "3 h", "10 h", "24 h")
+
+# Format seconds as s / min / h for on-plot labels
+fmt_duration <- function(s) {
+  case_when(
+    s < 60   ~ sprintf("%.0f s", s),
+    s < 3600 ~ sprintf("%.1f min", s / 60),
+    TRUE     ~ sprintf("%.1f h", s / 3600)
+  )
+}
+
+duration_medians <- events %>%
+  group_by(source_file) %>%
+  summarise(median_s = median(duration_s), .groups = "drop")
+
 if (nrow(events) > 0) {
-  p_durations <- ggplot(events, aes(x = duration_min)) +
-    geom_histogram(bins = 30, fill = "steelblue", color = "white") +
+  p_durations <- ggplot(events, aes(x = duration_s)) +
+    geom_histogram(bins = 40, fill = "steelblue", color = "white") +
+    geom_vline(
+      data = duration_medians,
+      aes(xintercept = median_s), linetype = "dashed"
+    ) +
+    geom_text(
+      data = duration_medians,
+      aes(x = median_s, y = Inf, label = paste("median =", fmt_duration(median_s))),
+      hjust = -0.1, vjust = 1.5, size = 3.5
+    ) +
+    scale_x_log10(breaks = time_breaks_s, labels = time_labels) +
     facet_wrap(~source_file, ncol = 1) +
     labs(
       title = "Distribution of gape event durations",
-      x = "Event duration (minutes)", y = "Count of events"
+      subtitle = "Dashed line = median event duration",
+      x = "Event duration (log scale)", y = "Count of events"
     ) +
     theme_minimal()
   p_durations
@@ -1105,14 +1138,32 @@ if (nrow(events) > 0) {
 
 ## Inter-event intervals
 
+Log10-scaled x-axis for the same reason as the duration plot. Dashed line =
+median.
+
 ```{r plot-intervals}
 if (nrow(intervals) > 0) {
-  p_intervals <- ggplot(intervals, aes(x = interval_s / 60)) +
-    geom_histogram(bins = 30, fill = "darkorange", color = "white") +
+  interval_medians <- intervals %>%
+    group_by(source_file) %>%
+    summarise(median_s = median(interval_s), .groups = "drop")
+
+  p_intervals <- ggplot(intervals, aes(x = interval_s)) +
+    geom_histogram(bins = 40, fill = "darkorange", color = "white") +
+    geom_vline(
+      data = interval_medians,
+      aes(xintercept = median_s), linetype = "dashed"
+    ) +
+    geom_text(
+      data = interval_medians,
+      aes(x = median_s, y = Inf, label = paste("median =", fmt_duration(median_s))),
+      hjust = -0.1, vjust = 1.5, size = 3.5
+    ) +
+    scale_x_log10(breaks = time_breaks_s, labels = time_labels) +
     facet_wrap(~source_file, ncol = 1) +
     labs(
       title = "Time between consecutive gape events",
-      x = "Interval between events (minutes)", y = "Count"
+      subtitle = "Dashed line = median interval between events",
+      x = "Interval between events (log scale)", y = "Count"
     ) +
     theme_minimal()
   p_intervals
@@ -1121,19 +1172,54 @@ if (nrow(intervals) > 0) {
 }
 ```
 
+## Events per hour over time
+
+Number of gape events starting in each hour of the deployment. Shows whether
+gaping activity changes over time (e.g. day/night rhythm, settling in after
+deployment). Partial hours at the start and end of a session will read low.
+
+```{r plot-event-rate-over-time}
+if (nrow(events) > 0) {
+  p_rate_time <- events %>%
+    mutate(x_pos = if (has_real_time) start_time else start_s / 3600) %>%
+    ggplot(aes(x = x_pos)) +
+    geom_histogram(
+      binwidth = if (has_real_time) 3600 else 1,  # 1 h bins (POSIXct is in s)
+      boundary = 0, fill = "steelblue", color = "white"
+    ) +
+    facet_wrap(~source_file, scales = "free_x", ncol = 1) +
+    labs(
+      title = "Gape events per hour across the deployment",
+      x = if (has_real_time) "Time" else "Elapsed time (h)",
+      y = "Events per hour"
+    ) +
+    theme_minimal()
+  p_rate_time
+} else {
+  cat("No events detected - nothing to plot.\n")
+}
+```
+
 ## Events per hour by session
 
-```{r plot-event-rate}
-p_rate <- ggplot(event_frequency, aes(x = source_file, y = events_per_hr)) +
-  geom_col(fill = "steelblue") +
-  labs(
-    title = "Gape event frequency by session",
-    x = "Log file (session)", y = "Events per hour"
-  ) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+Overall event rate for each log file. Only drawn when there is more than one
+session to compare.
 
-p_rate
+```{r plot-event-rate}
+if (n_sessions > 1) {
+  p_rate <- ggplot(event_frequency, aes(x = source_file, y = events_per_hr)) +
+    geom_col(fill = "steelblue") +
+    labs(
+      title = "Gape event frequency by session",
+      x = "Log file (session)", y = "Events per hour"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+  p_rate
+} else {
+  cat("Single session - see the events-per-hour table above for its overall rate.\n")
+}
 ```
 
 # NOTES / NEXT STEPS

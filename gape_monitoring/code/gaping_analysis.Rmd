@@ -82,13 +82,13 @@ deployment_tz <- "America/Los_Angeles"
 # a sustained DROP in magnitude below a threshold.
 #
 # The threshold can be set three ways:
-#   "noise"    - computed per session from the spread (SD) of the
-#                closed-shell baseline itself: threshold = closed_mean -
-#                n_sd_threshold * closed_sd. This ties the cutoff to how
-#                noisy that particular session's signal actually is, so a
-#                "gape" is a drop that's statistically distinguishable from
-#                background noise, not an arbitrary fractional drop.
-#                RECOMMENDED DEFAULT.
+#   "noise"    - computed per session from the sensor noise: threshold =
+#                closed_mean - n_sd_threshold * noise_sd, where noise_sd is
+#                the noise left in the smoothed magnitude. This ties
+#                the cutoff to how noisy that particular session's signal
+#                actually is, so a "gape" is a drop that's statistically
+#                distinguishable from background noise, not an arbitrary
+#                fractional drop. RECOMMENDED DEFAULT.
 #   "relative" - computed per session as a fixed fractional drop below the
 #                closed-shell baseline value (kept for comparison /
 #                backward compatibility - doesn't account for how noisy the
@@ -101,11 +101,13 @@ threshold_method <- "noise"
 baseline_quantile <- 0.90
 
 # Used when threshold_method == "noise":
-# The closed-baseline mean/SD are estimated from samples at/above
-# `baseline_quantile`. n_sd_threshold sets how many SDs below that mean a
-# sample must fall to count as "open" - larger values are more conservative
-# (fewer false-positive events from sensor noise), smaller values are more
-# sensitive. 3 SD is a common starting point for "clearly not noise".
+# The closed-baseline mean is estimated from smoothed samples at/above
+# `baseline_quantile`; the noise SD from lagged differences of the smoothed
+# signal (see the classify-state chunk). n_sd_threshold sets how many noise
+# SDs below the closed mean a smoothed sample must fall to count as "open" -
+# larger values are more conservative (fewer false-positive events from
+# sensor noise), smaller values are more sensitive. 3 SD is a common
+# starting point for "clearly not noise".
 n_sd_threshold <- 3
 
 # Used when threshold_method == "relative":
@@ -113,6 +115,20 @@ gape_drop_frac <- 0.10   # open if magnitude < baseline * (1 - this)
 
 # Used when threshold_method == "absolute":
 gape_threshold_uT <- 40
+
+# ---- Smoothing ----------------------------------------------------------
+# Rolling-median window (seconds) applied to field magnitude before it is
+# compared to the threshold. The TLV493D reports each axis in 98 uT steps, so
+# single 1 Hz samples jump by ~100 uT from quantization alone; a short
+# rolling median suppresses that without blurring real gapes, which last
+# tens of seconds or more. Set to 1 (or less) to disable smoothing.
+smooth_window_s <- 15
+
+# ---- Percent opening ----------------------------------------------------
+# Each session is rescaled so 0% = closed baseline and 100% = widest opening
+# seen. "Widest" is this low quantile of smoothed magnitude rather than the
+# single minimum, so one outlier sample can't set the scale.
+open_ref_quantile <- 0.01
 
 # ---- Event filtering ----------------------------------------------------
 # Reject blips and bridge momentary re-closures, so sensor noise doesn't
@@ -631,23 +647,64 @@ if (apply_calibration) {
 
 ## Threshold and open/closed state
 
-The `"noise"` method characterizes the closed-shell baseline as a
-distribution, not a single value: samples at/above `baseline_quantile` are
-taken as "closed", and their mean and SD describe that session's baseline
-noise. The threshold then sits `n_sd_threshold` SDs below that mean, so a
-gape event is a drop that's statistically distinct from background noise -
-not just a fixed percentage below baseline, which says nothing about
-whether that drop is bigger than the sensor's own jitter.
+Field magnitude is first smoothed with a rolling median
+(`smooth_window_s`) to suppress the sensor's quantization noise; all
+open/closed calls are made on the smoothed signal (`field_smooth_uT`).
+
+The `"noise"` method then needs two numbers per session:
+
+- **Closed baseline** (`closed_mean_uT`): the mean of smoothed samples
+  at/above `baseline_quantile`. This only assumes the animal spends at least
+  `1 - baseline_quantile` of the recording fully closed.
+- **Noise** (`noise_sd_uT`): the noise left in the *smoothed* signal,
+  estimated from differences between smoothed values one smoothing window
+  apart (consecutive smoothed values share most of their window, so their
+  differences would understate it). Differencing cancels the slow gape
+  signal and leaves ~sqrt(2) x the noise; using the MAD keeps real
+  opening/closing steps from inflating it. This replaces the SD of the
+  top-quantile samples, which describes only a truncated slice of the
+  distribution and doesn't measure noise.
+
+The threshold sits `n_sd_threshold` noise SDs below the closed baseline, so
+a gape event is a drop that's statistically distinct from noise - not just a
+fixed percentage below baseline. The noise is measured on the same smoothed
+signal the threshold is applied to.
 
 ```{r classify-state}
+# Smoothing window in samples at the session's typical sampling interval,
+# forced odd as runmed requires; 1 = no smoothing.
+smooth_k <- function(elapsed_s, window_s) {
+  k <- round(window_s / median(diff(elapsed_s)))
+  if (is.na(k) || k < 3) return(1)
+  if (k %% 2 == 0) k <- k + 1
+  k
+}
+
+smooth_magnitude <- function(x, k) {
+  if (k < 3) return(x)
+  as.numeric(runmed(x, k, endrule = "median"))
+}
+
+# Noise SD from differences `lag` samples apart.
+noise_sd <- function(x, lag) {
+  d <- diff(x, lag = lag)
+  s <- mad(d, na.rm = TRUE) / sqrt(2)
+  # A heavily quantized signal can give MAD = 0; fall back to the SD then.
+  if (s == 0) s <- sd(d, na.rm = TRUE) / sqrt(2)
+  s
+}
+
 gaping <- gaping %>%
+  arrange(session_id, elapsed_s) %>%
   group_by(session_id) %>%
   mutate(
-    baseline_uT    = quantile(field_magnitude_uT, baseline_quantile, na.rm = TRUE),
-    closed_mean_uT = mean(field_magnitude_uT[field_magnitude_uT >= baseline_uT], na.rm = TRUE),
-    closed_sd_uT   = sd(field_magnitude_uT[field_magnitude_uT >= baseline_uT], na.rm = TRUE),
+    k               = smooth_k(elapsed_s, smooth_window_s),
+    field_smooth_uT = smooth_magnitude(field_magnitude_uT, first(k)),
+    baseline_uT    = quantile(field_smooth_uT, baseline_quantile, na.rm = TRUE),
+    closed_mean_uT = mean(field_smooth_uT[field_smooth_uT >= baseline_uT], na.rm = TRUE),
+    noise_sd_uT    = noise_sd(field_smooth_uT, lag = first(k)),
     threshold_uT = if (threshold_method == "noise") {
-      closed_mean_uT - n_sd_threshold * closed_sd_uT
+      closed_mean_uT - n_sd_threshold * noise_sd_uT
     } else if (threshold_method == "relative") {
       baseline_uT * (1 - gape_drop_frac)
     } else if (threshold_method == "absolute") {
@@ -655,9 +712,10 @@ gaping <- gaping %>%
     } else {
       NA_real_
     },
-    is_open = field_magnitude_uT < threshold_uT
+    is_open = field_smooth_uT < threshold_uT
   ) %>%
-  ungroup()
+  ungroup() %>%
+  select(-k)
 
 stopifnot("`threshold_method` must be one of \"noise\", \"relative\", \"absolute\"." =
             !any(is.na(gaping$threshold_uT)))
@@ -665,13 +723,61 @@ stopifnot("`threshold_method` must be one of \"noise\", \"relative\", \"absolute
 gaping %>%
   group_by(session_id, source_file) %>%
   summarise(
+    smooth_window_s  = smooth_window_s,
     closed_mean_uT   = first(closed_mean_uT),
-    closed_sd_uT     = first(closed_sd_uT),
+    noise_sd_uT      = first(noise_sd_uT),
     threshold_uT     = first(threshold_uT),
     pct_samples_open = 100 * mean(is_open),
     .groups = "drop"
   ) %>%
   kable(digits = 2, caption = "Detection threshold per session")
+```
+
+## Percent opening
+
+A continuous measure of how far open the animal is, independent of any
+open/closed cutoff: each session is rescaled so **0% = closed baseline**
+(`closed_mean_uT`) and **100% = widest opening seen** (the
+`open_ref_quantile` of smoothed magnitude). It's computed on gape distance
+when calibration is applied, since distance is linear in valve gape; without
+calibration it falls back to field magnitude, which is only a rough proxy
+because field falls off non-linearly with distance. Values are clamped to
+0-100%.
+
+```{r percent-opening}
+# Puts field magnitude on the scale percent opening is measured on, oriented
+# so larger = more open. The calibration coefficients are only evaluated when
+# calibration is applied.
+opening_scale <- function(field_uT, a, b, c) {
+  if (apply_calibration) a * field_uT^b + coalesce(c, 0) else -field_uT
+}
+
+gaping <- gaping %>%
+  group_by(session_id) %>%
+  mutate(
+    open_ref_uT = quantile(field_smooth_uT, open_ref_quantile, na.rm = TRUE),
+    s_closed    = opening_scale(closed_mean_uT, cal_a, cal_b, cal_c),
+    s_open      = opening_scale(open_ref_uT, cal_a, cal_b, cal_c),
+    pct_opening = 100 * (opening_scale(field_smooth_uT, cal_a, cal_b, cal_c) - s_closed) /
+                    (s_open - s_closed),
+    pct_opening = pmin(pmax(pct_opening, 0), 100),
+    # Where the open/closed threshold falls on the same scale.
+    threshold_pct_opening = 100 * (opening_scale(threshold_uT, cal_a, cal_b, cal_c) - s_closed) /
+                              (s_open - s_closed)
+  ) %>%
+  select(-s_closed, -s_open) %>%
+  ungroup()
+
+gaping %>%
+  group_by(session_id, source_file) %>%
+  summarise(
+    open_ref_uT           = first(open_ref_uT),
+    threshold_pct_opening = first(threshold_pct_opening),
+    mean_pct_opening      = mean(pct_opening),
+    median_pct_opening    = median(pct_opening),
+    .groups = "drop"
+  ) %>%
+  kable(digits = 1, caption = "Percent opening per session")
 ```
 
 ## Build the event table
@@ -955,7 +1061,8 @@ if (nrow(events) > 0) {
 }
 
 p_magnitude <- p_magnitude +
-  geom_line(linewidth = 0.3) +
+  geom_line(linewidth = 0.3, colour = "grey60") +
+  geom_line(aes(y = field_smooth_uT), linewidth = 0.3) +
   # One threshold row per session - inheriting `gaping` here would draw the
   # same line once per sample.
   geom_hline(
@@ -965,8 +1072,9 @@ p_magnitude <- p_magnitude +
   facet_wrap(~source_file, scales = "free_x", ncol = 1) +
   labs(
     title = "Field magnitude over time, with detected gape events shaded",
-    subtitle = paste("Background-corrected; magnitude falls as the shell opens",
-                     "(magnet moves away from sensor)"),
+    subtitle = paste0("Background-corrected; magnitude falls as the shell opens ",
+                      "(magnet moves away from sensor).\nGrey = raw, black = ",
+                      smooth_window_s, " s rolling median, red dashed = open/closed threshold"),
     x = x_lab, y = "Field magnitude, background-corrected (uT)"
   ) +
   theme_minimal()
@@ -1222,6 +1330,71 @@ if (n_sessions > 1) {
 }
 ```
 
+## Percent opening over time
+
+One-minute means of percent opening (0% = closed baseline, 100% = widest
+opening seen).
+
+```{r plot-pct-opening-time}
+pct_by_min <- gaping %>%
+  mutate(minute = floor(elapsed_s / 60)) %>%
+  group_by(source_file, minute) %>%
+  summarise(
+    timestamp   = min(timestamp),
+    elapsed_s   = min(elapsed_s),
+    pct_opening = mean(pct_opening),
+    .groups = "drop"
+  )
+
+pct_thresholds <- gaping %>% distinct(source_file, threshold_pct_opening)
+
+p_pct_time <- ggplot(pct_by_min, aes(x = .data[[x_var]], y = pct_opening)) +
+  geom_line(linewidth = 0.3, colour = "steelblue") +
+  geom_hline(
+    data = pct_thresholds,
+    aes(yintercept = threshold_pct_opening), linetype = "dashed", colour = "firebrick"
+  ) +
+  scale_y_continuous(limits = c(0, 100)) +
+  facet_wrap(~source_file, scales = "free_x", ncol = 1) +
+  labs(
+    title = "Percent opening over time (1-minute means)",
+    subtitle = "0% = closed baseline, 100% = widest opening seen; red dashed = open/closed threshold",
+    x = x_lab, y = "Opening (%)"
+  ) +
+  theme_minimal()
+
+p_pct_time
+```
+
+## Percent opening distribution
+
+How much of the recording was spent at each degree of opening (1 s samples).
+A clean two-state animal would show two peaks, at 0% and near 100%.
+
+```{r plot-pct-opening-distribution}
+p_pct_dist <- ggplot(gaping, aes(x = pct_opening)) +
+  geom_histogram(binwidth = 2.5, boundary = 0, fill = "steelblue", color = "white") +
+  geom_vline(
+    data = pct_thresholds,
+    aes(xintercept = threshold_pct_opening), linetype = "dashed", colour = "firebrick"
+  ) +
+  geom_text(
+    data = pct_thresholds,
+    aes(x = threshold_pct_opening, y = Inf,
+        label = sprintf("threshold = %.0f%%", threshold_pct_opening)),
+    hjust = -0.1, vjust = 1.5, size = 3.5, colour = "firebrick"
+  ) +
+  facet_wrap(~source_file, ncol = 1) +
+  labs(
+    title = "Distribution of percent opening",
+    subtitle = "Red dashed = open/closed detection threshold on the same scale",
+    x = "Opening (%)", y = "Count of samples"
+  ) +
+  theme_minimal()
+
+p_pct_dist
+```
+
 # NOTES / NEXT STEPS
 
 - **Gape distance depends on the magnet count, not just the board.** The
@@ -1234,23 +1407,30 @@ if (n_sessions > 1) {
 - **Distances are only as good as the calibration range.** `rmse_mm` in the
   matched-curve table is the fit error over the bench range; the
   extrapolation check reports how much of the deployment fell outside it.
-- **Threshold calibration.** The `noise` and `relative` methods both assume
-  the animal is closed for most of the recording (the top
-  `1 - baseline_quantile` fraction of samples, default 10%, is treated as
-  "closed" and used to characterize the baseline). If an animal gapes more
-  than that, the baseline estimate - and for `noise`, the SD used to set
-  the threshold - gets contaminated by open samples and the threshold
-  drifts too low. If that assumption breaks, characterize known
-  open/closed magnitudes on the bench and switch to
+- **Threshold calibration.** The `noise` and `relative` methods take the
+  top `1 - baseline_quantile` fraction of smoothed samples (default 10%) as
+  "closed". That only assumes the animal spends at least that fraction of
+  the recording fully closed - not most of it. An animal can be open most
+  of the time and still give a good baseline, as long as it closes fully
+  now and then; check that the highest magnitudes are steady across the
+  deployment. If the animal rarely or never closes fully, the baseline
+  shifts toward open and the threshold with it. In that case, characterize
+  known open/closed magnitudes on the bench and switch to
   `threshold_method = "absolute"`.
-- **Noise-based threshold (`n_sd_threshold`).** The default of 3 SD below
-  the closed-baseline mean is a starting point, not a calibrated value -
-  check the `closed_sd_uT` column in the per-session table. A very small SD
-  (a clean, low-noise sensor) with 3 SD may flag drops that are real but
-  small; a very large SD (noisy signal, or a baseline window that already
-  contains some open samples) may require a larger `n_sd_threshold` to
-  avoid false positives. Vary it and confirm the detected event count and
+- **Noise-based threshold (`n_sd_threshold`).** `noise_sd_uT` comes from
+  lagged differences of the smoothed signal, so it doesn't depend on how
+  often the animal is closed, and it shrinks as `smooth_window_s` grows.
+  The default of 3 SD below the closed baseline is a starting point, not a
+  calibrated value. Vary `n_sd_threshold` and
+  `smooth_window_s` and confirm the detected event count and
   `pct_samples_open` are stable rather than an artifact of one setting.
+- **Open/closed is a definition, not a measurement.** If the percent-opening
+  distribution is one broad hump rather than two peaks, there's no natural
+  break between open and closed, and the time-open fraction depends heavily
+  on where the cutoff sits (check how `pct_samples_open` moves as
+  `n_sd_threshold` is varied). In that case,
+  report percent opening as the primary continuous measure and state the
+  open/closed cutoff explicitly.
 - **Event filtering.** `min_event_duration_s` and `min_gap_between_s` set
   how aggressively blips are rejected and near-adjacent gapes are merged.
   Vary them and re-render to check the event count is stable rather than an

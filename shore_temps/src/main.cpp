@@ -1,24 +1,32 @@
 #include <Arduino.h>
-// shore_temps.ino — SHORE tank temperature hub (ESP32 + DS18B20 probes on one 1-Wire bus)
+// shore_temps — SHORE tank temperature hub (ESP32 + DS18B20 probes on one 1-Wire bus)
+// Reads the probes once a minute and POSTs the readings to the receiver on Gannet (see gannet/readme.txt).
 #include <WiFi.h>
-#include <WebServer.h>
-#include <ESPmDNS.h>
+#include <NetworkClientSecure.h>
+#include <HTTPClient.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <esp_mac.h>
-#include "secrets.h"                             // WIFI_SSID, WIFI_PASS; copy from secrets.h.example
+#include <time.h>
+#include <deque>
+#include "secrets.h"                             // WIFI_SSID, WIFI_PASS, HUB_TOKEN; copy from secrets.h.example
+#include "gannet_ca.h"                           // root certificate for Gannet's HTTPS
 
-const char* HUB_NAME  = "shore-temps-b";        // "shore-temps-b" on the second hub
+const char* HUB_NAME  = "shore-temps-b";        // "shore-temps-b" on the second hub; must match HUB_TOKENS on Gannet
 const int   ONE_WIRE_PIN = 4;                    // GPIO 4 (A5 on HUZZAH32)
+const char* RECEIVER_URL = "https://gannet.fish.washington.edu:8443/ingest";
 
 const unsigned long READ_EVERY_MS   = 60UL * 1000;       // read probes once a minute
-const unsigned long WIFI_GIVEUP_MS  = 10UL * 60 * 1000;  // reboot if WiFi is down this long
+const unsigned long WIFI_GIVEUP_MS  = 60UL * 60 * 1000;  // reboot if WiFi is down this long (the backlog is lost on reboot)
+const size_t MAX_BACKLOG  = 180;                 // readings held while Gannet is unreachable (3 h at one per minute)
+const size_t MAX_PER_POST = 30;                  // readings per upload when catching up on a backlog
+const time_t MIN_EPOCH    = 1704067200;          // 2024-01-01; an earlier clock means NTP hasn't set it yet
 
 OneWire oneWire(ONE_WIRE_PIN);
 DallasTemperature sensors(&oneWire);
-WebServer server(80);
+NetworkClientSecure tls;
 
-String latestJson = "{}";
+std::deque<String> backlog;                      // readings not yet accepted by Gannet, oldest first
 unsigned long lastRead = 0, wifiLostAt = 0;
 
 String idToString(const DeviceAddress a) {
@@ -27,11 +35,13 @@ String idToString(const DeviceAddress a) {
   return String(buf);
 }
 
-void readProbes() {
+String readProbes() {
   sensors.begin();                               // re-scan so a replugged probe reappears
   sensors.requestTemperatures();                 // ~750 ms at 12-bit resolution
-  String out = "{\"hub\":\"" + String(HUB_NAME) + "\",\"uptime_s\":" + String(millis() / 1000) +
-               ",\"probes\":[";
+  String out = "{\"hub\":\"" + String(HUB_NAME) + "\",\"uptime_s\":" + String(millis() / 1000);
+  time_t now = time(nullptr);
+  if (now >= MIN_EPOCH) out += ",\"epoch\":" + String((unsigned long)now);   // omitted until NTP has set the clock
+  out += ",\"probes\":[";
   DeviceAddress a;
   int n = sensors.getDeviceCount(), written = 0;
   for (int i = 0; i < n; i++) {
@@ -42,8 +52,50 @@ void readProbes() {
     out += "{\"id\":\"" + idToString(a) + "\",\"temp_c\":" + (bad ? String("null") : String(c, 2)) + "}";
   }
   out += "]}";
-  latestJson = out;
-  Serial.println(latestJson);
+  Serial.println(out);
+  return out;
+}
+
+void queueReading(const String& reading) {
+  if (backlog.size() >= MAX_BACKLOG) {
+    backlog.pop_front();
+    Serial.println("Backlog full: dropped the oldest reading");
+  }
+  backlog.push_back(reading);
+}
+
+// Send queued readings to Gannet, oldest first, until the backlog is empty or an upload fails.
+void uploadBacklog() {
+  while (!backlog.empty() && WiFi.status() == WL_CONNECTED) {
+    size_t n = min(backlog.size(), MAX_PER_POST);
+    String body = "[";
+    for (size_t i = 0; i < n; i++) {
+      if (i) body += ",";
+      body += backlog[i];
+    }
+    body += "]";
+
+    HTTPClient http;
+    http.begin(tls, RECEIVER_URL);
+    http.setTimeout(15000);
+    http.addHeader("Content-Type", "application/json");
+    http.addHeader("Authorization", String("Bearer ") + HUB_TOKEN);
+    int code = http.POST(body);
+    String reply = code > 0 ? http.getString() : HTTPClient::errorToString(code);
+    http.end();
+    reply.trim();
+
+    if (code == 200) {
+      backlog.erase(backlog.begin(), backlog.begin() + n);
+      Serial.printf("Uploaded %u reading(s); %u waiting\n", n, backlog.size());
+    } else if (code == 400 || code == 413) {
+      backlog.erase(backlog.begin(), backlog.begin() + n);   // Gannet will never accept these; don't let them block newer ones
+      Serial.printf("Gannet rejected %u reading(s), HTTP %d: %s\n", n, code, reply.c_str());
+    } else {
+      Serial.printf("Upload failed (%d: %s); %u reading(s) waiting\n", code, reply.c_str(), backlog.size());
+      return;                                    // keep everything and retry after the next reading
+    }
+  }
 }
 
 void setup() {
@@ -77,20 +129,26 @@ void setup() {
   }, ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
 
   WiFi.begin(WIFI_SSID, WIFI_PASS);
+  configTime(0, 0, "pool.ntp.org", "time.nist.gov");   // UTC; syncs in the background once WiFi is up
   for (int i = 0; i < 60 && WiFi.status() != WL_CONNECTED; i++) delay(500);
   Serial.println("IP address: " + WiFi.localIP().toString());
-  MDNS.begin(HUB_NAME);                          // http://shore-temps-a.local/ on the same subnet
+  for (int i = 0; i < 20 && time(nullptr) < MIN_EPOCH; i++) delay(500);    // give NTP a moment before the first reading
+  Serial.println(time(nullptr) >= MIN_EPOCH ? "Clock set from NTP" : "Clock not set yet; readings sent without a timestamp");
 
+  tls.setCACert(GANNET_ROOT_CA);
+  Serial.printf("Hub %s uploading to %s\n", HUB_NAME, RECEIVER_URL);
   sensors.setResolution(12);
-  server.on("/", []() { server.send(200, "application/json", latestJson); });
-  server.begin();
-  readProbes();
   lastRead = millis();
+  queueReading(readProbes());
+  uploadBacklog();
 }
 
 void loop() {
-  server.handleClient();
-  if (millis() - lastRead >= READ_EVERY_MS) { readProbes(); lastRead = millis(); }
+  if (millis() - lastRead >= READ_EVERY_MS) {
+    lastRead = millis();
+    queueReading(readProbes());
+    uploadBacklog();
+  }
 
   if (WiFi.status() != WL_CONNECTED) {
     if (!wifiLostAt) wifiLostAt = millis();

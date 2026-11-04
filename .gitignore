@@ -5,7 +5,6 @@
 .Rhistory
 .Rproj.user
 .ipynb_checkpoints/
-.gitignore
 *.sif
 apptainer_definition_files/*.log
 __pycache__/

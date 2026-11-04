@@ -1,0 +1,18 @@
+services:
+  receiver:
+    build: ./receiver
+    container_name: shore-temps-receiver
+    restart: unless-stopped
+    user: "${PUID}:${PGID}"                 # your DSM user, so it can write to the shared folder
+    environment:
+      HUB_TOKENS: ${HUB_TOKENS}
+    ports:
+      - "127.0.0.1:8080:8080"               # only reachable through DSM's HTTPS reverse proxy
+    volumes:
+      - ./data:/data
+    read_only: true
+    logging:
+      driver: json-file
+      options:
+        max-size: "1m"
+        max-file: "3"

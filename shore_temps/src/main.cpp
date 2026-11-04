@@ -8,7 +8,7 @@
 #include <esp_mac.h>
 #include "secrets.h"                             // WIFI_SSID, WIFI_PASS; copy from secrets.h.example
 
-const char* HUB_NAME  = "shore-temps-a";        // "shore-temps-b" on the second hub
+const char* HUB_NAME  = "shore-temps-b";        // "shore-temps-b" on the second hub
 const int   ONE_WIRE_PIN = 4;                    // GPIO 4 (A5 on HUZZAH32)
 
 const unsigned long READ_EVERY_MS   = 60UL * 1000;       // read probes once a minute
@@ -56,6 +56,26 @@ void setup() {
   char macStr[18];
   sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
   Serial.println("MAC address: " + String(macStr));     // UW IT may ask for this
+
+  // WiFi diagnostics: is the network visible on 2.4 GHz, and why does a connection attempt fail?
+  int found = WiFi.scanNetworks();
+  bool seen = false;
+  for (int i = 0; i < found; i++) {
+    if (WiFi.SSID(i) == WIFI_SSID) {
+      seen = true;
+      Serial.printf("Found \"%s\": channel %d, signal %d dBm\n", WIFI_SSID, WiFi.channel(i), WiFi.RSSI(i));
+    }
+  }
+  if (!seen) {
+    Serial.printf("\"%s\" not found among %d 2.4 GHz networks:\n", WIFI_SSID, found);
+    for (int i = 0; i < found; i++) Serial.printf("  \"%s\" (channel %d, %d dBm)\n", WiFi.SSID(i).c_str(), WiFi.channel(i), WiFi.RSSI(i));
+  }
+  WiFi.scanDelete();
+  WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
+    uint8_t reason = info.wifi_sta_disconnected.reason;
+    Serial.printf("WiFi failed, reason %d: %s\n", reason, WiFi.disconnectReasonName((wifi_err_reason_t)reason));
+  }, ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+
   WiFi.begin(WIFI_SSID, WIFI_PASS);
   for (int i = 0; i < 60 && WiFi.status() != WL_CONNECTED; i++) delay(500);
   Serial.println("IP address: " + WiFi.localIP().toString());

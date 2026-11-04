@@ -31,7 +31,9 @@ MIN_EPOCH = 1704067200                      # 2024-01-01; anything earlier means
 
 # HUB_TOKENS="shore-temps-a:<token>,shore-temps-b:<token>"
 HUB_TOKENS = {}
-for pair in os.environ["HUB_TOKENS"].split(","):
+for pair in os.environ.get("HUB_TOKENS", "").split(","):
+    if ":" not in pair:
+        raise SystemExit("HUB_TOKENS must look like 'hub-name:token,hub-name:token' (is .env missing?)")
     hub, token = pair.strip().split(":", 1)
     if len(token) < 20:
         raise SystemExit(f"Token for {hub} is too short; generate a long random one.")

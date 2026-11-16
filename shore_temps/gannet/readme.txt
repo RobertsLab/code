@@ -185,6 +185,25 @@ offsets in a separate processing step, and never edit these files in place.
 Include data/ in Gannet's snapshot or backup schedule.
 
 
+PROBE IDS
+---------
+
+Each probe's number and its ID, as it appears in the probe_id column:
+
+  | Probe | Probe ID         |
+  |------:|------------------|
+  |     1 | 285453BB79250B4D |
+  |     2 | 285963BE79250B02 |
+  |     3 | 28F953870074746A |
+  |     4 | 283EBEB579250B62 |
+  |     5 | 289C2BB779250B32 |
+  |     6 | 28F55BC479250B2A |
+  |     7 | 28B27FB379250B13 |
+  |     8 | 28CC7DBC79250B81 |
+  |     9 | 282107B179250BAF |
+  |    10 | 286B0FB679250BAD |
+
+
 WHAT THE RECEIVER ACCEPTS
 -------------------------
 
